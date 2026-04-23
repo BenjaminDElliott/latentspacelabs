@@ -6,7 +6,7 @@
 - **Parent / Epic:** LAT-YY
 - **Agent type:** coding | qa | review | research | sre | pm | observability
 - **Risk level:** low | medium | high
-- **Budget cap:** {{tokens, time, or cost — required, numeric}}
+- **Budget cap:** {{tokens, time, or cost — required, numeric; this is the per-run trigger for the runaway-cost interrupt per ADR-0009 / `docs/process/cost-controls.md`}}
 - **Approval required before dispatch:** yes | no (pilot default: yes for coding agents)
 
 ## Goal
@@ -117,7 +117,7 @@ A ticket is **agent-ready only if all of the following are true**:
 4. **Tests are identified.** The `Tests` section names the verification path for each acceptance criterion, even if the answer is "manual, because …" with a stated reason.
 5. **Dependencies are declared.** The `## Sequencing` block is present, `Hard blockers:` is populated (`none` is a valid value, but the line must exist), and any declared hard blocker has a `LAT-*` key that resolves to a real Linear issue. Tickets missing a `## Sequencing` block fail safely to `caution`, not `ready` (per ADR-0005).
 6. **Risk level is classified.** `low`, `medium`, or `high` — not blank, not "TBD". If genuinely unknown, the ticket is not ready; triage first.
-7. **Budget cap is set.** Numeric. Not "reasonable". Not empty. Runaway cost risk is always a stop-and-ask per `intake-triage.md`.
+7. **Budget cap is set.** Numeric. Not "reasonable". Not empty. The cap is the per-run trigger for the runaway-cost interrupt defined in ADR-0009 / `docs/process/cost-controls.md` — an agent crossing it halts and routes to `needs-human`. Runaway-cost is always a stop-and-ask per `intake-triage.md` and ADR-0008.
 8. **Constraints are stated where they exist.** If the work touches security, secrets, migrations, schema changes, public APIs, or billing, the `Constraints` section must reflect that. Silence on those topics when they apply is a refusal trigger.
 9. **Evidence expectations match risk.** High-risk work requires at minimum PR + tests + run report + reviewer; low-risk reversible work may collapse to PR + revert plan. A high-risk ticket with only "PR link" as required evidence is refused.
 10. **No duplicate or stale context.** The ticket links out to the PRD/ADR/code path rather than duplicating long content inline. Pasted PRDs, pasted ADRs, or pasted prior comments are a refusal trigger — they rot.
