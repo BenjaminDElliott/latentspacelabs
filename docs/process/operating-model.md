@@ -44,17 +44,29 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 |---|---|
 | Triage raw input | No |
 | Draft PRD, ticket, or ADR | No |
-| Create Linear issues marked for refinement | No |
+| Create Linear issues marked for refinement | No — agent-created issues default to `needs-refinement` and are reviewed at the next refinement pass (see *Backlog refinement*, `intake-triage.md`) |
 | Create Linear projects | **Yes** (explicit Ben approval; agents may propose but must not auto-create — see ADR-0003) |
-| Start coding agents | **Yes** during pilot |
+| Start coding agents | **Yes, per-dispatch** during pilot (ADR-0008 L3-with-approval; not batched) |
+| Start QA / review agents | **Yes, per-dispatch** during pilot |
 | Open PRs | No, if the Linear issue key is in the PR title (see PR ↔ Linear linking convention) |
 | Merge PRs | **Yes** |
 | Deploy | **Yes** |
-| Change autonomy rules | **Yes** |
+| Change autonomy rules | **Yes** — requires an ADR (ADR-0008 and ADR-0009 are the canonical locations) |
+| Resume a ticket whose last run halted for runaway-cost | **Yes** — requires an explicit Ben unblock comment on the Linear issue (cap raise, re-scope, or cancel). See `cost-controls.md`. |
 
-Runaway cost risk is always a stop-and-ask event, even when product risk is otherwise low.
+Runaway-cost risk is always a stop-and-ask event, even when product risk is otherwise low. The three cost bands (`normal`, `elevated`, `runaway_risk`), the concrete triggers, and the interrupt protocol live in `cost-controls.md` (architecture: ADR-0009).
 
 The full category-by-action rule matrix — including Perplexity-direct vs Agent Control Layer routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008).
+
+### Backlog refinement (cadence)
+
+Ben runs a backlog-refinement pass at least **weekly**, and additionally whenever the `intake` + `needs-refinement` queue crosses ~15 open items. The pass reviews, prunes, and reprioritizes agent-created and intake items, and promotes only those passing the `agent-ready` pre-flight. Full procedure: `intake-triage.md` → *Backlog refinement loop*.
+
+This cadence is load-bearing: L2 permission for agent-created Linear issues (ADR-0008) assumes the refinement pass happens.
+
+### Cost reporting (every run)
+
+Every spend-incurring agent run populates the `cost` object in the run report (`docs/templates/agent-run-report.md`), including a non-null `cost.band`. `elevated` and `runaway_risk` bands must surface in the Linear write-back's `Risks:` line per ADR-0003. A run report missing `cost.band` is grounds for rejection in review. Policy: ADR-0009 + `cost-controls.md`. Absolute dollar/token budgets are **not set yet** — they are a deliberate non-goal until the telemetry substrate can enforce them.
 
 ## PR ↔ Linear linking convention
 
