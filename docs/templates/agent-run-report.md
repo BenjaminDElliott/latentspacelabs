@@ -113,11 +113,16 @@ Treat `agent_metadata`, `cost`, and `correlation` as open objects. Add keys when
 
 One or two paragraphs. What did the agent set out to do, what did it do, and what should a human pay attention to?
 
+If the run crossed a **context / chat compaction event** and is shipping a change whose rationale was in the pre-compaction context, record here (per [ADR-0015](../decisions/0015-context-compaction-and-agent-handoff-policy.md) Rule 2): *when* the compaction happened, *what* was compacted, and *where the pre-compaction content is durable* — a link to the ADR / process doc / PRD / template / named paragraph in this run report that preserves the load-bearing content, or an explicit statement that the content was not durably preserved because it was not load-bearing. A shipped change whose rationale now resolves only to chat is a preflight refuse (`docs/process/coding-agent-preflight.md` § C).
+
+If the run is a spike that produced **no implementation PR**, state the spike's terminal state (ADR-0015 Rule 4): *findings promoted* (link the promotion PR and the durable surface) or *explicitly archived* (with a one-line rationale for not promoting).
+
 ## Evidence
 
 - Artifacts produced.
 - External trace / log links.
 - Diffs, screenshots, or metrics relevant to acceptance.
+- Handoff packet (ADR-0015 Rule 1): confirm current goal, active tickets, open PRs, blockers, prior decisions (with durable links), next action, and open questions are all present in this report + the PR body + the Linear write-back. References to prior rationale must resolve to a durable surface, not to chat.
 
 ## Human follow-up required
 
