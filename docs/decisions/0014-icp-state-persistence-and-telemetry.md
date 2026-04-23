@@ -1,5 +1,5 @@
 ---
-id: ADR-0013
+id: ADR-0014
 title: Integration Control Plane state, persistence, and telemetry architecture
 status: proposed
 date: 2026-04-23
@@ -12,7 +12,7 @@ superseded_by:
 revisit_trigger: Revisit when (a) the MVP dispatcher is running end-to-end and Perplexity cannot answer one of the named visibility questions against repo-committed run reports, (b) a second caller (scheduler, second harness, or service surface) needs run-registry reads that Markdown + JSON grep cannot serve, (c) run-report volume makes the conventional `runs/` directory unreadable during review (order of magnitude: hundreds of runs per week), (d) a telemetry backend ADR is opened, or (e) run-report files need to carry secrets or PII that cannot live in the repo.
 ---
 
-# ADR-0013: Integration Control Plane state, persistence, and telemetry architecture
+# ADR-0014: Integration Control Plane state, persistence, and telemetry architecture
 
 ## Context
 

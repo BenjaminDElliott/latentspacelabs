@@ -133,7 +133,7 @@ Working if, six to eight weeks in:
 ## Links
 
 - Linear: `LAT-5`.
-- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0013-icp-state-persistence-and-telemetry.md` (locates the envelope in the `runs/` tree for the MVP and names the visibility query surfaces).
+- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0014-icp-state-persistence-and-telemetry.md` (locates the envelope in the `runs/` tree for the MVP and names the visibility query surfaces).
 - Template: `docs/templates/agent-run-report.md` (canonical schema form).
 - Process: `docs/process/operating-model.md` (Linear write-back contract).
 - Deferred: telemetry substrate ADR (tracked under ADR-0003 open questions).
