@@ -14,7 +14,8 @@
     }
   },
   "bin": {
-    "icp-cockpit": "./dist/cockpit/cli.js"
+    "icp-cockpit": "./dist/cockpit/cli.js",
+    "direct-anthropic-proof": "./dist/skills/direct-anthropic-proof-cli.js"
   },
   "files": [
     "dist",

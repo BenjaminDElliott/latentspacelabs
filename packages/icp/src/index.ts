@@ -98,6 +98,42 @@ export {
   type DispatchTicketOutputs,
 } from "./skills/dispatch-ticket.js";
 
+/* LAT-67 Direct-Path Anthropic invocation proof (ADR-0013 § Direct-Path,
+ * ADR-0017 Rule 1). `loadAnthropicCredentialFromEnv` is the single
+ * sanctioned pre-loader reader of `process.env.ANTHROPIC_API_KEY`; the
+ * client closes over the key and never re-surfaces it; the proof harness
+ * writes E1 evidence with provider/model/status/tokens/latency/
+ * cost-band check/secret_source only. */
+export {
+  createDirectAnthropicProviderClient,
+  loadAnthropicCredentialFromEnv,
+  LAT67_PROOF_MODEL,
+  LAT67_PROOF_MAX_TOKENS,
+  LAT67_PROOF_PROMPT,
+} from "./adapters/direct-provider-client.js";
+export type {
+  DirectAnthropicClient,
+  DirectAnthropicClientEvent,
+  DirectAnthropicClientOptions,
+  DirectAnthropicClientPingOptions,
+  DirectProviderPingResult,
+  EnvLike,
+  FetchLike as DirectProviderFetchLike,
+  FetchLikeResponse as DirectProviderFetchLikeResponse,
+} from "./adapters/direct-provider-client.js";
+
+export {
+  E1_EVIDENCE_ID,
+  E1_EVIDENCE_SCHEMA_VERSION,
+  runDirectAnthropicProof,
+  cliMain as directAnthropicProofCliMain,
+} from "./skills/direct-anthropic-proof.js";
+export type {
+  DirectAnthropicProofOptions,
+  DirectAnthropicProofResult,
+  DirectProviderE1Evidence,
+} from "./skills/direct-anthropic-proof.js";
+
 export {
   evaluateReadiness,
   evaluateCodingRun,
