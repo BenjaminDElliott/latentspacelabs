@@ -109,3 +109,18 @@ One or two paragraphs. What did the agent set out to do, what did it do, and wha
 - [ ] Approval to deploy.
 - [ ] Resolution of open risk or question.
 - [ ] None.
+
+## Linear write-back (paste this into the issue comment)
+
+This is the bounded summary that goes back to Linear under the ADR-0003 write-back contract. Keep it scannable — see the comment size/shape guideline in ADR-0003. Everything else stays in this run report, the PR, or the telemetry substrate.
+
+```md
+**Outcome:** <one or two sentences on what happened>
+**Evidence:** <PR URL> · <run report URL> · <other artifacts>
+**Risks:** <risk flags, including cost band if elevated; "none" is fine>
+**PR:** <PR URL, or "n/a">
+**Next action:** <single recommended next step>
+**Open questions:** <blocking questions, or "none">
+```
+
+Do not paste raw traces, full diffs, or long rationale into the Linear comment. Link to them instead.
