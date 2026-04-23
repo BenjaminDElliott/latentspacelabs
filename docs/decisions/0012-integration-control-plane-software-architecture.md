@@ -319,6 +319,6 @@ Revisit if any of those stops being true, or if the revisit trigger in the front
 ## Links
 
 - Linear: `LAT-19` (this ADR). Related in-flight: `LAT-20` (runtime), `LAT-6`, `LAT-11` (autonomy). Related context: `LAT-5`, `LAT-8`, `LAT-10`, `LAT-14`, `LAT-15`, `LAT-16`.
-- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0004-process-docs-vs-agent-skills.md`, `0005-linear-dependency-and-sequencing-model.md`, `0006-agent-run-visibility-schema.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md` (which uses the older "ACL" name for the same substrate).
+- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0004-process-docs-vs-agent-skills.md`, `0005-linear-dependency-and-sequencing-model.md`, `0006-agent-run-visibility-schema.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md` (which uses the older "ACL" name for the same substrate), `0014-icp-state-persistence-and-telemetry.md` (pins the run recorder's MVP destination to the repo-committed `runs/` tree and names the visibility query surfaces).
 - Process: `docs/process/approval-gates-and-autonomy-rules.md`, `docs/process/operating-model.md`, `docs/process/intake-triage.md`, `docs/process/qa-review-evidence.md` (upstream docs still use "ACL" pending the follow-up rename).
 - Templates: `docs/templates/agent-run-report.md`, `docs/templates/agent-ready-ticket.md`.
