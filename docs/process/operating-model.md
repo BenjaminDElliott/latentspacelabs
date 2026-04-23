@@ -81,6 +81,16 @@ Full format, defaults, and the step-by-step dispatch algorithm live in ADR-0005.
 
 The `## Sequencing` block is a **transitional pilot bridge**, not the long-term architecture. Once the Agent Control Layer (or an equivalent canonical dependency graph) can read/write native Linear relations, the block is expected to be deprecated as the authoritative dispatch source per a follow-up ADR — possibly becoming a generated mirror or being removed from issue descriptions entirely. Until that follow-up ADR lands, agents must continue to treat the block as authoritative; it is the only connector-readable pilot mechanism today. See ADR-0005 "Deprecation and migration".
 
+## Verification of code-producing runs
+
+Every code-producing agent run (any run that opens a PR) closes out with QA and PR-review evidence before merge is requested. The authoritative policy is [ADR-0007](../decisions/0007-qa-review-evidence-workflow.md); the operational guide is [`qa-review-evidence.md`](qa-review-evidence.md). In summary:
+
+- **Two concerns, two reports.** QA answers "did the change do what the ticket said it should do?" (`docs/templates/qa-report.md`). PR review answers "is the change the right change, done well?" (`docs/templates/pr-review-report.md`). They overlap; that is intentional.
+- **Agent shape.** Default is separate QA and PR review agents. A combined QA+review agent is allowed **only** when the ticket is `Risk level: low`, reversible, touches no security-sensitive surface (auth, permissions, secrets, dispatch policy, cost gating, data retention), and makes no ADR-relevant decision. Combined agents still produce both report sections.
+- **Severity ladder.** `nit` · `low` · `medium` · `high` · `critical`. `high` and `critical` findings cannot carry an `approve`/`approve-with-nits` recommendation; `critical` always routes to `needs-human` (Ben). Runaway cost risk is `critical` by default.
+- **Recommendations.** `approve` · `approve-with-nits` · `request-changes` · `block-merge` · `needs-human`. **No verification recommendation authorizes merge.** Merge and deploy remain Ben-approved per the gates above.
+- **Linear write-back.** Same five-element ADR-0003 contract, with two additions: the outcome states the recommendation verbatim, and `Risks:` surfaces every `high`/`critical` finding by severity label even when the recommendation is approval-variant.
+
 ## Linear write-back contract
 
 Every agent run that touches a `LAT-*` issue must leave a single, bounded write-back comment on that issue. The comment contains, at minimum:
@@ -102,6 +112,6 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`.
-- Process: `approval-gates-and-autonomy-rules.md` (full rule matrix and autonomy levels), `intake-triage.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`.`0008-agent-control-layer-and-perplexity-boundary.md`.
+- Process: `qa-review-evidence.md`.
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow). `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).

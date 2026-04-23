@@ -104,8 +104,8 @@ Treat `agent_metadata`, `cost`, and `correlation` as open objects. Add keys when
 - **PR branch / commit:**
 - **Files changed:**
 - **Tests run / results:**
-- **QA result:**
-- **Review result:**
+- **QA result:** link to `qa-report.md` (see ADR-0007); include recommendation verbatim.
+- **Review result:** link to `pr-review-report.md` (see ADR-0007); include recommendation verbatim.
 - **Risks surfaced:**
 - **Next action:**
 

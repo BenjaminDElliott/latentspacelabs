@@ -172,6 +172,8 @@ When in doubt about reversibility, treat as non-reversible.
 
 - `operating-model.md`
 - `mobile-intake-ux.md` — low-friction chat/mobile interaction contract for the capture step.
+- `qa-review-evidence.md` (verification of code-producing runs).
 - `docs/templates/agent-ready-ticket.md`
-- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`.' `0005-linear-dependency-and-sequencing-model.md`
-- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model).
+- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`.
+- ADR-0007: `docs/decisions/0007-qa-review-evidence-workflow.md` (QA and PR-review evidence workflow).
+- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence).
