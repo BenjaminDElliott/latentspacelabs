@@ -49,7 +49,7 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 | Start coding agents | **Yes, per-dispatch** during pilot (ADR-0008 L3-with-approval; not batched) |
 | Start QA / review agents | **Yes, per-dispatch** during pilot |
 | Open PRs | No, if the Linear issue key is in the PR title (see PR ↔ Linear linking convention) |
-| Merge PRs | **Yes** |
+| Merge PRs | **Yes** — Ben approves. An agent may mechanically execute the merge under explicit in-thread approval per [`thread-approved-merge-authority.md`](thread-approved-merge-authority.md); the gate there is authoritative. |
 | Deploy | **Yes** |
 | Change autonomy rules | **Yes** — requires an ADR (ADR-0008 and ADR-0009 are the canonical locations) |
 | Resume a ticket whose last run halted for runaway-cost | **Yes** — requires an explicit Ben unblock comment on the Linear issue (cap raise, re-scope, or cancel). See `cost-controls.md`. |
