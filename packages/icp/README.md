@@ -28,8 +28,8 @@ src/
 From the repo root:
 
 ```sh
-pnpm install
-pnpm --filter @latentspacelabs/icp build
-pnpm --filter @latentspacelabs/icp typecheck
-pnpm --filter @latentspacelabs/icp test
+npm install
+npm run build --workspace @latentspacelabs/icp
+npm run typecheck --workspace @latentspacelabs/icp
+npm run test --workspace @latentspacelabs/icp
 ```
