@@ -26,15 +26,14 @@ Perplexity threads and workspace Markdown files are **working drafts, not source
 
 ## Conventions
 
-- Every durable doc should link back to the Linear issue(s) that motivated it.
+- Every durable doc should link back to the Linear issue(s) that motivated it via its own frontmatter or body — not via a hand-maintained list in this README.
 - Linear issues should link forward to the canonical doc URL in this repo.
 - Prefer small, frequent edits over large rewrites. Supersede ADRs rather than mutate accepted ones.
 
-## Related Linear issues
+## Index policy
 
-- `LAT-10` — Operating model / Perplexity-first intake scaffolding.
-- `LAT-11` — Retrospective learning loop (ADR-0010 + `process/retrospective-learning-loop.md` + `templates/retro-report.md`).
-- `LAT-12` — Persistence boundaries across Perplexity, Linear, and Git.
-- `LAT-13` — Architecture decision process and ADR structure.
-- `LAT-23` — Canonicalize the root PRD (see [`prds/root-agentic-development-flywheel.md`](prds/root-agentic-development-flywheel.md)).
-- `LAT-31` — PRD governance policy (see [`prds/README.md`](prds/README.md)).
+This README intentionally does **not** maintain a hand-edited list of sibling docs, PRDs, ADRs, or the Linear issues that motivated them. Prior versions kept such lists and they drifted under parallel PRs — every new doc became a merge conflict on the index. The authoritative metadata for any doc lives in that doc's frontmatter or body.
+
+To discover what exists: `ls docs/prds/`, `ls docs/decisions/`, `ls docs/process/`, and read the frontmatter. To check motivation or status: read the file, not a sibling index.
+
+New PRD, ADR, or process-doc PRs should **not** need to touch `docs/README.md` (or any other shared index/list/table file) unless the ticket explicitly owns that hub. If you find yourself editing a shared index to land an unrelated doc, that is the conflict surface this policy exists to prevent — stop and leave the index alone.
