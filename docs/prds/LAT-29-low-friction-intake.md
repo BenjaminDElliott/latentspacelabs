@@ -1,3 +1,29 @@
+---
+prd_id: LAT-29-low-friction-intake
+title: Low-Friction Intake Surfaces and Triage UX
+status: draft
+owner: Ben Elliott
+date: 2026-04-23
+related_linear:
+  - LAT-29
+  - LAT-10
+  - LAT-12
+  - LAT-14
+  - LAT-16
+related_adrs:
+  - ADR-0001
+  - ADR-0003
+  - ADR-0005
+  - ADR-0008
+  - ADR-0012
+  - ADR-0013
+  - ADR-0014
+derived_from:
+  - root-agentic-development-flywheel
+supersedes:
+superseded_by:
+---
+
 # PRD: Low-Friction Intake Surfaces and Triage UX
 
 - **Owner:** Ben Elliott
