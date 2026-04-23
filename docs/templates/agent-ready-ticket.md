@@ -70,8 +70,20 @@ If a criterion has no corresponding test, flag it here and justify.
 - [ ] Files changed.
 - [ ] Tests added/run and their results.
 - [ ] Known risks and unresolved questions.
-- [ ] QA and/or review notes.
+- [ ] QA report for code-producing runs (see `docs/templates/qa-report.md` and ADR-0007). Omit only for non-code runs or doc/template-only changes, with explicit reason.
+- [ ] PR review report for code-producing runs (see `docs/templates/pr-review-report.md` and ADR-0007). A combined QA+review agent still produces both report sections; combined scope allowed only for low-risk reversible work that touches no security-sensitive surface and makes no ADR-relevant decision.
+- [ ] Final recommendation (`approve` / `approve-with-nits` / `request-changes` / `block-merge` / `needs-human`) recorded in each report and in the Linear write-back. No recommendation authorizes merge — merge remains Ben-approved.
 - [ ] Agent run report (`docs/templates/agent-run-report.md`) linked from the PR and Linear write-back.
+
+## Quality Gate Checklist (must all pass before marking agent-ready)
+
+- [ ] Scope is bounded and specific.
+- [ ] Acceptance criteria are testable.
+- [ ] Dependencies are identified and declared in the `## Sequencing` block per ADR-0005.
+- [ ] Risk level is classified.
+- [ ] Budget cap is set.
+- [ ] Testability is confirmed.
+- [ ] Security / architecture concerns are flagged or ruled out.
 
 ## Rollback / Reversal Plan
 

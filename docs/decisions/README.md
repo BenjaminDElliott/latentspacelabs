@@ -56,7 +56,7 @@ The table below is for scanning. Status is copied from each ADR's frontmatter at
 | [0004](0004-process-docs-vs-agent-skills.md) | Process docs vs agent skills and commands | accepted |
 | [0005](0005-linear-dependency-and-sequencing-model.md) | Linear dependency and sequencing model | accepted |
 | [0006](0006-agent-run-visibility-schema.md) | Agent run visibility schema (pilot) | accepted |
-
+| [0007](0007-qa-review-evidence-workflow.md) | QA and PR-review evidence workflow | accepted |
 
 ## Anti-astronautics guardrail
 
