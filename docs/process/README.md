@@ -33,7 +33,7 @@ Until ADR-0004 decides otherwise, docs are canonical and skills/commands are tre
 2. When the change is ready to govern behavior, open a PR that edits the relevant file here.
 3. If the change represents an architecturally significant decision (autonomy, persistence, observability, security, cost, or integration boundary), also add or update an ADR in `docs/decisions/`.
 4. If a corresponding skill or slash command exists, flag that it may need to be regenerated. Until automation lands, this is a manual call-out in the PR description.
-5. Link the PR to the relevant Linear issue (`LAT-*`). Link the Linear issue forward to the merged doc.
+5. Link the PR to the relevant Linear issue (`LAT-*`) by prefixing the PR title with the issue key (e.g. `LAT-13: short imperative title`) and referencing it in the PR body. See `operating-model.md` → *PR ↔ Linear linking convention* for the full rule, including multi-issue and no-issue cases. Link the Linear issue forward to the merged doc.
 6. Keep process docs concise. Link out to ADRs, PRDs, and Linear issues rather than inlining long context.
 
 ## Review posture

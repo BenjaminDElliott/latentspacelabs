@@ -40,12 +40,21 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 | Create Linear issues marked for refinement | No |
 | Create Linear projects | **Yes** |
 | Start coding agents | **Yes** during pilot |
-| Open PRs | No, if clearly linked to a Linear issue |
+| Open PRs | No, if the Linear issue key is in the PR title (see PR ↔ Linear linking convention) |
 | Merge PRs | **Yes** |
 | Deploy | **Yes** |
 | Change autonomy rules | **Yes** |
 
 Runaway cost risk is always a stop-and-ask event, even when product risk is otherwise low.
+
+## PR ↔ Linear linking convention
+
+All PRs for Linear-tracked work must be discoverable from Linear without manual search. This is an **agent execution rule**, not just human advice — agents that open PRs must follow it.
+
+- **PR title must prefix the primary Linear issue key**, e.g. `LAT-13: short imperative title`. Linear's GitHub integration uses this to link the PR to the issue automatically.
+- **PR body must reference the related Linear issue(s)** with the key (e.g. `LAT-13`) or a full URL in a `Related:` or `Linear:` line.
+- **Multiple issues:** put the primary key in the title; list secondary keys in the PR body (e.g. `Also: LAT-10, LAT-12`).
+- **No Linear issue yet?** Stop and create/triage the issue first via the intake flow, unless the human has explicitly instructed you to open a PR without one. Do not invent a ticket number.
 
 ## Source-of-truth rules
 

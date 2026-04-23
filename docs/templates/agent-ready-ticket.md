@@ -41,7 +41,7 @@ What does the agent need to know before starting? Link to the PRD, ADR, prior ti
 
 ## Required Evidence on Completion
 
-- [ ] PR link (or explicit reason no PR was opened).
+- [ ] PR link (or explicit reason no PR was opened). PR title must prefix this ticket's Linear key, e.g. `LAT-XX: short imperative title`; PR body must reference the Linear issue. See `docs/process/operating-model.md` → *PR ↔ Linear linking convention*.
 - [ ] Files changed.
 - [ ] Tests added/run and their results.
 - [ ] Known risks and unresolved questions.

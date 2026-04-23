@@ -84,7 +84,7 @@ Treat `agent_metadata`, `cost`, and `correlation` as open objects. Adding a key 
 - **Started / ended:**
 - **Cost band:**
 - **Budget state:** within cap | elevated | exceeded
-- **PR link (if any):**
+- **PR link (if any):** PR title must be prefixed with the Linear issue key (e.g. `LAT-13: ...`); body must reference the issue. See `docs/process/operating-model.md` → *PR ↔ Linear linking convention*.
 - **PR branch / commit:**
 - **Files changed:**
 - **Tests run / results:**
