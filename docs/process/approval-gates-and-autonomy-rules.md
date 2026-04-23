@@ -1,20 +1,20 @@
 # Approval gates and autonomy rules
 
-Operational rule matrix for the Agentic Development Flywheel pilot. Companion to ADR-0008 (which captures the architecture decision); this document captures the day-to-day rules a human or agent can look up without re-deriving policy.
+Operational rule matrix for the Agentic Development Flywheel pilot. Companion to ADR-0008 (which captures the original architecture decision under the working name "Agent Control Layer / ACL"; ADR-0012 renamed the concept to **Integration Control Plane / ICP**). This document captures the day-to-day rules a human or agent can look up without re-deriving policy.
 
-If this doc and ADR-0008 disagree, the ADR wins until superseded. If this doc and `operating-model.md` disagree, update the one that's wrong in the same PR that flagged the conflict.
+If this doc and ADR-0008 / ADR-0012 disagree, the ADR wins until superseded. If this doc and `operating-model.md` disagree, update the one that's wrong in the same PR that flagged the conflict.
 
 ## Why this document exists
 
-ADR-0001 chose Perplexity / Linear / GitHub as the control plane. ADR-0003 bounded what Linear stores. ADR-0005 defined dispatch readiness and noted that Perplexity's Linear connector does not reliably expose first-class native relations. ADR-0008 names the follow-on: **Perplexity is the cognitive front door; an owned Agent Control Layer (ACL) is the operational substrate for anything requiring first-class APIs, deterministic dispatch, or auditable runs.**
+ADR-0001 chose Perplexity / Linear / GitHub as the control plane. ADR-0003 bounded what Linear stores. ADR-0005 defined dispatch readiness and noted that Perplexity's Linear connector does not reliably expose first-class native relations. ADR-0008 names the follow-on: **Perplexity is the cognitive front door; an owned Integration Control Plane (ICP) is the operational substrate for anything requiring first-class APIs, deterministic dispatch, or auditable runs.** (ADR-0008 originally called this the "Agent Control Layer / ACL"; ADR-0012 renamed it to avoid collision with "Access Control List.")
 
 This document is the rule matrix that operationalizes that boundary. It is intended to be concrete enough that a future agent can classify a new action in seconds.
 
 ## Core finding
 
-**Perplexity connectors are useful convenience tools for bounded direct actions and drafting, but not the authoritative dispatch/dependency substrate.** Use Perplexity for cognition (triage, drafting, synthesis, read-heavy analysis) and for cheap, reversible Linear writes. Route anything that needs first-class API semantics, native Linear relations, deterministic dispatch, or high-fidelity telemetry through the ACL.
+**Perplexity connectors are useful convenience tools for bounded direct actions and drafting, but not the authoritative dispatch/dependency substrate.** Use Perplexity for cognition (triage, drafting, synthesis, read-heavy analysis) and for cheap, reversible Linear writes. Route anything that needs first-class API semantics, native Linear relations, deterministic dispatch, or high-fidelity telemetry through the ICP.
 
-**The ACL side of the boundary is concrete, not speculative.** The Linear GraphQL API already exposes first-class CRUD for native issue relations — `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete` — with `IssueRelationType` covering `blocks`, `related`, and `duplicate` (`blocked` is the inferred inverse of `blocks`). Combined with issue status fields, parent/child links, labels, and pagination, this is enough to build deterministic next-dispatchable issue selection in an owned adapter. The first ACL capability should therefore be a **direct Linear GraphQL adapter** for issue-relation CRUD and next-dispatchable selection (see ADR-0008, "First implementation implication").
+**The ICP side of the boundary is concrete, not speculative.** The Linear GraphQL API already exposes first-class CRUD for native issue relations — `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete` — with `IssueRelationType` covering `blocks`, `related`, and `duplicate` (`blocked` is the inferred inverse of `blocks`). Combined with issue status fields, parent/child links, labels, and pagination, this is enough to build deterministic next-dispatchable issue selection in an owned adapter. The first ICP capability should therefore be a **direct Linear GraphQL adapter** for issue-relation CRUD and next-dispatchable selection (see ADR-0008, "First implementation implication").
 
 ## The four action categories
 
@@ -24,7 +24,7 @@ Every action falls into exactly one category.
 |---|---|---|
 | Perplexity-direct | **P-Direct** | Perplexity invokes the connector directly. Cheap, reversible, or cognitive. Connector drift is tolerable. |
 | Perplexity-propose, human-approve | **P-Propose** | Perplexity drafts; human confirms in-thread before execution. Used for asymmetric or semi-durable actions. |
-| Agent Control Layer routed | **ACL-Routed** | Action executes through an owned ACL skill/adapter. Used when first-class API semantics, native Linear relations, dispatch determinism, or recorded runs are required. Perplexity may trigger, but the adapter is authoritative. |
+| Integration Control Plane routed | **ICP-Routed** | Action executes through an owned ICP skill/adapter. Used when first-class API semantics, native Linear relations, dispatch determinism, or recorded runs are required. Perplexity may trigger, but the adapter is authoritative. (ADR-0008 originally named this category `ACL-Routed`; the policy semantics are identical — only the label is renamed per ADR-0012.) |
 | Forbidden / stop-and-ask | **Stop** | Always halts. High-risk, destructive, security-sensitive, or runaway-cost. No autonomy level overrides. |
 
 ## Autonomy levels (pilot)
@@ -34,11 +34,11 @@ Every action falls into exactly one category.
 | **L0** | Observe / draft only | Read and draft. No external writes. |
 | **L1** | Reversible workspace / docs draft | Workspace drafts, draft PR changes, draft tickets/ADRs. No Linear writes. |
 | **L2** | Bounded Linear / GitHub write-backs | Create/update Linear issues, add comments, open PRs that follow the PR ↔ Linear linking convention. No project creation. No native-relation writes. |
-| **L3** | Agent dispatch with human approval | ACL selects a dispatchable `LAT-*` issue per ADR-0005; a coding/QA/review agent starts only after explicit human go. |
+| **L3** | Agent dispatch with human approval | ICP selects a dispatchable `LAT-*` issue per ADR-0005; a coding/QA/review agent starts only after explicit human go. |
 | **L4** | Autonomous implementation with review gates | A dispatched agent executes end-to-end, opens a PR, requests review. Merge still requires human approval. |
 | **L5** | Autonomous merge / deploy | **Out of scope for the pilot.** Explicitly not accepted. A separate ADR is required to enable. |
 
-**Pilot defaults:** Perplexity runs at L2. ACL-dispatched agents run at L3-with-approval. Raising a level requires explicit approval; L4+ requires an ADR.
+**Pilot defaults:** Perplexity runs at L2. ICP-dispatched agents run at L3-with-approval. Raising a level requires explicit approval; L4+ requires an ADR.
 
 ## Failure posture by severity
 
@@ -55,7 +55,7 @@ A Low/reversible classification never promotes an action out of its category: a 
 
 ## Rule matrix
 
-Each row lists the category, the minimum autonomy level at which the action is permitted, and notes. When a row says `ACL-Routed`, Perplexity may trigger the skill but the ACL adapter is the authoritative execution path.
+Each row lists the category, the minimum autonomy level at which the action is permitted, and notes. When a row says `ICP-Routed`, Perplexity may trigger the skill but the ICP adapter is the authoritative execution path.
 
 ### Linear
 
@@ -66,12 +66,12 @@ Each row lists the category, the minimum autonomy level at which the action is p
 | Add Linear comment / agent write-back | P-Direct | L2 | Must follow the Linear write-back contract (ADR-0003): outcome, evidence, risk flags, PR link, next action. |
 | Create Linear **project** | P-Propose | L2 → human | Draft only; explicit Ben approval required before creation. See ADR-0003. |
 | Read `## Sequencing` block for humans / triage | P-Direct | L1 | Reading for context. |
-| Read `## Sequencing` block for dispatch decision | ACL-Routed | L3 | Dispatch determinism per ADR-0005. |
-| Create native Linear issue relation (`blocks` / `blocked by` / `related` / `duplicate`) | ACL-Routed | L2 | ACL adapter writes via Linear GraphQL `issueRelationCreate`. Perplexity connector is not authoritative here. |
-| Read native Linear issue relations for dispatch | ACL-Routed | L3 | ACL adapter reads via inline `issue.relations`; `blocked` is inferred inverse of `blocks`. |
-| Delete native Linear issue relation | ACL-Routed | L2 | ACL adapter via `issueRelationDelete`. |
+| Read `## Sequencing` block for dispatch decision | ICP-Routed | L3 | Dispatch determinism per ADR-0005. |
+| Create native Linear issue relation (`blocks` / `blocked by` / `related` / `duplicate`) | ICP-Routed | L2 | ICP adapter writes via Linear GraphQL `issueRelationCreate`. Perplexity connector is not authoritative here. |
+| Read native Linear issue relations for dispatch | ICP-Routed | L3 | ICP adapter reads via inline `issue.relations`; `blocked` is inferred inverse of `blocks`. |
+| Delete native Linear issue relation | ICP-Routed | L2 | ICP adapter via `issueRelationDelete`. |
 | Add / remove labels (state classification only) | P-Direct | L2 | Labels are filters, not dependencies. Must not encode blockers. |
-| Select next dispatchable `LAT-*` issue | ACL-Routed | L3 | Must execute the ADR-0005 dispatch algorithm; records decision. |
+| Select next dispatchable `LAT-*` issue | ICP-Routed | L3 | Must execute the ADR-0005 dispatch algorithm; records decision. |
 | Reassign or change owner | P-Propose | L2 → human | Touches accountability; confirm first. |
 | Delete a Linear issue | Stop | — | Always human. |
 
@@ -81,9 +81,9 @@ Each row lists the category, the minimum autonomy level at which the action is p
 |---|---|---|---|
 | Clone a repo, read code | P-Direct | L0 | Read-only. |
 | Draft a PR body or diff (no push) | P-Direct | L1 | Workspace draft. |
-| Open a PR | ACL-Routed | L2 | PR title must prefix the Linear issue key; body must reference the issue. See `operating-model.md`. |
+| Open a PR | ICP-Routed | L2 | PR title must prefix the Linear issue key; body must reference the issue. See `operating-model.md`. |
 | Add PR comments | P-Direct | L2 | |
-| Request review | ACL-Routed | L2 | Through the ACL when the agent that opened the PR is dispatched. |
+| Request review | ICP-Routed | L2 | Through the ICP when the agent that opened the PR is dispatched. |
 | Approve a PR | Stop | — | Agents are never authorized to approve PRs. |
 | Merge a PR | Stop | — | Human only during the pilot. |
 | Force-push / rewrite shared history | Stop | — | Always human and always explicitly asked for. |
@@ -94,11 +94,11 @@ Each row lists the category, the minimum autonomy level at which the action is p
 
 | Action | Category | Min level | Notes |
 |---|---|---|---|
-| Start coding agent | ACL-Routed | L3 | **Early pilot: explicit Ben approval per dispatch.** L3 approval is per-action, not batched (ADR-0008 Open Question #2 — leaning per-action during pilot). Dispatcher must verify: `agent-ready`, `## Sequencing` clear, numeric `Budget cap` set (`cost-controls.md`), no prior runaway-cost halt without unblock comment. |
-| Start QA / review agent | ACL-Routed | L3 | Same as coding agent: per-dispatch human approval during pilot. |
+| Start coding agent | ICP-Routed | L3 | **Early pilot: explicit Ben approval per dispatch.** L3 approval is per-action, not batched (ADR-0008 Open Question #2 — leaning per-action during pilot). Dispatcher must verify: `agent-ready`, `## Sequencing` clear, numeric `Budget cap` set (`cost-controls.md`), no prior runaway-cost halt without unblock comment. |
+| Start QA / review agent | ICP-Routed | L3 | Same as coding agent: per-dispatch human approval during pilot. |
 | Run a self-contained evaluation or spike inside the agent's own workspace | P-Direct | L1 | No external writes. |
-| Record an agent run report | ACL-Routed | L2 | Write-back contract enforcement (ADR-0003). `cost.band` is required on every run report per ADR-0009 / `cost-controls.md` — never omit. |
-| Write high-fidelity telemetry / traces | ACL-Routed | L2 | Into the future telemetry substrate; until it exists, a committed Markdown run report (see `docs/templates/agent-run-report.md`). |
+| Record an agent run report | ICP-Routed | L2 | Write-back contract enforcement (ADR-0003). `cost.band` is required on every run report per ADR-0009 / `cost-controls.md` — never omit. |
+| Write high-fidelity telemetry / traces | ICP-Routed | L2 | Into the future telemetry substrate; until it exists, a committed Markdown run report (see `docs/templates/agent-run-report.md`). |
 | Resume / re-dispatch a ticket whose last run halted for runaway-cost | Stop | — | Dispatcher MUST refuse unless a subsequent unblock comment from Ben has landed on the Linear issue (cap raise, re-scope, or cancel). See `cost-controls.md` → *Unblocking a halted ticket*. |
 
 ### Docs, ADRs, templates, and rules
@@ -106,7 +106,7 @@ Each row lists the category, the minimum autonomy level at which the action is p
 | Action | Category | Min level | Notes |
 |---|---|---|---|
 | Draft an ADR, PRD, process doc, or template change | P-Direct | L1 | Drafts only. |
-| Open a PR updating docs / ADRs / templates | P-Propose → ACL-Routed | L2 | Propose the draft; open the PR through the usual convention. Merge is Stop. |
+| Open a PR updating docs / ADRs / templates | P-Propose → ICP-Routed | L2 | Propose the draft; open the PR through the usual convention. Merge is Stop. |
 | Merge a docs / ADR / template PR | Stop | — | Human only. |
 | Change approval gates or autonomy rules (edit this doc or ADR-0008) | Stop | — | Requires an ADR. Agents may draft; humans decide. |
 | Raise an autonomy level beyond the pilot default | Stop | — | Requires explicit approval. L4+ requires an ADR. |
@@ -134,9 +134,9 @@ Concrete cost-band definitions, runaway-cost triggers, the interrupt protocol, a
 | Provision new infrastructure / services | Stop | — | Human only. |
 | Change secrets, tokens, connector permissions | Stop | — | Human only. |
 
-## Dispatch and the ACL
+## Dispatch and the ICP
 
-The ACL's canonical responsibilities during the pilot:
+The ICP's canonical responsibilities during the pilot:
 
 - Execute the ADR-0005 dispatch algorithm: read the candidate's `## Sequencing` block, re-verify hard blockers in Linear via the GraphQL adapter's native-relation read (`blocks` / inferred `blocked`), stop on unresolved hard blockers, flag unresolved soft predecessors, ignore parent/child and comment-based claims.
 - Write the Linear write-back per ADR-0003's five-element contract.
@@ -144,16 +144,16 @@ The ACL's canonical responsibilities during the pilot:
 - Record the run report (`docs/templates/agent-run-report.md`) until the telemetry substrate ADR lands.
 - Apply the cost-band check before starting any agent that has non-trivial spend risk.
 
-**First ACL capability to build:** a direct Linear GraphQL adapter that implements native issue-relation CRUD (`issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`) and next-dispatchable issue selection. This is the adapter that moves dispatch determinism from the `## Sequencing` block to first-class Linear semantics. See ADR-0008 ("First implementation implication").
+**First ICP capability to build:** a direct Linear GraphQL adapter that implements native issue-relation CRUD (`issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`) and next-dispatchable issue selection. This is the adapter that moves dispatch determinism from the `## Sequencing` block to first-class Linear semantics. See ADR-0008 ("First implementation implication") and ADR-0012 (software architecture).
 
-The ACL is, for now, deterministic skills and adapters committed to this repo — not a standalone service. It graduates to a service only when a real need forces it.
+The ICP is, for now, deterministic skills and adapters committed to this repo — not a standalone service. It graduates to a service only when a real need forces it.
 
 ## How to classify a new action
 
 When Perplexity or a human agent encounters an action not listed above:
 
 1. Is it destructive, security-sensitive, runaway-cost, merges, deploys, or external communication? → **Stop** by default. Require an explicit rule change to enable.
-2. Does it need first-class Linear API semantics, native relations, dispatch determinism, or a recorded run? → **ACL-Routed.**
+2. Does it need first-class Linear API semantics, native relations, dispatch determinism, or a recorded run? → **ICP-Routed.**
 3. Is it asymmetric (project creation, owner changes, anything Ben would want to see before it happens)? → **P-Propose.**
 4. Otherwise, cheap and reversible? → **P-Direct.**
 
@@ -169,7 +169,7 @@ Dispatch note: LAT-15 (ADR-0005) merged; the dispatch algorithm this doc referen
 
 ## Related
 
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`, `0011-integration-control-plane-language-and-runtime.md`, `0012-integration-control-plane-software-architecture.md`.
 - Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`, `docs/process/cost-controls.md`.
 - Templates: `docs/templates/agent-ready-ticket.md`, `docs/templates/agent-run-report.md`.
 - Linear: `LAT-16` (this boundary), `LAT-6` (approval and cost-control gates).

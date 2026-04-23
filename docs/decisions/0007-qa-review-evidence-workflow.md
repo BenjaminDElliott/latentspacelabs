@@ -183,7 +183,7 @@ Bad / open:
 1. How to surface verification reports in Linear beyond links — should `qa_result` / `review_result` be promoted to first-class Linear fields (custom fields) once the connector supports it?
 2. When (if ever) to allow auto-merge on `approve` from both agents for the lowest-risk changes. Out of scope for the pilot; would require the telemetry substrate ADR and a rollback story, plus explicit ADR supersession here.
 3. Whether visibility classes from LAT-5 (when that ADR lands) should gate which reports are visible to which agents — e.g. security findings hidden from general dispatch.
-4. Whether approval gates in LAT-6 / LAT-16 (agent control layer boundary) will consume this severity ladder directly or define their own; expected direction is direct consumption.
+4. Whether approval gates in LAT-6 / LAT-16 (Integration Control Plane boundary; originally named "Agent Control Layer") will consume this severity ladder directly or define their own; expected direction is direct consumption.
 5. Cadence for reviewing false-negative rates (verification agent approved, humans later found defects) — likely a retro input rather than a continuous metric until the telemetry substrate lands.
 
 ## Confirmation

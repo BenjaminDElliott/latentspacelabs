@@ -9,7 +9,7 @@ related_linear:
   - LAT-15
 supersedes:
 superseded_by:
-revisit_trigger: Revisit (and plan deprecation of the `## Sequencing` block as the authoritative dispatch source) when the Agent Control Layer or a custom Linear API path can read/write native Linear issue relations, when another canonical dependency graph becomes available to agents, or when the block fails in practice during agent dispatch.
+revisit_trigger: Revisit (and plan deprecation of the `## Sequencing` block as the authoritative dispatch source) when the Integration Control Plane (ICP; originally called "Agent Control Layer" in ADR-0008, renamed by ADR-0012) or a custom Linear API path can read/write native Linear issue relations, when another canonical dependency graph becomes available to agents, or when the block fails in practice during agent dispatch.
 ---
 
 # ADR-0005: Linear dependency and sequencing model
@@ -114,7 +114,7 @@ The `## Sequencing` block is a **pilot bridge**, not the long-term architecture.
 
 This ADR must be revisited and the block deprecated as the authoritative dispatch source once **either** of the following is true:
 
-- The Agent Control Layer (or a custom Linear API path) can read and write native Linear issue relations — `blocks` / `blocked by` — reliably enough for dispatch decisions, **or**
+- The Integration Control Plane (ICP; originally "Agent Control Layer" per ADR-0008, renamed by ADR-0012) or a custom Linear API path can read and write native Linear issue relations — `blocks` / `blocked by` — reliably enough for dispatch decisions, **or**
 - Another canonical dependency graph (e.g. a dedicated control-plane store) becomes available to agents with equivalent or better guarantees than the `## Sequencing` block.
 
 At that point:

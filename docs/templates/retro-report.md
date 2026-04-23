@@ -29,7 +29,7 @@ If `Retro cost band` is `elevated` or `runaway_risk`, **stop and hand to Ben** p
 | Intake triage outputs (`intake-triage.md`) | ✅ / ❌ | rejected items, low-confidence classifications |
 | Dispatch decisions (ADR-0005) | ✅ / ❌ | any `## Sequencing` block failures/overrides |
 | Docs-vs-skills drift (ADR-0004) | ✅ / ❌ | any adapter/doc mismatches flagged |
-| ACL routing decisions (ADR-0008) | ✅ / ❌ | rule-matrix edge cases encountered |
+| ICP routing decisions (ADR-0008 / ADR-0012; originally called "ACL routing") | ✅ / ❌ | rule-matrix edge cases encountered |
 
 ## The six retrospective questions
 

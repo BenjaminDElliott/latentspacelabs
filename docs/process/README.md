@@ -20,7 +20,7 @@ Docs are canonical; skills and commands are downstream operational adapters. A s
 - `intake-triage.md` — How raw input becomes structured work, with a ruthless chief-of-staff posture.
 - `mobile-intake-ux.md` — Chat/mobile interaction contract: terse response pattern, clarifying-question rules, personal-vs-project gate.
 - `qa-review-evidence.md` — Verification workflow for code-producing runs.
-- `approval-gates-and-autonomy-rules.md` — Rule matrix for Perplexity-direct / propose / ACL-routed / stop classifications.
+- `approval-gates-and-autonomy-rules.md` — Rule matrix for Perplexity-direct / propose / ICP-routed / stop classifications. (ADR-0008 originally named the routed category `ACL-Routed`; ADR-0012 renamed it to `ICP-Routed`.)
 - `retrospective-learning-loop.md` — Bounded retro step: how evidence from run reports, QA/review, intake, and dispatch becomes prompt/template/backlog/ADR changes.
 
 ## What does not live here
