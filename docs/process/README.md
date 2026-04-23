@@ -18,6 +18,7 @@ Until ADR-0004 decides otherwise, docs are canonical and skills/commands are tre
 
 - `operating-model.md` — Roles of Perplexity, Linear, GitHub, and humans; approval boundaries.
 - `intake-triage.md` — How raw input becomes structured work, with a ruthless chief-of-staff posture.
+- `mobile-intake-ux.md` — Chat/mobile interaction contract: terse response pattern, clarifying-question rules, personal-vs-project gate.
 
 ## What does not live here
 
