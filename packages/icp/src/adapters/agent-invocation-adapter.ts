@@ -58,6 +58,7 @@ export interface StubAgentResponse {
   commit_sha?: string | null;
   cost_band?: AgentInvocationResult["cost_band"];
   spent_usd?: number | null;
+  cost_band_unavailable_reason?: string | null;
   notes?: ReadonlyArray<string>;
 }
 
@@ -75,6 +76,7 @@ export function createStubAgentAdapter(
     async invoke(req: AgentInvocationRequest): Promise<AgentInvocationResult> {
       opts.invocationSink?.(req);
       const canned = opts.responses?.[req.linear_issue_id];
+      const band = canned?.cost_band ?? "normal";
       return {
         exit_signal: canned?.exit_signal ?? "succeeded",
         pr_url:
@@ -82,8 +84,12 @@ export function createStubAgentAdapter(
           `https://github.com/stub/repo/pull/${req.linear_issue_id.toLowerCase()}`,
         pr_branch: canned?.pr_branch ?? `${req.linear_issue_id.toLowerCase()}-stub`,
         commit_sha: canned?.commit_sha ?? "0000000",
-        cost_band: canned?.cost_band ?? "normal",
+        cost_band: band,
         spent_usd: canned?.spent_usd ?? null,
+        cost_band_unavailable_reason:
+          band === "unknown"
+            ? canned?.cost_band_unavailable_reason ?? "stub adapter: no cost data recorded for this canned response"
+            : canned?.cost_band_unavailable_reason ?? null,
         notes: canned?.notes ?? [`stub agent invocation for ${req.linear_issue_id}`],
       };
     },
@@ -135,6 +141,12 @@ export interface CodingAgentRun {
   commit_sha?: string | null;
   cost_band?: AgentInvocationResult["cost_band"];
   spent_usd?: number | null;
+  /**
+   * Secret-safe reason the provider could not produce a concrete cost band.
+   * Expected only when `cost_band === "unknown"`. LAT-66: the runner refuses
+   * `succeeded` without this reason so provider honesty stays structured.
+   */
+  cost_band_unavailable_reason?: string | null;
   notes?: ReadonlyArray<string>;
 }
 
@@ -312,13 +324,25 @@ export function createCodingAgentAdapter(
       });
 
       const notes = (result.notes ?? []).map(scrub);
+      const band: AgentInvocationResult["cost_band"] = result.cost_band ?? "unknown";
+      const providerReason =
+        typeof result.cost_band_unavailable_reason === "string"
+          ? scrub(result.cost_band_unavailable_reason)
+          : null;
+      const unavailableReason =
+        band === "unknown"
+          ? providerReason && providerReason.trim().length > 0
+            ? providerReason
+            : `coding provider ${provider.id} returned no cost-band evidence`
+          : null;
       return {
         exit_signal: result.exit_signal,
         pr_url: result.pr_url ?? null,
         pr_branch: result.pr_branch ?? null,
         commit_sha: result.commit_sha ?? null,
-        cost_band: result.cost_band ?? "unknown",
+        cost_band: band,
         spent_usd: result.spent_usd ?? null,
+        cost_band_unavailable_reason: unavailableReason,
         notes:
           notes.length > 0
             ? notes
@@ -412,6 +436,7 @@ function refusalToResult(
     commit_sha: null,
     cost_band: "unknown",
     spent_usd: null,
+    cost_band_unavailable_reason: `coding-agent adapter refused before invocation (reason=${refusal.reason}); no spend recorded`,
     notes: [
       `coding-agent adapter refused (provider=${providerId}, reason=${refusal.reason})`,
       scrub(refusal.message),
@@ -689,6 +714,8 @@ export function parseProviderEnvelope(
           spent_usd: asNumberOrNull(parsed["spent_usd"]),
         };
         if (isCostBand(parsed["cost_band"])) run.cost_band = parsed["cost_band"];
+        const reason = asStringOrNull(parsed["cost_band_unavailable_reason"]);
+        if (reason !== null) run.cost_band_unavailable_reason = reason;
         const notes = asStringArray(parsed["notes"]);
         if (notes) run.notes = notes;
         return run;

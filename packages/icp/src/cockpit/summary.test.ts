@@ -21,7 +21,7 @@ function run(partial: Partial<CockpitRunRecord> & { run_id: string }): CockpitRu
     decisions: [],
     next_actions: ["none"],
     errors: [],
-    cost: { band: "normal", budget_cap_usd: null, spent_usd: null },
+    cost: { band: "normal", budget_cap_usd: null, spent_usd: null, band_unavailable_reason: null },
     correlation: { pr_url: null, pr_branch: null, commit_sha: null, linear_comment_url: null },
     ...partial,
   };
@@ -52,7 +52,7 @@ test("summary: surfaces sync-page events before the view sections (PRD §6.5.6)"
       run({
         run_id: "halt",
         status: "failed",
-        cost: { band: "runaway_risk", budget_cap_usd: 5, spent_usd: 20 },
+        cost: { band: "runaway_risk", budget_cap_usd: 5, spent_usd: 20, band_unavailable_reason: null },
         errors: ["budget exceeded"],
       }),
     ],

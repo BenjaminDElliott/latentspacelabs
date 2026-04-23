@@ -14,6 +14,7 @@ function successResult(
     commit_sha: "abc1234",
     cost_band: "normal",
     spent_usd: 1.25,
+    cost_band_unavailable_reason: null,
     notes: ["coding provider command:agent ran for LAT-999"],
     ...overrides,
   };

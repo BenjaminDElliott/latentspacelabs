@@ -227,6 +227,86 @@ test("dispatch-ticket: run report includes LAT-36 schema_version", async () => {
   // call and contains schema_version by type.
 });
 
+test("LAT-66: dispatch-ticket surfaces cost_band on a successful dispatch", async () => {
+  // The runner's cost-band evidence gate (evidence.cost_band=true) requires
+  // dispatch-ticket to surface a concrete band on success. Without this,
+  // the runner would refuse or mark the run needs_human.
+  const issue = readyIssue();
+  const h = await buildHarness({ [issue.id]: issue });
+  const res = await h.runner.run({
+    skill: "dispatch-ticket",
+    inputs: { linear_issue_id: issue.id, approve: true, dry_run: false },
+    approve: true,
+    dry_run: false,
+  });
+  assert.equal(res.status, "succeeded");
+  const outputs = res.outputs as DispatchTicketOutputs;
+  assert.equal(outputs.cost_band, "normal");
+  assert.equal(outputs.budget_cap_usd, 5);
+  assert.equal(outputs.cost_band_unavailable_reason, null);
+});
+
+test("LAT-66: dispatch-ticket surfaces unknown + typed reason when provider withholds cost data", async () => {
+  // Command-provider path: when cost data is unavailable, the adapter maps
+  // to cost_band=unknown plus a non-empty cost_band_unavailable_reason.
+  // The runner gate accepts this explicit unavailable state without
+  // inventing spend values.
+  const issue = readyIssue();
+  const comments: Array<{ issueId: string; body: string; url: string }> = [];
+  const resolved: ResolvedTools = {
+    linear: createStubLinearAdapter({
+      issues: { [issue.id]: issue },
+      commentSink: (c) => comments.push(c),
+    }),
+    policy: createPolicyEvaluator(),
+    agents: createStubAgentAdapter({
+      responses: {
+        [issue.id]: {
+          cost_band: "unknown",
+          cost_band_unavailable_reason:
+            "command provider did not emit spend metrics",
+        },
+      },
+    }),
+    runRecorder: createRunRecorder(),
+    writeBack: createWriteBackFormatter(),
+  };
+  const reg = new SkillRegistry({
+    repoRoot: REPO_ROOT,
+    availableTools: [
+      "linear-adapter",
+      "policy-evaluator",
+      "agent-invocation-adapter",
+      "run-recorder",
+      "write-back-formatter",
+    ],
+  });
+  await reg.register(dispatchTicketSkill);
+  const runner = new SkillRunner({
+    registry: reg,
+    tools: resolved,
+    autonomyCap: "L2-propose",
+  });
+  const res = await runner.run({
+    skill: "dispatch-ticket",
+    inputs: { linear_issue_id: issue.id, approve: true, dry_run: false },
+    approve: true,
+    dry_run: false,
+  });
+  // Side-effecting success stays succeeded because the unknown state is
+  // paired with an explicit, secret-safe reason. Neither spend nor band
+  // was fabricated.
+  assert.equal(res.status, "succeeded");
+  const outputs = res.outputs as DispatchTicketOutputs;
+  assert.equal(outputs.cost_band, "unknown");
+  assert.ok(
+    outputs.cost_band_unavailable_reason &&
+      outputs.cost_band_unavailable_reason.length > 0,
+    "expected a non-empty cost_band_unavailable_reason",
+  );
+  assert.equal(outputs.spent_usd, null);
+});
+
 test("dispatch-ticket: Linear write-back renders six lines (LAT-36 contract)", async () => {
   // ADR-0003 fixes the contract at five elements; the render emits six lines
   // because element 5 splits into Next action + Open questions. LAT-36

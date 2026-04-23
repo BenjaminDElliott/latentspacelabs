@@ -18,6 +18,7 @@
  */
 import type {
   AutonomyLevel,
+  CostBand,
   SkillDefinition,
   SkillStatus,
 } from "../runtime/contract.js";
@@ -57,6 +58,18 @@ export type DispatchTicketOutputs = {
   reasons: ReadonlyArray<string>;
   run_report_path: string | null;
   run_report_markdown: string | null;
+  /**
+   * LAT-66 / ADR-0009: cost band surfaced to the runner so the evidence
+   * gate can refuse a successful run that lacks cost-band evidence.
+   */
+  cost_band: CostBand;
+  /**
+   * Secret-safe reason the cost band is `unknown`; `null` when the band
+   * is determinable. Required by the LAT-66 runner gate.
+   */
+  cost_band_unavailable_reason: string | null;
+  spent_usd: number | null;
+  budget_cap_usd: number | null;
 } & Record<string, unknown>;
 
 const AUTONOMY: AutonomyLevel = "L3-with-approval";
@@ -86,7 +99,7 @@ export const dispatchTicketSkill: SkillDefinition<
   ],
   autonomy_level: AUTONOMY,
   requires_approval_flag: true,
-  evidence: { run_report: true, linear_write_back: true },
+  evidence: { run_report: true, linear_write_back: true, cost_band: true },
   derived_from: [
     "docs/decisions/0005-linear-dependency-and-sequencing-model.md",
     "docs/decisions/0006-agent-run-visibility-schema.md",
@@ -134,6 +147,10 @@ export const dispatchTicketSkill: SkillDefinition<
         reasons: policy.reasons,
         run_report_path: recorded.path,
         run_report_markdown: recorded.markdown,
+        cost_band: recorded.report.cost.band,
+        cost_band_unavailable_reason: recorded.report.cost.band_unavailable_reason,
+        spent_usd: recorded.report.cost.spent_usd,
+        budget_cap_usd: recorded.report.cost.budget_cap_usd,
       };
     }
 
@@ -166,6 +183,10 @@ export const dispatchTicketSkill: SkillDefinition<
         reasons: policy.reasons,
         run_report_path: recorded.path,
         run_report_markdown: recorded.markdown,
+        cost_band: recorded.report.cost.band,
+        cost_band_unavailable_reason: recorded.report.cost.band_unavailable_reason,
+        spent_usd: recorded.report.cost.spent_usd,
+        budget_cap_usd: recorded.report.cost.budget_cap_usd,
       };
     }
 
@@ -244,6 +265,10 @@ export const dispatchTicketSkill: SkillDefinition<
       reasons: policy.reasons,
       run_report_path: recorded.path,
       run_report_markdown: recorded.markdown,
+      cost_band: recorded.report.cost.band,
+      cost_band_unavailable_reason: recorded.report.cost.band_unavailable_reason,
+      spent_usd: recorded.report.cost.spent_usd,
+      budget_cap_usd: recorded.report.cost.budget_cap_usd,
     };
   },
 };

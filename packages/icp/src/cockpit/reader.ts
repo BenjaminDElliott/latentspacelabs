@@ -210,6 +210,7 @@ function pickCost(v: unknown): RunReport["cost"] {
     band: "unknown",
     budget_cap_usd: null,
     spent_usd: null,
+    band_unavailable_reason: null,
   };
   if (typeof v !== "object" || v === null || Array.isArray(v)) return empty;
   const c = v as Record<string, unknown>;
@@ -221,10 +222,13 @@ function pickCost(v: unknown): RunReport["cost"] {
     band === "unknown"
       ? band
       : "unknown";
+  const reason = c["band_unavailable_reason"];
   return {
     band: bandSafe,
     budget_cap_usd: typeof c["budget_cap_usd"] === "number" ? c["budget_cap_usd"] : null,
     spent_usd: typeof c["spent_usd"] === "number" ? c["spent_usd"] : null,
+    band_unavailable_reason:
+      typeof reason === "string" && reason.length > 0 ? reason : null,
   };
 }
 

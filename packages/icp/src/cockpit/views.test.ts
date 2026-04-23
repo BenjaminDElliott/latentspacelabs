@@ -20,7 +20,7 @@ function run(partial: Partial<CockpitRunRecord> & { run_id: string }): CockpitRu
     decisions: [],
     next_actions: ["none"],
     errors: [],
-    cost: { band: "normal", budget_cap_usd: null, spent_usd: null },
+    cost: { band: "normal", budget_cap_usd: null, spent_usd: null, band_unavailable_reason: null },
     correlation: {
       pr_url: null,
       pr_branch: null,
@@ -139,12 +139,12 @@ test("cost_and_risk_flags: surfaces elevated/runaway_risk and high/critical; sor
       run({
         run_id: "c1",
         status: "succeeded",
-        cost: { band: "elevated", budget_cap_usd: 5, spent_usd: 4 },
+        cost: { band: "elevated", budget_cap_usd: 5, spent_usd: 4, band_unavailable_reason: null },
       }),
       run({
         run_id: "c2",
         status: "failed",
-        cost: { band: "runaway_risk", budget_cap_usd: 5, spent_usd: 12 },
+        cost: { band: "runaway_risk", budget_cap_usd: 5, spent_usd: 12, band_unavailable_reason: null },
         errors: ["budget exceeded"],
       }),
       run({ run_id: "c3", status: "succeeded", risk_level: "critical" }),
