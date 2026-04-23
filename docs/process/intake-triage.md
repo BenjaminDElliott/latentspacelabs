@@ -47,7 +47,8 @@ This metadata is what lets a later agent re-enter the PR with enough context to 
 
 ## Principles
 
-1. **Low-friction capture.** Any text, voice note, mobile dump, Linear comment, or GitHub comment is valid input. Formatting is not a prerequisite.
+
+1. **Low-friction capture.** Any text, voice note, mobile dump, Linear comment, or GitHub comment is valid input. Formatting is not a prerequisite. The interaction contract for chat-style and mobile intake — terse response pattern, when to ask clarifying questions, and the personal-vs-project confirmation gate — is defined in `mobile-intake-ux.md`.
 2. **Ruthless chief-of-staff posture.** Push back on vague scope, contradictions, and architecture smell. Refuse to ticket unclear work. See *Chief-of-staff posture* below.
 3. **Ask only blocking questions.** A clarification is warranted only when routing, risk, or persistence destination is genuinely ambiguous. Do not run a generic PM interview.
 4. **Personal vs project separation.** Personal notes route to Ben's private space, not the LAT work graph. Triage must distinguish, and must confirm before writing personal content into Linear.
@@ -155,9 +156,10 @@ When in doubt about reversibility, treat as non-reversible.
 ## Backlog refinement loop
 
 1. On a regular cadence (cadence TBD; see ADR-0003 open questions), Ben reviews Linear items labeled `intake` or `needs-refinement`.
-2. Items are promoted to `agent-ready` only after passing the quality gates in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md`).
-3. Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision).
-4. Retro learnings feed back into updates to this document, the triage prompt, and ticket templates.
+2. Items are promoted to `agent-ready` only after passing the pre-flight checks in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md` → *Pre-flight: refuse to mark agent-ready if any of these fail*), including a populated `## Sequencing` block per ADR-0005.
+3. A dispatcher (human or agent) that encounters a ticket labeled `agent-ready` but failing pre-flight must **refuse** to dispatch it, move it back to `needs-refinement`, and leave the refusal block on the Linear issue as a comment. Silently proceeding on a vague ticket is a policy violation, not a courtesy.
+4. Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision) or to a PRD (if the blocker is scope ambiguity).
+5. Retro learnings feed back into updates to this document, the triage prompt, and the PRD + ticket templates.
 
 ## What triage is not
 
@@ -169,6 +171,7 @@ When in doubt about reversibility, treat as non-reversible.
 ## Related
 
 - `operating-model.md`
+- `mobile-intake-ux.md` — low-friction chat/mobile interaction contract for the capture step.
 - `docs/templates/agent-ready-ticket.md`
-- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`.
+- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`.' `0005-linear-dependency-and-sequencing-model.md`
 - Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model).
