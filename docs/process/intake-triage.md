@@ -1,0 +1,83 @@
+# Intake and Triage
+
+Raw input arrives messy. The job of intake-triage is to turn it into structured work *or explicitly reject it* without burning Ben's time on low-value clarification loops.
+
+## Principles
+
+1. **Low-friction capture.** Any text, voice note, or mobile dump is valid input. Formatting is not a prerequisite.
+2. **Ruthless chief-of-staff posture.** Push back on vague scope, contradictions, and architecture smell. Refuse to ticket unclear work.
+3. **Ask only blocking questions.** A clarification is warranted only when routing, risk, or persistence destination is genuinely ambiguous. Do not run a generic PM interview.
+4. **Personal vs project separation.** Personal notes route to Ben's private space, not the LAT work graph. Triage must distinguish.
+5. **Small reversible steps.** Prefer the cheapest next validation step over a large up-front commitment.
+
+## Classification (PARA-inspired)
+
+Every input is first sorted into:
+
+- **Project** — outcome-oriented work; candidate for a Linear Project, PRD, epic, or parent issue.
+- **Area** — persistent responsibility (observability, QA, cost, security, DX). Does not need a ticket yet.
+- **Resource** — reference material for future work.
+- **Archive** — duplicate, stale, rejected, superseded, or non-actionable.
+
+Secondary subtypes: PRD candidate, ticket candidate, ADR candidate, research task, risk, open question, retro learning.
+
+## Triage output shape
+
+Every triage run should produce:
+
+```md
+## Triage Result
+
+Classification:
+Confidence:
+Suggested destination:
+Actionability:
+Potential duplicates:
+Related active work:
+Risks:
+Open questions:
+Recommended next action:
+```
+
+## Clarifying-question policy
+
+Ask a clarifying question only if **at least one** of these is true:
+
+- Routing is ambiguous (project vs area vs personal).
+- Risk level cannot be assessed.
+- The input conflicts with an existing active item and the conflict must be resolved before acting.
+- Persistence destination (Linear vs ADR vs PRD vs drop) is unclear.
+
+Otherwise, make a best-effort classification with stated confidence and proceed. Over-asking is a failure mode.
+
+## Severity and risk policy
+
+- **Low risk** — proceed and flag. Safe to create Linear issues marked for refinement.
+- **Medium risk** — proceed only if reversible. Flag prominently. Require human confirmation before Linear Project creation or agent dispatch.
+- **High risk** — stop and ask. Do not create durable artifacts.
+- **Runaway cost risk** — always stop and ask, regardless of product risk level.
+
+## Personal vs project separation
+
+- Personal reminders, health notes, non-work items → personal destination only. Never create `LAT-*` issues for these.
+- Mixed dumps → split, summarize both halves, route separately.
+- When in doubt about personal vs work, default to personal and ask.
+
+## Backlog refinement loop
+
+1. On a regular cadence (cadence TBD; see ADR-0003 open questions), Ben reviews Linear items labeled `intake` or `needs-refinement`.
+2. Items are promoted to `agent-ready` only after passing the quality gates in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md`).
+3. Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision).
+4. Retro learnings feed back into updates to this document, the triage prompt, and ticket templates.
+
+## What triage is not
+
+- Not a replacement for PRDs. A triage run may produce a PRD *candidate*, not a finished PRD.
+- Not an approval mechanism. Triage recommends; Ben approves per the operating model.
+- Not a place to design architecture. Architecturally significant decisions become ADRs.
+
+## Related
+
+- `operating-model.md`
+- `docs/templates/agent-ready-ticket.md`
+- Linear: `LAT-10` (intake scaffolding), `LAT-12` (persistence boundaries).
