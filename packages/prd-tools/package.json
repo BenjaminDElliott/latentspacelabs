@@ -1,0 +1,38 @@
+{
+  "name": "@latentspacelabs/prd-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repo PRD validator: filename/frontmatter consistency, required keys, duplicate prd_id and derived_from resolution. See docs/prds/README.md.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "prd-validate": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/*.test.ts",
+    "validate": "tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
