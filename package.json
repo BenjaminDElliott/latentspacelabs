@@ -17,6 +17,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "validate:adrs": "node packages/adr-tools/dist/cli.js docs/decisions",
     "validate:prds": "node packages/prd-tools/dist/cli.js docs/prds",
-    "check": "npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run test"
+    "policy-scan": "node packages/policy-scanner/dist/cli.js .",
+    "check": "npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run test"
   }
 }
