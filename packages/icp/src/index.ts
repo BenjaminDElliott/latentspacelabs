@@ -119,3 +119,30 @@ export type {
   RetroAggregationResult,
   RetroAggregationOptions,
 } from "./evaluation/index.js";
+
+/* ICP observability cockpit (LAT-55, PRD docs/prds/LAT-28). Read-through
+ * projection of the ADR-0006 envelope onto the seven MVP views. */
+export { readRunsDir, parseRunJson } from "./cockpit/reader.js";
+export { buildCockpitState } from "./cockpit/views.js";
+export {
+  renderCockpitSummary,
+  type SummaryOptions,
+} from "./cockpit/summary.js";
+export type {
+  ActiveRunRow,
+  BlockedWorkRow,
+  CockpitInputs,
+  CockpitRunRecord,
+  CockpitState,
+  CostRiskRow,
+  FailedRunsGroup,
+  GitHubPRState,
+  LearningCandidate,
+  LinearIssueState,
+  NotificationEvent,
+  NotificationTier,
+  PRReviewQueueRow,
+  QAReviewReport,
+  RecentCompletionRow,
+  ViewName,
+} from "./cockpit/types.js";
