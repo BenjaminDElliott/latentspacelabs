@@ -2,13 +2,40 @@
 
 Raw input arrives messy. The job of intake-triage is to turn it into structured work *or explicitly reject it* without burning Ben's time on low-value clarification loops.
 
+## Intake sources
+
+All of the following are first-class intake sources and route into the same triage pipeline:
+
+- **Perplexity threads and workspace scratch** — free-form brain dumps, drafts, research.
+- **Voice notes and mobile text** — low-friction capture.
+- **Linear comments and issue descriptions** — especially items arriving with an `intake` or `needs-refinement` label.
+- **GitHub issue comments** — on this repo or any repo in the `LAT` surface.
+- **GitHub pull-request comments** — both top-level PR conversation and inline review comments on specific lines/files. These carry extra context (the diff, the file path, the PR branch, the linked Linear issue) that triage must preserve rather than flatten.
+- **GitHub issues** — newly opened issues, including from future external reporters.
+
+Code-review feedback (inline PR comments) is high-signal intake: it often implies an ADR candidate, a follow-up ticket, or a doc/skill update. Triage must not silently drop it. If a review comment implies durable change and nobody is already on the hook to address it in-PR, it becomes a triage item like any other brain dump.
+
+## Required context for GitHub-sourced intake
+
+When the source is GitHub, the triage result must carry, at minimum:
+
+- Repo and PR/issue number.
+- PR branch name and base branch (for PR-sourced intake).
+- Linked Linear issue, if any, inferred from PR title, body, or branch name.
+- File path and line range (for inline review comments).
+- Commenter and whether they are the PR author.
+- Comment URL, so the durable Linear item or ADR can link back.
+
+This metadata is what lets a later agent re-enter the PR with enough context to act — without it, the intake is lossy.
+
 ## Principles
 
-1. **Low-friction capture.** Any text, voice note, or mobile dump is valid input. Formatting is not a prerequisite.
+1. **Low-friction capture.** Any text, voice note, mobile dump, Linear comment, or GitHub comment is valid input. Formatting is not a prerequisite.
 2. **Ruthless chief-of-staff posture.** Push back on vague scope, contradictions, and architecture smell. Refuse to ticket unclear work.
 3. **Ask only blocking questions.** A clarification is warranted only when routing, risk, or persistence destination is genuinely ambiguous. Do not run a generic PM interview.
 4. **Personal vs project separation.** Personal notes route to Ben's private space, not the LAT work graph. Triage must distinguish.
 5. **Small reversible steps.** Prefer the cheapest next validation step over a large up-front commitment.
+6. **Preserve source metadata.** Never discard the URL, author, and context of an intake item. GitHub comments in particular must keep their PR/file/line pointers.
 
 ## Classification (PARA-inspired)
 

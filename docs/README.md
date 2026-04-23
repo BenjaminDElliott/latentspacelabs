@@ -4,9 +4,13 @@ This directory is the durable source of truth for process, decisions, and templa
 
 ## Layout
 
-- `process/` — How we work: operating model, intake/triage posture, approval gates.
+- `process/` — How we work: operating model, intake/triage posture, approval gates. Human-readable policy.
 - `decisions/` — Architecture Decision Records (ADRs). File naming: `NNNN-title-with-dashes.md`.
-- `templates/` — Reusable document templates (PRDs, agent-ready tickets, ADRs, agent run reports).
+- `templates/` — Artifact schemas (PRDs, agent-ready tickets, ADRs, agent run reports) consumed by humans and agents alike.
+
+## Docs vs agent skills and commands
+
+Process docs here are the canonical, human-readable source of truth. Agent-executable procedures (skill files, slash commands under a future `.claude/skills/` and `.claude/commands/`) are treated as operational adapters downstream of these docs. See [ADR-0004](decisions/0004-process-docs-vs-agent-skills.md) for the open decision on whether this split is the right one; until that ADR is accepted or superseded, docs win when they disagree with a skill.
 
 ## Canonical sources
 

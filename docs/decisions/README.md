@@ -38,13 +38,22 @@ Write an ADR when a decision materially affects **autonomy, persistence, observa
 
 Accepted ADRs are immutable in spirit: if the decision changes, write a new ADR and link `supersedes` / `superseded_by`.
 
-## Index
+## Source of truth
 
-| ID | Title | Status |
+Each ADR file is the sole source of truth for its own status, decision makers, and supersession links. The file's frontmatter is authoritative; anything outside the file (this index, Linear labels, PR descriptions) is a navigation aid only and may lag.
+
+If this index and an ADR file disagree, **trust the file**. Fix the index in the same PR that changed the file's status.
+
+## Index (navigation aid — not authoritative)
+
+The table below is for scanning. Status is copied from each ADR's frontmatter at write time and will drift if not updated alongside the ADR. We accept that risk for now; a future CI check should validate that the index matches each file's frontmatter and fail the build on drift (tracked as a follow-up; see ADR-0004 for the broader docs-vs-skills automation question).
+
+| ID | Title | Status (see file) |
 |---|---|---|
 | [0001](0001-use-perplexity-linear-and-github-as-control-plane.md) | Use Perplexity, Linear, and GitHub as the control plane | accepted |
 | [0002](0002-store-process-docs-and-adrs-in-the-monorepo.md) | Store process docs and ADRs in the monorepo | accepted |
 | [0003](0003-linear-persistence-boundary.md) | Linear persistence boundary | proposed |
+| [0004](0004-process-docs-vs-agent-skills.md) | Process docs vs agent skills and commands | proposed |
 
 ## Anti-astronautics guardrail
 
