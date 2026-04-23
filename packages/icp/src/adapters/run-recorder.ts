@@ -8,11 +8,13 @@
  * dispatch skill, tests, and the CLI can decide how to persist them.
  */
 import { randomUUID } from "node:crypto";
-import type {
-  RunRecorder,
-  RunRecorderInput,
-  RunRecorderOutput,
-  RunReport,
+import {
+  RUN_REPORT_SCHEMA_VERSION,
+  type RunRecorder,
+  type RunRecorderInput,
+  type RunRecorderOutput,
+  type RunReport,
+  type RunReportStatus,
 } from "../runtime/contract.js";
 
 export function createRunRecorder(): RunRecorder {
@@ -21,6 +23,7 @@ export function createRunRecorder(): RunRecorder {
       const runId = `run_${randomUUID()}`;
       const status = mapVerdictToStatus(input);
       const report: RunReport = {
+        schema_version: RUN_REPORT_SCHEMA_VERSION,
         run_id: runId,
         agent_type: "coding",
         status,
@@ -57,7 +60,7 @@ export function createRunRecorder(): RunRecorder {
   };
 }
 
-function mapVerdictToStatus(input: RunRecorderInput): RunReport["status"] {
+function mapVerdictToStatus(input: RunRecorderInput): RunReportStatus {
   if (input.dry_run) return "succeeded";
   if (input.verdict === "blocked" || input.verdict === "stop") return "needs_human";
   if (!input.agent_result) return "needs_human";

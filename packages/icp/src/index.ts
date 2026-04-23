@@ -12,11 +12,14 @@ export const ICP_PACKAGE_NAME = "@latentspacelabs/icp";
 export const ICP_PACKAGE_VERSION = "0.0.0";
 
 export type {
+  AgentType,
   AutonomyLevel,
   SkillDefinition,
   SkillStatus,
   PolicyVerdict,
+  RunReportStatus,
   ToolName,
+  TriggeredBy,
   RunReport,
   LinearAdapter,
   LinearIssueSnapshot,
@@ -33,6 +36,7 @@ export type {
   ResolvedTools,
   SkillExecutionContext,
 } from "./runtime/contract.js";
+export { RUN_REPORT_SCHEMA_VERSION, toRunStatus } from "./runtime/contract.js";
 
 export { SkillRegistry, SkillRegistryError } from "./runtime/registry.js";
 export type { RegistryOptions, RegisteredSkill } from "./runtime/registry.js";

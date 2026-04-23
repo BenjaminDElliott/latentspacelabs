@@ -8,13 +8,18 @@ One envelope for all agent types in the pilot: `coding`, `qa`, `review`, `sre`, 
 
 ## Envelope (JSON)
 
-Required core fields: `run_id`, `agent_type`, `status`, `started_at`, `ended_at`. All other fields are optional and forward-compatible. Adding a field is a non-breaking change; renaming or removing a field is ADR-worthy. Consumers must ignore fields they do not recognize.
+Required core fields: `run_id`, `agent_type`, `status`, `started_at`, `ended_at`, and `schema_version`. All other fields are optional and forward-compatible. Adding a field is a non-breaking change; renaming or removing a field is ADR-worthy. Consumers must ignore fields they do not recognize.
+
+`schema_version` is a SemVer string the run recorder stamps on every envelope. LAT-36 set it to `"1.0.0"` (first version that matches this template verbatim). Major-bump on any rename or removal; minor-bump on any new sub-object surface; patch-bump on a clarifying edit that does not change producer or consumer code. The canonical value lives in `packages/icp/src/runtime/contract.ts` as `RUN_REPORT_SCHEMA_VERSION`.
+
+`agent_type` enumerates exactly seven values (`coding | qa | review | sre | pm | research | observability`). **`retro` is not an agent type.** Retros are a process artefact (ADR-0010 / `docs/templates/retro-report.md`), not a runnable agent invocation; a retro run is recorded under `pm` or `research` depending on who authored it.
 
 ```json
 {
+  "schema_version": "1.0.0",
   "run_id": "run_...",
   "agent_type": "coding | qa | review | sre | pm | research | observability",
-  "triggered_by": "user | linear_status | schedule | webhook | agent | github_comment",
+  "triggered_by": "user | linear_status | schedule | webhook | agent | github_comment | hook | mcp",
   "linear_issue_id": "LAT-XXX",
   "project_id": "linear_project_uuid",
   "input_artifacts": [],
@@ -23,7 +28,7 @@ Required core fields: `run_id`, `agent_type`, `status`, `started_at`, `ended_at`
   "risk_level": "low | medium | high",
   "cost_band": "normal | elevated | runaway_risk",
   "approval_required": false,
-  "autonomy_level": "suggest | review_required | auto_with_gate | full_auto",
+  "autonomy_level": "L1-read-only | L2-propose | L3-with-approval | L4-autonomous",
   "summary": "",
   "decisions": [],
   "tests_run": [],
@@ -94,7 +99,7 @@ Treat `agent_metadata`, `cost`, and `correlation` as open objects. Add keys when
 - **Run ID:**
 - **Agent type:**
 - **Model / reasoning:** e.g. `claude-opus-4-7`, reasoning=`medium`
-- **Autonomy level:**
+- **Autonomy level:** one of `L1-read-only | L2-propose | L3-with-approval | L4-autonomous` (ADR-0008)
 - **Linear issue:** LAT-XX
 - **Status:**
 - **Started / ended:**
@@ -134,6 +139,8 @@ If the run is a spike that produced **no implementation PR**, state the spike's 
 ## Linear write-back (paste this into the issue comment)
 
 Bounded summary per the ADR-0003 write-back contract and the ADR-0006 envelope→comment mapping. Keep it scannable — see the comment size/shape guideline in ADR-0003. Everything else stays in this run report, the PR, or the future telemetry substrate.
+
+The ADR-0003 contract names **five elements** (outcome, evidence, risks, PR, next action + open questions); the render below emits **six lines** because the fifth element splits into an explicit `Next action` line and an explicit `Open questions` line so either can be `"none"` without ambiguity. The write-back formatter (`packages/icp/src/adapters/write-back-formatter.ts`) produces exactly these six lines; renderers and reviewers should treat any other shape as non-conforming.
 
 ```md
 **Outcome:** <one or two sentences on what happened>

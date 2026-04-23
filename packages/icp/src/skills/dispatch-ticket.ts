@@ -217,6 +217,13 @@ function nextActionFor(signal: string): string {
   }
 }
 
+/**
+ * Map the agent invocation adapter's exit_signal onto the SkillStatus the
+ * runner returns. `cancelled` → `stopped` is the deliberate rename: inside
+ * the skill runner, a cancelled invocation reads as "stopped by policy /
+ * human"; the ADR-0006 run report still records it as `status: cancelled`
+ * via `toRunStatus` in contract.ts.
+ */
 function runStatusFrom(signal: string): SkillStatus {
   switch (signal) {
     case "succeeded":
