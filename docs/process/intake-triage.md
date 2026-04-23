@@ -93,7 +93,7 @@ Otherwise, make a best-effort classification with stated confidence and proceed.
 ## Backlog refinement loop
 
 1. On a regular cadence (cadence TBD; see ADR-0003 open questions), Ben reviews Linear items labeled `intake` or `needs-refinement`.
-2. Items are promoted to `agent-ready` only after passing the quality gates in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md`).
+2. Items are promoted to `agent-ready` only after passing the quality gates in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md`), including a populated `## Sequencing` block per ADR-0005.
 3. Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision).
 4. Retro learnings feed back into updates to this document, the triage prompt, and ticket templates.
 
@@ -107,4 +107,5 @@ Otherwise, make a best-effort classification with stated confidence and proceed.
 
 - `operating-model.md`
 - `docs/templates/agent-ready-ticket.md`
-- Linear: `LAT-10` (intake scaffolding), `LAT-12` (persistence boundaries).
+- ADR-0005: `docs/decisions/0005-linear-dependency-and-sequencing-model.md` (dependency and sequencing model used by dispatch).
+- Linear: `LAT-10` (intake scaffolding), `LAT-12` (persistence boundaries), `LAT-15` (dependency and sequencing model).

@@ -23,6 +23,16 @@ What does the agent need to know before starting? Link to the PRD, ADR, prior ti
 - Linear issues:
 - External references:
 
+## Sequencing
+
+> Authoritative dependency declaration for agent dispatch (see ADR-0005). Lines are comma-separated `LAT-*` keys or `none`. Keep in sync with Linear's native `blocks` / `blocked by` relation when the UI shows it. Sub-issue (parent/child) relationships and labels are **not** read as dependencies — parent/child is decomposition, labels classify kind or coarse state. If a real dependency exists on a parent, sibling, or label-peer, list it explicitly below.
+
+Hard blockers: none
+Recommended predecessors: none
+Related context: none
+Dispatch status: ready
+Dispatch note:
+
 ## Scope
 
 ### In scope
@@ -51,7 +61,7 @@ What does the agent need to know before starting? Link to the PRD, ADR, prior ti
 
 - [ ] Scope is bounded and specific.
 - [ ] Acceptance criteria are testable.
-- [ ] Dependencies are identified.
+- [ ] Dependencies are identified and declared in the `## Sequencing` block per ADR-0005.
 - [ ] Risk level is classified.
 - [ ] Budget cap is set.
 - [ ] Testability is confirmed.
