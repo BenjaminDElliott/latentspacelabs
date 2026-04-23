@@ -1,11 +1,29 @@
+---
+prd_id: LAT-NN-short-slug
+title: Short product or feature name
+status: draft
+owner: Ben Elliott
+date: YYYY-MM-DD
+related_linear:
+  - LAT-NN
+related_adrs:
+  - ADR-NNNN
+derived_from:
+  - root-agentic-development-flywheel
+supersedes:
+superseded_by:
+---
+
 # PRD: {{Short product or feature name}}
 
-> Copy this file into a working location (e.g., `docs/prds/NNNN-name.md` when that directory exists, or a Perplexity/workspace draft first). Keep the PRD concise — link out to ADRs, research, and Linear issues rather than inlining. A PRD that is longer than what a reviewer will actually read is a failed PRD.
-
-- **Owner:** Ben Elliott
-- **Status:** draft | in-review | approved | archived
-- **Related Linear:** LAT-XX, LAT-YY
-- **Related ADRs:** ADR-XXXX
+> File name: see [`docs/prds/README.md`](../prds/README.md). Root PRDs use `root-<slug>.md`; feature PRDs use `LAT-NN-<slug>.md`. Do **not** use monotonic `NNNN-` numbering — it collides under parallel agents.
+>
+> Keep the PRD concise — link out to ADRs, research, and Linear issues rather than inlining. A PRD that is longer than what a reviewer will actually read is a failed PRD.
+>
+> **Frontmatter rules** (see [`docs/prds/README.md`](../prds/README.md) for the full spec):
+> - `prd_id` MUST equal the filename stem (no `.md`). For feature PRDs, it starts with `LAT-NN`.
+> - `derived_from` on a feature PRD MUST name a root PRD file that exists in `docs/prds/`.
+> - `status` is one of `draft | in-review | approved | superseded | archived`.
 
 ## 1. Problem Statement
 
