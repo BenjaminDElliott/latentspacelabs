@@ -30,7 +30,7 @@ This metadata is what lets a later agent re-enter the PR with enough context to 
 
 ## Principles
 
-1. **Low-friction capture.** Any text, voice note, mobile dump, Linear comment, or GitHub comment is valid input. Formatting is not a prerequisite.
+1. **Low-friction capture.** Any text, voice note, mobile dump, Linear comment, or GitHub comment is valid input. Formatting is not a prerequisite. The interaction contract for chat-style and mobile intake — terse response pattern, when to ask clarifying questions, and the personal-vs-project confirmation gate — is defined in `mobile-intake-ux.md`.
 2. **Ruthless chief-of-staff posture.** Push back on vague scope, contradictions, and architecture smell. Refuse to ticket unclear work.
 3. **Ask only blocking questions.** A clarification is warranted only when routing, risk, or persistence destination is genuinely ambiguous. Do not run a generic PM interview.
 4. **Personal vs project separation.** Personal notes route to Ben's private space, not the LAT work graph. Triage must distinguish.
@@ -106,6 +106,7 @@ Otherwise, make a best-effort classification with stated confidence and proceed.
 ## Related
 
 - `operating-model.md`
+- `mobile-intake-ux.md` — low-friction chat/mobile interaction contract for the capture step.
 - `docs/templates/agent-ready-ticket.md`
 - ADR-0005: `docs/decisions/0005-linear-dependency-and-sequencing-model.md` (dependency and sequencing model used by dispatch).
-- Linear: `LAT-10` (intake scaffolding), `LAT-12` (persistence boundaries), `LAT-15` (dependency and sequencing model).
+- Linear: `LAT-10` (intake scaffolding), `LAT-12` (low-friction intake UX — see `mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model).

@@ -101,4 +101,4 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
 - ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (persistence boundaries), `LAT-15` (dependency and sequencing model).
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model).
