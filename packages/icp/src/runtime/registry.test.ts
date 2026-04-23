@@ -57,6 +57,22 @@ test("registry rejects derived_from that does not resolve", async () => {
   await assert.rejects(() => reg.register(bad), /derived_from path does not resolve/);
 });
 
+test("registry rejects derived_from outside canonical-doc roots (ADR-0016)", async () => {
+  const reg = new SkillRegistry({
+    repoRoot: REPO_ROOT,
+    availableTools: ["linear-adapter"],
+  });
+  const bad: SkillDefinition = {
+    ...goodSkill(),
+    // Points at a real, resolvable file that is NOT under docs/{decisions,prds,process,templates}/.
+    derived_from: ["package.json"],
+  };
+  await assert.rejects(
+    () => reg.register(bad),
+    /derived_from path must point into/,
+  );
+});
+
 test("registry rejects unknown required tool", async () => {
   const reg = new SkillRegistry({
     repoRoot: REPO_ROOT,
