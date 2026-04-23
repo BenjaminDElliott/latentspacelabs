@@ -262,12 +262,56 @@ export interface PolicyEvaluator {
   evaluate(input: PolicyInput): PolicyEvaluation;
 }
 
+/**
+ * Minimum agent invocation request carried across the ICP-Routed boundary
+ * (ADR-0013 § "Minimum run contract"). The earlier LAT-52 stub only needed
+ * `linear_issue_id`, `autonomy_level`, `approve`, and `dry_run`; LAT-61 adds
+ * the rest of the contract so a real coding provider receives enough context
+ * to open a `LAT-NN:` PR or return a typed refusal.
+ *
+ * New fields are optional on the type so pre-LAT-61 callers keep compiling;
+ * the real adapter (`createCodingAgentAdapter`) structurally refuses when the
+ * fields a provider actually needs are missing.
+ */
 export interface AgentInvocationRequest {
   agent_type: "coding";
   linear_issue_id: string;
   autonomy_level: AutonomyLevel;
   approve: boolean;
   dry_run: boolean;
+  /** `owner/name` repository the provider should act on (ADR-0013). */
+  repo?: string | undefined;
+  /** Base branch the provider should branch from, typically `main`. */
+  branch_target?: string | undefined;
+  /** Branch naming convention, typically `lat-<n>-<slug>`. */
+  branch_naming?: string | undefined;
+  /** Ticket title/summary/guardrails the provider must read before acting. */
+  ticket_context?: TicketInvocationContext | undefined;
+  /** Numeric ADR-0009 budget cap; required for side-effecting runs. */
+  budget_cap_usd?: number | null | undefined;
+  /**
+   * Caller's best-known cost band per ADR-0009 before invocation. `elevated`
+   * or `runaway_risk` bands at the start of a run are refusals (ADR-0013).
+   */
+  cost_band_observed?: AgentInvocationResult["cost_band"] | undefined;
+  /** The `name@version` of the skill originating this invocation. */
+  skill_name_and_version?: string | undefined;
+  /** Stable per-run correlation id; surfaced into provider logs only. */
+  run_id?: string | undefined;
+}
+
+export interface TicketInvocationContext {
+  /** Human-readable title from Linear. Never a secret. */
+  title: string;
+  /** Short summary of what the ticket asks the provider to do. */
+  summary: string;
+  /** ADR-0008 / ADR-0013 / ADR-0017 guardrails the provider must honour. */
+  guardrails: ReadonlyArray<string>;
+  /**
+   * Non-goals / out-of-scope notes the caller wants surfaced verbatim.
+   * Empty array is valid; `null` is not.
+   */
+  non_goals: ReadonlyArray<string>;
 }
 
 export interface AgentInvocationResult {

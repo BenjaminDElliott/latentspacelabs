@@ -29,6 +29,7 @@ export type {
   AgentInvocationAdapter,
   AgentInvocationRequest,
   AgentInvocationResult,
+  TicketInvocationContext,
   RunRecorder,
   RunRecorderInput,
   RunRecorderOutput,
@@ -67,7 +68,29 @@ export type {
   FetchLike,
   FetchLikeResponse,
 } from "./adapters/linear-adapter.js";
-export { createStubAgentAdapter } from "./adapters/agent-invocation-adapter.js";
+export {
+  createStubAgentAdapter,
+  createCodingAgentAdapter,
+  createCommandCodingAgentProvider,
+  parseProviderEnvelope,
+  scrubSecrets,
+} from "./adapters/agent-invocation-adapter.js";
+export type {
+  StubAgentAdapterOptions,
+  StubAgentResponse,
+  CodingAgentAdapterOptions,
+  CodingAgentAdapterEvent,
+  CodingAgentProvider,
+  CodingAgentProviderRequest,
+  CodingAgentProviderResult,
+  CodingAgentRun,
+  CodingAgentRefusal,
+  CodingAgentRefusalKind,
+  CommandCodingAgentProviderOptions,
+  SerialisedProviderRequest,
+  SpawnLike,
+  SpawnedLike,
+} from "./adapters/agent-invocation-adapter.js";
 
 export {
   dispatchTicketSkill,
