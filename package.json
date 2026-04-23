@@ -18,6 +18,9 @@
     "validate:adrs": "node packages/adr-tools/dist/cli.js docs/decisions",
     "validate:prds": "node packages/prd-tools/dist/cli.js docs/prds",
     "policy-scan": "node packages/policy-scanner/dist/cli.js .",
+    "secret-guard": "node packages/secret-guard/dist/cli.js",
+    "secret-guard:staged": "node packages/secret-guard/dist/cli.js --staged",
+    "secret-guard:install-hook": "node packages/secret-guard/dist/install-hook.js",
     "check": "npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run test"
   }
 }
