@@ -6,6 +6,7 @@ This directory is the durable source of truth for process, decisions, and templa
 
 - `process/` — How we work: operating model, intake/triage posture, approval gates. Human-readable policy.
 - `decisions/` — Architecture Decision Records (ADRs). File naming: `NNNN-title-with-dashes.md`.
+- `prds/` — Product Requirements Documents (PRDs). Root PRD: [`prds/root-agentic-development-flywheel.md`](prds/root-agentic-development-flywheel.md). Feature PRDs are keyed by Linear issue: `LAT-NN-<slug>.md`. See [`prds/README.md`](prds/README.md) for the full naming and frontmatter policy.
 - `templates/` — Artifact schemas (PRDs, agent-ready tickets, ADRs, agent run reports) consumed by humans and agents alike.
 
 ## Docs vs agent skills and commands
@@ -35,3 +36,5 @@ Perplexity threads and workspace Markdown files are **working drafts, not source
 - `LAT-11` — Retrospective learning loop (ADR-0010 + `process/retrospective-learning-loop.md` + `templates/retro-report.md`).
 - `LAT-12` — Persistence boundaries across Perplexity, Linear, and Git.
 - `LAT-13` — Architecture decision process and ADR structure.
+- `LAT-23` — Canonicalize the root PRD (see [`prds/root-agentic-development-flywheel.md`](prds/root-agentic-development-flywheel.md)).
+- `LAT-31` — PRD governance policy (see [`prds/README.md`](prds/README.md)).
