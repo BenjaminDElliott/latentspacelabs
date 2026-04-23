@@ -102,7 +102,7 @@ Bad / open:
 
 ## Open Questions
 
-1. What is the minimum viable telemetry substrate for agent run reports (JSONL in repo, SQLite, Postgres, Langfuse/Helicone, or other)? Deferred to a follow-up ADR — this ADR does not block on it.
+1. What is the minimum viable telemetry substrate for agent run reports (JSONL in repo, SQLite, Postgres, Langfuse/Helicone, or other)? Deferred to a follow-up ADR — this ADR does not block on it. (Partially narrowed by [ADR-0013](0013-icp-state-persistence-and-telemetry.md), which pins the MVP run registry to repo-committed Markdown + JSON under `runs/` and explicitly defers the backend selection itself.)
 2. Cadence and mechanism to keep Linear links and repo URLs in sync as docs move — likely solved by a CI check, tracked under the ADR-0004 automation follow-up.
 3. For personal or cross-cutting notes not tied to a single `LAT-*` issue: out of scope here; `intake-triage.md` handles the personal-vs-project split.
 
@@ -119,6 +119,6 @@ Working if, three months in:
 ## Links
 
 - Linear: `LAT-9`, `LAT-12`.
-- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0004-process-docs-vs-agent-skills.md`.
+- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0004-process-docs-vs-agent-skills.md`, `0013-icp-state-persistence-and-telemetry.md` (MVP run-registry destination and visibility query surfaces).
 - Template: `docs/templates/agent-run-report.md`.
 - Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`.
