@@ -93,6 +93,10 @@ Additions to *this* ticket's own new/edited file are not conflict-surface edits;
 - **PRDs.** If writing a new PRD, the file follows [`../templates/prd.md`](../templates/prd.md); frontmatter matches the rules in [`../prds/README.md`](../prds/README.md); `status` begins as `draft`.
 - **Run reports.** Every code-producing run emits a run report per [`../templates/agent-run-report.md`](../templates/agent-run-report.md) with `cost.band` set per ADR-0009 / `cost-controls.md`. A missing `cost.band` is a refuse at write-back time.
 - **Write-backs.** Linear write-backs follow the five-element contract in ADR-0003 / `operating-model.md` (outcome, evidence, risk flags, PR link, next action).
+- **Handoff packet.** If the run is long-running or expects a follow-up actor (another agent or a later run of the same agent type), the run report, PR body, and Linear write-back together carry the minimum handoff packet fields from ADR-0015 Rule 1 (current goal, active tickets, open PRs, blockers, prior decisions with durable links, next action, open questions). A missing field is a refuse at write-back time. See [`context-compaction-and-handoff.md`](context-compaction-and-handoff.md).
+- **Compaction event recording.** If the run crossed a chat / context compaction and is shipping a change whose rationale was in the pre-compaction context, the run-report narrative records *when* the compaction happened, *what* was compacted, and *where the pre-compaction content is durable* (ADR / process doc / PRD / template / named paragraph in a committed run report). A shipped change whose rationale now resolves only to chat is a refuse.
+- **Durable-source references.** Any reference in a PR body or Linear write-back to "earlier discussion" / "the Perplexity thread" / "our prior chat" must resolve to a durable surface (ADR, process doc, PRD, template, or a named paragraph in a committed run report). A reference that does not resolve is a refuse — the fix is to promote the load-bearing content to a durable surface before merging the PR that depends on it (ADR-0015 Rule 3).
+- **Spike terminal state.** If the run is a research / design spike that did not produce an implementation PR, the Linear write-back ends in exactly one of two states: *findings promoted* (links the promotion PR) or *explicitly archived* (`Outcome: spike complete — no promotion; archived`, with a narrative rationale in the run report). Neither state present is a refuse (ADR-0015 Rule 4).
 
 ## Refusal and warn behaviour
 
@@ -191,4 +195,5 @@ Until the skill framework lands (LAT-19 et al.), this document is executed by th
 - ADR-0009 — cost bands and runaway-cost interrupt.
 - ADR-0011 — ICP language and runtime (TypeScript / Node / npm).
 - ADR-0012 — ICP software architecture and skill framework.
-- Linear: `LAT-35` (this guardrail).
+- ADR-0015 — context compaction and agent handoff policy (checks in § C).
+- Linear: `LAT-35` (this guardrail), `LAT-54` (handoff / compaction policy).
