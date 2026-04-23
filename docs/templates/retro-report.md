@@ -1,6 +1,6 @@
 # Retro Report: {{cycle label}}
 
-> Retrospective evidence for a completed pilot cycle (or a monthly minimum-cadence review). Answers the six retrospective questions and routes findings to one of four promotion paths. Authoritative policy: [ADR-0009](../decisions/0009-retrospective-learning-loop.md). Operational guide: [`docs/process/retrospective-learning-loop.md`](../process/retrospective-learning-loop.md).
+> Retrospective evidence for a completed pilot cycle (or a monthly minimum-cadence review). Answers the six retrospective questions and routes findings to one of four promotion paths. Authoritative policy: [ADR-0010](../decisions/0010-retrospective-learning-loop.md). Operational guide: [`docs/process/retrospective-learning-loop.md`](../process/retrospective-learning-loop.md).
 
 ## Metadata
 
@@ -14,7 +14,7 @@
 - **Retro cost band:** normal | elevated | runaway_risk
 - **Started / ended:**
 
-If `Retro cost band` is `elevated` or `runaway_risk`, **stop and hand to Ben** per ADR-0009 stop conditions. Do not continue this retro autonomously.
+If `Retro cost band` is `elevated` or `runaway_risk`, **stop and hand to Ben** per ADR-0010 stop conditions. Do not continue this retro autonomously.
 
 ## Evidence surfaces consulted
 
@@ -73,7 +73,7 @@ Did runs stay within declared cost bands? Were any `elevated` or `runaway_risk`?
 
 ## Agent-created Linear work review
 
-> Required per ADR-0009. Every `LAT-*` issue created by an agent during the window appears here. Classification, labelling, AC quality, and dispatch state.
+> Required per ADR-0010. Every `LAT-*` issue created by an agent during the window appears here. Classification, labelling, AC quality, and dispatch state.
 
 | Issue | Created by | Classification | Labels OK? | AC quality | Dispatched? | Action |
 |---|---|---|---|---|---|---|
@@ -114,7 +114,7 @@ If none detected in the window, say so explicitly and state how it was checked.
 |---|---|---|---|---|
 | 1 | ... | `docs/decisions/NNNN-....md` | proposed | Ben merge per ADR lifecycle |
 
-> Any ADR candidate that would edit `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0009, or raise an autonomy level is a **stop-and-escalate** item — draft only, hand to Ben, do not proceed autonomously.
+> Any ADR candidate that would edit `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0010, or raise an autonomy level is a **stop-and-escalate** item — draft only, hand to Ben, do not proceed autonomously.
 
 ### Archived observations
 
@@ -124,9 +124,9 @@ If none detected in the window, say so explicitly and state how it was checked.
 
 ## Stop-condition check
 
-> Confirm none of the ADR-0009 hard stop conditions were violated in producing this retro. If any were, the retro must halt and escalate rather than merge.
+> Confirm none of the ADR-0010 hard stop conditions were violated in producing this retro. If any were, the retro must halt and escalate rather than merge.
 
-- [ ] No proposed change edits `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0009, the retro loop definition, or raises an autonomy level **without** being routed to Ben approval.
+- [ ] No proposed change edits `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0010, the retro loop definition, or raises an autonomy level **without** being routed to Ben approval.
 - [ ] Retro cost band is `normal`.
 - [ ] No other retro is concurrently targeting the same surface (prompts / templates / routing rules / backlog).
 - [ ] Sizing budget respected — promotions across all paths are within the budget stated in `retrospective-learning-loop.md`.
@@ -151,7 +151,7 @@ One or two paragraphs. What did this cycle look like as a whole? What should a f
 
 ## Related
 
-- ADR-0009 (authoritative policy): `docs/decisions/0009-retrospective-learning-loop.md`
+- ADR-0010 (authoritative policy): `docs/decisions/0010-retrospective-learning-loop.md`
 - Process: `docs/process/retrospective-learning-loop.md`
 - Evidence templates: `docs/templates/agent-run-report.md`, `docs/templates/qa-report.md`, `docs/templates/pr-review-report.md`, `docs/templates/agent-ready-ticket.md`
 - Upstream ADRs feeding the loop: `0001`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`

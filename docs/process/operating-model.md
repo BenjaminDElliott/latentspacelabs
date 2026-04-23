@@ -117,12 +117,12 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 
 ## Retrospective learning loop
 
-Every closed pilot cycle (and at minimum a monthly review) runs through the bounded retrospective step defined in [ADR-0009](../decisions/0009-retrospective-learning-loop.md) and operationalized in [`retrospective-learning-loop.md`](retrospective-learning-loop.md). In summary:
+Every closed pilot cycle (and at minimum a monthly review) runs through the bounded retrospective step defined in [ADR-0010](../decisions/0010-retrospective-learning-loop.md) and operationalized in [`retrospective-learning-loop.md`](retrospective-learning-loop.md). In summary:
 
 - The retro answers six fixed questions: did we build the right thing; were tickets well-scoped; where did agents struggle; were acceptance criteria sufficient; what did QA/review catch; were costs reasonable.
 - Findings are routed along exactly one of four promotion paths: prompt/template update (PR), backlog item (`LAT-*` via intake-triage), architecture decision candidate (ADR draft), or archived note. Default when in doubt is archive.
 - Repeated agent failure patterns (same failure mode across ≥ 2 runs in the window or ≥ 3 across recent retros) **must** produce improvement work or an archived-with-rationale entry. Silent drops are retro failures.
-- Governance and autonomy changes (edits to `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0009, or any autonomy-level raise) are **stop-and-escalate** — retro agents draft; Ben decides.
+- Governance and autonomy changes (edits to `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0010, or any autonomy-level raise) are **stop-and-escalate** — retro agents draft; Ben decides.
 - The retro explicitly reviews every `LAT-*` issue created by agents during the window.
 
 The retro does not re-derive evidence; it reads from the run report envelope (ADR-0006), QA/review reports (ADR-0007), Linear write-backs (ADR-0003), intake triage (LAT-10), docs-vs-skills drift (ADR-0004), dispatch decisions (ADR-0005), and ACL routing (ADR-0008). If a question cannot be answered from those surfaces, the gap itself is a finding.
@@ -136,6 +136,6 @@ The retro does not re-derive evidence; it reads from the run report envelope (AD
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-retrospective-learning-loop.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0010-retrospective-learning-loop.md`.
 - Process: `qa-review-evidence.md`, `retrospective-learning-loop.md`.
 - Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow), `LAT-11` (retrospective learning loop), `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).

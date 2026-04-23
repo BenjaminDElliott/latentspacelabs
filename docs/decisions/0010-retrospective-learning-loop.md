@@ -1,5 +1,5 @@
 ---
-id: ADR-0009
+id: ADR-0010
 title: Retrospective learning loop
 status: proposed
 date: 2026-04-23
@@ -12,7 +12,7 @@ superseded_by:
 revisit_trigger: Revisit when a retro has run against at least two complete pilot cycles, when the telemetry substrate (ADR-0003 open question) lands and changes the evidence surface, or when the rate of promoted changes per retro consistently exceeds the sizing budget in either direction (too few to matter, or too many to review).
 ---
 
-# ADR-0009: Retrospective learning loop
+# ADR-0010: Retrospective learning loop
 
 ## Context
 

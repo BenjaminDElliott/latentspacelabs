@@ -1,6 +1,6 @@
 # Retrospective learning loop
 
-> Operational guide for how the pilot improves itself — prompts, templates, routing rules, and backlog — from human and agent feedback. Authoritative policy lives in [ADR-0009](../decisions/0009-retrospective-learning-loop.md); this document is the working manual.
+> Operational guide for how the pilot improves itself — prompts, templates, routing rules, and backlog — from human and agent feedback. Authoritative policy lives in [ADR-0010](../decisions/0010-retrospective-learning-loop.md); this document is the working manual.
 
 ## Why this exists
 
@@ -113,7 +113,7 @@ The third question — "where did agents struggle?" — is load-bearing for the 
 The retro loop is not allowed to silently change its own governance.
 
 - **This document.** Edits to `retrospective-learning-loop.md` follow the normal doc-PR path, merge-approved by Ben. The retro may *propose* edits; it must not *apply* them as part of its own run.
-- **ADR-0009.** Edits follow the ADR supersession rule (`docs/decisions/README.md`): accepted ADRs are immutable; a material change requires a new ADR that supersedes 0009, which Ben approves.
+- **ADR-0010.** Edits follow the ADR supersession rule (`docs/decisions/README.md`): accepted ADRs are immutable; a material change requires a new ADR that supersedes 0010, which Ben approves.
 - **Approval gates and autonomy rules.** Covered by the stop conditions above and the existing Stop rows in `approval-gates-and-autonomy-rules.md` ("Change approval gates or autonomy rules" and "Raise an autonomy level beyond the pilot default" are Stop-category).
 - **Feedback loop on the feedback loop.** Observations about the retro process itself go into the *Archived observations* section of the retro report and are considered on the next retro by a human, not as an input the retro uses to rewrite itself mid-run.
 
@@ -136,7 +136,7 @@ The retro loop is not allowed to silently change its own governance.
 
 ## Related
 
-- ADR-0009 (authoritative policy): `docs/decisions/0009-retrospective-learning-loop.md`
+- ADR-0010 (authoritative policy): `docs/decisions/0010-retrospective-learning-loop.md`
 - ADR-0001 (control plane): `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`
 - ADR-0003 (Linear write-back contract): `docs/decisions/0003-linear-persistence-boundary.md`
 - ADR-0004 (docs vs skills): `docs/decisions/0004-process-docs-vs-agent-skills.md`
