@@ -169,7 +169,7 @@ Dispatch note: LAT-15 (ADR-0005) merged; the dispatch algorithm this doc referen
 
 ## Related
 
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`, `0011-integration-control-plane-language-and-runtime.md`, `0012-integration-control-plane-software-architecture.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`, `0011-integration-control-plane-language-and-runtime.md`, `0012-integration-control-plane-software-architecture.md`, `0013-agent-invocation-and-integration-boundaries.md` (invocation categories, minimum run contract, isolation).
 - Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`, `docs/process/cost-controls.md`.
 - Templates: `docs/templates/agent-ready-ticket.md`, `docs/templates/agent-run-report.md`.
 - Linear: `LAT-16` (this boundary), `LAT-6` (approval and cost-control gates).
