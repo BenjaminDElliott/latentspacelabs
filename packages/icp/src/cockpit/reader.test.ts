@@ -21,7 +21,7 @@ function baseEnvelope(partial: Record<string, unknown> = {}): Record<string, unk
     decisions: [],
     next_actions: ["merge"],
     errors: [],
-    cost: { band: "normal", budget_cap_usd: null, spent_usd: null },
+    cost: { band: "normal", budget_cap_usd: null, spent_usd: null, band_unavailable_reason: null },
     correlation: {
       pr_url: "https://example.com/pr/1",
       pr_branch: null,

@@ -145,9 +145,17 @@ export interface RunReport {
   next_actions: ReadonlyArray<string>;
   errors: ReadonlyArray<string>;
   cost: {
-    band: "normal" | "elevated" | "runaway_risk" | "unknown";
+    band: CostBand;
     budget_cap_usd: number | null;
     spent_usd: number | null;
+    /**
+     * Free-text, secret-safe reason surfaced when `band === "unknown"` — e.g.
+     * "command provider returned no spend data". ADR-0009 requires a narrative
+     * whenever spend cannot be measured; this field carries the machine-
+     * readable handle so reviewers can tell apart genuine unknowns from
+     * skipped reporting (LAT-66).
+     */
+    band_unavailable_reason: string | null;
   };
   correlation: {
     pr_url: string | null;
@@ -171,7 +179,19 @@ export interface SkillInputSpec {
 export interface EvidenceContract {
   run_report: boolean;
   linear_write_back: boolean;
+  /**
+   * LAT-66 / ADR-0009: when true, the skill must surface cost-band evidence
+   * on a successful non-dry run. The runner refuses a `succeeded` outcome
+   * that lacks a valid `cost_band` output, and requires a typed unavailable
+   * reason when the band is `"unknown"`. Side-effecting skills (L3+ or
+   * `requires_approval_flag`) default this to `true` at the skill level so a
+   * missing cost band cannot silently produce a successful run.
+   */
+  cost_band: boolean;
 }
+
+/** Valid cost-band values per ADR-0009. */
+export type CostBand = "normal" | "elevated" | "runaway_risk" | "unknown";
 
 /**
  * The runner calls `execute` with fully resolved tools. A skill file's
@@ -293,7 +313,7 @@ export interface AgentInvocationRequest {
    * Caller's best-known cost band per ADR-0009 before invocation. `elevated`
    * or `runaway_risk` bands at the start of a run are refusals (ADR-0013).
    */
-  cost_band_observed?: AgentInvocationResult["cost_band"] | undefined;
+  cost_band_observed?: CostBand | undefined;
   /** The `name@version` of the skill originating this invocation. */
   skill_name_and_version?: string | undefined;
   /** Stable per-run correlation id; surfaced into provider logs only. */
@@ -319,8 +339,15 @@ export interface AgentInvocationResult {
   pr_url: string | null;
   pr_branch: string | null;
   commit_sha: string | null;
-  cost_band: "normal" | "elevated" | "runaway_risk" | "unknown";
+  cost_band: CostBand;
   spent_usd: number | null;
+  /**
+   * Secret-safe reason the provider could not produce a concrete cost band.
+   * Expected only when `cost_band === "unknown"`; required by the runner
+   * LAT-66 gate so callers cannot silently paper over missing cost evidence
+   * (ADR-0009). `null` when the band is determinable.
+   */
+  cost_band_unavailable_reason: string | null;
   notes: ReadonlyArray<string>;
 }
 

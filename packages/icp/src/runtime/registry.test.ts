@@ -16,7 +16,7 @@ function goodSkill(): SkillDefinition {
     required_tools: ["linear-adapter"],
     autonomy_level: "L1-read-only",
     requires_approval_flag: false,
-    evidence: { run_report: false, linear_write_back: false },
+    evidence: { run_report: false, linear_write_back: false, cost_band: false },
     derived_from: ["docs/decisions/0012-integration-control-plane-software-architecture.md"],
     derived_at: "2026-04-23",
     async execute() {

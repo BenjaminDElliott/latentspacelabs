@@ -50,7 +50,7 @@ test("cli: --json prints structured state that includes all seven view keys", as
       decisions: [],
       next_actions: [],
       errors: [],
-      cost: { band: "normal", budget_cap_usd: null, spent_usd: null },
+      cost: { band: "normal", budget_cap_usd: null, spent_usd: null, band_unavailable_reason: null },
       correlation: {
         pr_url: null,
         pr_branch: null,

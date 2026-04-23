@@ -10,6 +10,7 @@
  */
 import type {
   AutonomyLevel,
+  CostBand,
   ResolvedTools,
   SkillDefinition,
   SkillStatus,
@@ -171,6 +172,54 @@ export class SkillRunner {
     ) {
       return "evidence contract violated: skill claimed succeeded but did not post a Linear write-back";
     }
+    if (def.evidence.cost_band) {
+      const costGap = this.checkCostBandEvidence(outputs);
+      if (costGap) return costGap;
+    }
     return null;
   }
+
+  /**
+   * LAT-66 / ADR-0009: every side-effecting run with `evidence.cost_band` set
+   * must carry cost-band evidence before the runner lets it record success.
+   *
+   * The runner accepts three valid shapes:
+   *   1. A concrete band (`normal` / `elevated` / `runaway_risk`), optionally
+   *      with `spent_usd`. This is the happy path.
+   *   2. An explicit `unknown` band paired with a non-empty
+   *      `cost_band_unavailable_reason`. This preserves provider honesty:
+   *      command providers that cannot observe spend surface a typed
+   *      refusal-shaped reason rather than inventing a number.
+   *   3. A structural refusal — the skill returns a `needs_human` /
+   *      `failed` / `blocked` / `stopped` status, which short-circuits this
+   *      check earlier via `outputs.status !== "succeeded"`.
+   *
+   * Anything else — no band at all, or `unknown` with no reason — is a
+   * contract violation and the runner refuses to let the run finish as
+   * succeeded.
+   */
+  private checkCostBandEvidence(
+    outputs: Record<string, unknown>,
+  ): string | null {
+    const band = outputs["cost_band"];
+    if (!isValidCostBand(band)) {
+      return "evidence contract violated: skill claimed succeeded on a side-effecting run but produced no cost_band (ADR-0009 / LAT-66)";
+    }
+    if (band === "unknown") {
+      const reason = outputs["cost_band_unavailable_reason"];
+      if (typeof reason !== "string" || reason.trim().length === 0) {
+        return "evidence contract violated: cost_band=\"unknown\" requires a non-empty cost_band_unavailable_reason (ADR-0009 / LAT-66)";
+      }
+    }
+    return null;
+  }
+}
+
+function isValidCostBand(v: unknown): v is CostBand {
+  return (
+    v === "normal" ||
+    v === "elevated" ||
+    v === "runaway_risk" ||
+    v === "unknown"
+  );
 }

@@ -40,6 +40,7 @@ export function createRunRecorder(): RunRecorder {
           band: input.agent_result?.cost_band ?? "unknown",
           budget_cap_usd: input.budget_cap_usd,
           spent_usd: input.agent_result?.spent_usd ?? null,
+          band_unavailable_reason: costBandUnavailableReason(input),
         },
         correlation: {
           pr_url: input.agent_result?.pr_url ?? null,
@@ -118,6 +119,28 @@ function renderMarkdown(report: RunReport, input: RunRecorderInput): string {
     for (const q of input.open_questions) lines.push(`- ${q}`);
   }
   return lines.join("\n") + "\n";
+}
+
+/**
+ * LAT-66: record an explicit, secret-safe reason when the effective cost band
+ * is `unknown`. For dry-runs and policy refusals no agent ran, so the band is
+ * unknown-by-construction. For real agent runs, honour the provider's own
+ * `cost_band_unavailable_reason` when present; otherwise surface a generic
+ * "provider did not report a cost band" note. `null` when the band is
+ * determinable (`normal` / `elevated` / `runaway_risk`).
+ */
+function costBandUnavailableReason(input: RunRecorderInput): string | null {
+  const res = input.agent_result;
+  if (!res) {
+    if (input.dry_run) return "dry-run: no agent invocation; no spend to record";
+    return "no agent run was invoked (policy refused or pre-dispatch abort)";
+  }
+  if (res.cost_band !== "unknown") return null;
+  const providerReason = res.cost_band_unavailable_reason;
+  if (typeof providerReason === "string" && providerReason.trim().length > 0) {
+    return providerReason.trim();
+  }
+  return "provider returned no cost-band evidence (ADR-0009 unknown state)";
 }
 
 function formatBudgetState(cap: number | null, spent: number | null): string {
