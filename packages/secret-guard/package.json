@@ -1,0 +1,39 @@
+{
+  "name": "@latentspacelabs/secret-guard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local pre-commit guardrail that blocks staged .env files and obvious literal API key/token patterns. See docs/process/secret-commit-guardrails.md.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "secret-guard": "./dist/cli.js",
+    "secret-guard-install": "./dist/install-hook.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/*.test.ts",
+    "scan": "tsx src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
