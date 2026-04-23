@@ -142,7 +142,7 @@ When a voice stack is selected, the UX contract in this doc should survive uncha
 - **Personal store.** Where do `personal`-classified items durably land? Options: a private Linear team, a personal notes store, or keep them ephemeral in the chat thread. Not yet decided; likely a follow-up ADR alongside the telemetry substrate choice.
 - **Voice stack.** Which voice transcription path (device-native, connector-provided, third-party) does the pilot use? Deferred until the intake surface question is revisited.
 - **Confirmation persistence.** Does a `y` confirmation for personal→Linear in one session grant blanket permission in that session, or is it per-item? Default assumed per-item until Ben says otherwise.
-- **Agent control layer interplay.** Parts of this contract (routing decisions, dispatch gating) may migrate into the agent control layer described in LAT-14 / LAT-16. This doc is UX/process only and does not commit to implementation.
+- **Integration Control Plane interplay.** Parts of this contract (routing decisions, dispatch gating) may migrate into the Integration Control Plane (ICP) described in LAT-14 / LAT-16 (formerly called "Agent Control Layer" before ADR-0012). This doc is UX/process only and does not commit to implementation.
 - **Intake surface selection.** The surface-agnostic posture is a deliberate deferral, not a final answer. A follow-up ADR may pick a canonical intake surface once evidence accumulates.
 
 ## Related
@@ -151,4 +151,4 @@ When a voice stack is selected, the UX contract in this doc should survive uncha
 - `operating-model.md` — approval gates, personal vs project boundary, Linear write-back contract.
 - `docs/decisions/0003-linear-persistence-boundary.md` — what belongs in Linear vs elsewhere.
 - `docs/decisions/0005-linear-dependency-and-sequencing-model.md` — why messy-input issues are not dispatchable without refinement.
-- Linear: `LAT-10` (intake scaffolding), `LAT-12` (low-friction intake UX — this doc), `LAT-14` / `LAT-16` (agent control layer, may absorb parts of this contract later).
+- Linear: `LAT-10` (intake scaffolding), `LAT-12` (low-friction intake UX — this doc), `LAT-14` / `LAT-16` (Integration Control Plane, historically called "agent control layer"; may absorb parts of this contract later).

@@ -50,7 +50,7 @@ The non-goal is equally important: we must not build a **continuous self-improve
 
 ### The loop, at a glance
 
-- **Inputs:** run reports (ADR-0006), QA/review reports (ADR-0007), Linear write-backs (ADR-0003), intake triage outputs (`intake-triage.md`), dispatch decisions (ADR-0005), docs-vs-skills drift flags (ADR-0004), approval-gate/ACL routing decisions (ADR-0008).
+- **Inputs:** run reports (ADR-0006), QA/review reports (ADR-0007), Linear write-backs (ADR-0003), intake triage outputs (`intake-triage.md`), dispatch decisions (ADR-0005), docs-vs-skills drift flags (ADR-0004), approval-gate / ICP routing decisions (ADR-0008 / ADR-0012; originally named "ACL routing" in ADR-0008).
 - **Activity:** a bounded review against the six retrospective questions below, across a declared pilot-cycle window.
 - **Outputs:** concrete promotions along exactly one of four paths (prompt/template update, backlog item, ADR candidate, archived note).
 - **Cadence:** one retro per closed pilot cycle; at minimum monthly; at most one retro in-flight per surface (prompts, templates, routing rules, backlog).

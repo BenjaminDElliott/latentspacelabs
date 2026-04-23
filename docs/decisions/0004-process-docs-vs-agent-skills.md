@@ -118,7 +118,7 @@ Bad / open:
 
 1. Where exactly do skill and command files live? Working assumption: `.claude/skills/` and `.claude/commands/` at the repo root, matching the Claude Code convention. Confirm before the first adapter lands; a later ADR may relocate them.
 2. Do we want a doc → adapter generator now, or stay hand-maintained with CI drift checks? Leaning hand-maintained until adapter count exceeds ~3. Tracked as a follow-up.
-3. When the Agent Control Layer (see ADR-0001 and the LAT-16 follow-up) begins to own some procedure execution directly, does the adapter layer shrink, move, or stay in-repo? Deferred until the control-layer boundary is clearer; this ADR does not presume an answer.
+3. When the Integration Control Plane (see ADR-0001 and the LAT-16 follow-up; originally called "Agent Control Layer" before ADR-0012) begins to own some procedure execution directly, does the adapter layer shrink, move, or stay in-repo? Deferred until the control-plane boundary is clearer; this ADR does not presume an answer.
 4. Should the `derived_at:` field graduate to a commit SHA with CI enforcement? Leaning yes, but not until at least one adapter exists to test the check against.
 5. What signal would trigger re-evaluating option 4 (skills canonical)? Working answer: doc edits consistently lagging adapter edits across a month of activity, i.e. adapters are where real thinking happens and docs are retroactive summaries. Until then, this ADR stands.
 

@@ -74,7 +74,7 @@ A ticket whose most recent agent run halted with `cost_band: runaway_risk` is **
 - **Re-scope.** A comment from Ben narrowing the acceptance criteria so the remaining work fits under the existing cap (typically by splitting the ticket into smaller `LAT-*` issues).
 - **Cancel.** A comment moving the ticket to `Cancelled` / archived. No further runs.
 
-A dispatcher — human today, the ACL tomorrow per ADR-0008 — that encounters a ticket whose most recent write-back ended in a runaway-cost halt and finds **no subsequent unblock comment from Ben** MUST refuse to dispatch it and leave a refusal comment naming the missing unblock. Silently re-running a halted ticket is a policy violation, not a courtesy.
+A dispatcher — human today, the ICP tomorrow per ADR-0008 (renamed from "ACL" by ADR-0012) — that encounters a ticket whose most recent write-back ended in a runaway-cost halt and finds **no subsequent unblock comment from Ben** MUST refuse to dispatch it and leave a refusal comment naming the missing unblock. Silently re-running a halted ticket is a policy violation, not a courtesy.
 
 ## Reporting obligations on every run
 

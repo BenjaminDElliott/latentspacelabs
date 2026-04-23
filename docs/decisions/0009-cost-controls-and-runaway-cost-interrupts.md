@@ -57,7 +57,7 @@ When an agent detects that it is about to cross into `runaway_risk`, or is alrea
 1. **Halt immediately.** Do not take the next spend-incurring action. Do not attempt "one more retry." Do not open a PR if the PR has not already been opened.
 2. **Write the run report** (`docs/templates/agent-run-report.md`) with `cost.band = "runaway_risk"`, `status` reflecting the halt, and a `Narrative` that explains **which trigger fired** (cap crossed, loop count, unknown-cost action, new external service) and **what the agent was about to do next**.
 3. **Leave a Linear write-back** per ADR-0003's five-element contract. The outcome line names the interrupt verbatim (`Halted: runaway-cost interrupt — {trigger}`). `Risks:` surfaces the band. `Next action:` is always `Human decision required to resume or cancel.` A runaway-cost interrupt is `critical` severity per `operating-model.md` (severity ladder) and therefore routes to `needs-human` (Ben).
-4. **Do not auto-resume.** A subsequent run may pick the ticket back up only after a human has explicitly unblocked it — either by raising the `Budget cap` on the ticket with a comment explaining why, or by re-scoping the ticket so the remaining work fits. Dispatchers (human or the future ACL) must check the write-back history and refuse to re-dispatch a ticket whose most recent run halted for runaway-cost if no human unblock comment has landed since.
+4. **Do not auto-resume.** A subsequent run may pick the ticket back up only after a human has explicitly unblocked it — either by raising the `Budget cap` on the ticket with a comment explaining why, or by re-scoping the ticket so the remaining work fits. Dispatchers (human or the future ICP; originally called "ACL" in ADR-0008, renamed by ADR-0012) must check the write-back history and refuse to re-dispatch a ticket whose most recent run halted for runaway-cost if no human unblock comment has landed since.
 5. **PRs already in flight stay open.** If the PR was opened before the interrupt, leave it open and link the run report. Do not force-push, do not close, do not squash-amend to hide the halt.
 
 A runaway-cost halt is **not a failure of the agent**. It is the system working as designed. Review should focus on whether the `Budget cap` was right, whether the ticket was right-sized, and whether a new class of unbounded action needs to be added to the stop list.
@@ -84,7 +84,7 @@ Runs whose cost cannot be measured at all (e.g. an early prototype running outsi
 
 - Absolute dollar or token budgets per run, per day, per project. These require the telemetry substrate to enforce; premature numbers are worse than none.
 - A global daily-spend cap across all agent runs.
-- Automatic enforcement of the interrupt (the pilot relies on agents to self-report; the ACL will enforce when it exists per ADR-0008).
+- Automatic enforcement of the interrupt (the pilot relies on agents to self-report; the ICP will enforce when it exists per ADR-0008 / ADR-0012; the substrate was originally called "ACL" in ADR-0008).
 - Billing reconciliation against the harness vendor's dashboard.
 
 These remain open questions and should move under the telemetry substrate work when it is scoped.
@@ -100,10 +100,10 @@ Good:
 
 Bad / open:
 
-- Enforcement is self-reported until the ACL and telemetry substrate land. A misbehaving agent can under-report its band. Mitigated by review of the run report and the Linear write-back, and by the existing L3-with-approval gate on coding agents.
+- Enforcement is self-reported until the ICP (originally "ACL" in ADR-0008) and telemetry substrate land. A misbehaving agent can under-report its band. Mitigated by review of the run report and the Linear write-back, and by the existing L3-with-approval gate on coding agents.
 - The `elevated` / `runaway_risk` triggers are qualitative (loop counts, "approaching the cap"). This is deliberate — quantitative caps are a non-goal of LAT-6 — but it means two reviewers may classify the same run differently.
 - A ticket with a loose `Budget cap` will let a run drift before the interrupt fires. Addressed through ticket refinement, not this ADR.
-- Until the ACL enforces, the dispatcher-refuses-re-dispatch rule is also self-policing.
+- Until the ICP enforces, the dispatcher-refuses-re-dispatch rule is also self-policing.
 
 ## Confirmation
 

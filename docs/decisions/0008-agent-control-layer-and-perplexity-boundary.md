@@ -15,6 +15,8 @@ revisit_trigger: Revisit when Perplexity's connectors expose first-class create/
 
 # ADR-0008: Agent Control Layer and Perplexity boundary
 
+> **Terminology note (added by LAT-22):** this ADR uses the original working name **"Agent Control Layer / ACL"** throughout. That concept was renamed to **"Integration Control Plane / ICP"** by [ADR-0012](0012-integration-control-plane-software-architecture.md) to avoid collision with the common infrastructure meaning of ACL (Access Control List). The substantive decisions in this ADR — the Perplexity / owned-substrate boundary, the four action categories, the pilot autonomy levels, and the first implementation implication — remain in force. Where later documents speak in the new voice, the equivalent category label is `ICP-Routed` (semantically identical to this ADR's `ACL-Routed`). The original wording is preserved below as historical context. See also [ADR-0011](0011-integration-control-plane-language-and-runtime.md) (language and runtime) and [ADR-0012](0012-integration-control-plane-software-architecture.md) (software architecture).
+
 ## Context
 
 ADR-0001 chose Perplexity as the intake, reasoning, and control interface; Linear as the durable work graph; GitHub as the durable source of truth. ADR-0003 bounded what Linear stores. ADR-0005 defined the dispatch-readiness model and explicitly noted that the Linear connector currently exposed to Perplexity does not reliably expose first-class native-relation create/read for dispatch.
@@ -163,5 +165,5 @@ Working if, three months in:
 ## Links
 
 - Linear: `LAT-16` (this ADR), `LAT-6` (autonomy dial / operating posture).
-- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0004-process-docs-vs-agent-skills.md`, `0005-linear-dependency-and-sequencing-model.md`.
+- Related ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0004-process-docs-vs-agent-skills.md`, `0005-linear-dependency-and-sequencing-model.md`, `0011-integration-control-plane-language-and-runtime.md` (language and runtime for the substrate renamed by ADR-0012), `0012-integration-control-plane-software-architecture.md` (renames "Agent Control Layer / ACL" to "Integration Control Plane / ICP"; expands this ADR's architecture).
 - Process: `docs/process/approval-gates-and-autonomy-rules.md` (full rule matrix), `docs/process/operating-model.md`, `docs/process/intake-triage.md`.

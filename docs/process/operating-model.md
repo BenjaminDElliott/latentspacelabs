@@ -56,7 +56,7 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 
 Runaway-cost risk is always a stop-and-ask event, even when product risk is otherwise low. The three cost bands (`normal`, `elevated`, `runaway_risk`), the concrete triggers, and the interrupt protocol live in `cost-controls.md` (architecture: ADR-0009).
 
-The full category-by-action rule matrix — including Perplexity-direct vs Agent Control Layer routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008).
+The full category-by-action rule matrix — including Perplexity-direct vs Integration Control Plane (ICP) routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008, renamed to ICP by ADR-0012).
 
 ### Backlog refinement (cadence)
 
@@ -91,7 +91,7 @@ Before any agent is dispatched to a `LAT-*` issue, the dispatcher must check the
 
 Full format, defaults, and the step-by-step dispatch algorithm live in ADR-0005. The `## Sequencing` block is the source of truth agents read; Linear's native `blocks` / `blocked by` relation remains the canonical human/UI representation when available.
 
-The `## Sequencing` block is a **transitional pilot bridge**, not the long-term architecture. Once the Agent Control Layer (or an equivalent canonical dependency graph) can read/write native Linear relations, the block is expected to be deprecated as the authoritative dispatch source per a follow-up ADR — possibly becoming a generated mirror or being removed from issue descriptions entirely. Until that follow-up ADR lands, agents must continue to treat the block as authoritative; it is the only connector-readable pilot mechanism today. See ADR-0005 "Deprecation and migration".
+The `## Sequencing` block is a **transitional pilot bridge**, not the long-term architecture. Once the Integration Control Plane (or an equivalent canonical dependency graph) can read/write native Linear relations, the block is expected to be deprecated as the authoritative dispatch source per a follow-up ADR — possibly becoming a generated mirror or being removed from issue descriptions entirely. Until that follow-up ADR lands, agents must continue to treat the block as authoritative; it is the only connector-readable pilot mechanism today. See ADR-0005 "Deprecation and migration".
 
 ## Verification of code-producing runs
 
@@ -125,7 +125,7 @@ Every closed pilot cycle (and at minimum a monthly review) runs through the boun
 - Governance and autonomy changes (edits to `approval-gates-and-autonomy-rules.md`, ADR-0008, ADR-0010, or any autonomy-level raise) are **stop-and-escalate** — retro agents draft; Ben decides.
 - The retro explicitly reviews every `LAT-*` issue created by agents during the window.
 
-The retro does not re-derive evidence; it reads from the run report envelope (ADR-0006), QA/review reports (ADR-0007), Linear write-backs (ADR-0003), intake triage (LAT-10), docs-vs-skills drift (ADR-0004), dispatch decisions (ADR-0005), and ACL routing (ADR-0008). If a question cannot be answered from those surfaces, the gap itself is a finding.
+The retro does not re-derive evidence; it reads from the run report envelope (ADR-0006), QA/review reports (ADR-0007), Linear write-backs (ADR-0003), intake triage (LAT-10), docs-vs-skills drift (ADR-0004), dispatch decisions (ADR-0005), and ICP routing (ADR-0008 / ADR-0012). If a question cannot be answered from those surfaces, the gap itself is a finding.
 
 ## Source-of-truth rules
 
@@ -136,6 +136,6 @@ The retro does not re-derive evidence; it reads from the run report envelope (AD
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0010-retrospective-learning-loop.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0010-retrospective-learning-loop.md`, `0011-integration-control-plane-language-and-runtime.md`, `0012-integration-control-plane-software-architecture.md`.
 - Process: `qa-review-evidence.md`, `retrospective-learning-loop.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow), `LAT-11` (retrospective learning loop), `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow), `LAT-11` (retrospective learning loop), `LAT-16` (ICP and Perplexity boundary; historically named "ACL"), `LAT-6` (autonomy dial).

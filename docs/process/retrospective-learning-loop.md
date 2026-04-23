@@ -4,7 +4,7 @@
 
 ## Why this exists
 
-The flywheel produces evidence on every cycle: run reports (ADR-0006), QA and PR-review reports (ADR-0007), Linear write-backs (ADR-0003), dispatch decisions (ADR-0005), intake classifications (`intake-triage.md`), and ACL routing calls (ADR-0008). Without a bounded review step, that evidence accumulates without changing how we work. Without **bounded** review, the system drifts into self-reflection loops that never terminate and into silent rewrites of its own governance rules.
+The flywheel produces evidence on every cycle: run reports (ADR-0006), QA and PR-review reports (ADR-0007), Linear write-backs (ADR-0003), dispatch decisions (ADR-0005), intake classifications (`intake-triage.md`), and ICP routing calls (ADR-0008 / ADR-0012; originally named "ACL routing" in ADR-0008). Without a bounded review step, that evidence accumulates without changing how we work. Without **bounded** review, the system drifts into self-reflection loops that never terminate and into silent rewrites of its own governance rules.
 
 The retrospective learning loop is the explicit, scoped mechanism by which raw observations become durable changes. It is deliberately a **small, slow loop**, not a continuous optimization process.
 
@@ -68,7 +68,7 @@ The retro is a consumer of evidence produced by the rest of the flywheel. It doe
 | Linear write-backs | Bounded outcome, risks, open questions per `LAT-*` issue. | ADR-0003, `operating-model.md` |
 | Intake triage results | Triage-output shape: confidence, classification, open questions, rejected items. | `docs/process/intake-triage.md` |
 | Docs-vs-skills drift | Adapters that disagreed with canonical docs during the cycle, per ADR-0004's `Affected adapters:` flag on doc PRs. | ADR-0004, `docs/process/README.md` |
-| Approval / control-layer decisions | Which actions were routed P-Direct, P-Propose, ACL-Routed, or Stop; any rule-matrix edge cases encountered. | ADR-0008, `docs/process/approval-gates-and-autonomy-rules.md` |
+| Approval / control-plane decisions | Which actions were routed P-Direct, P-Propose, ICP-Routed, or Stop; any rule-matrix edge cases encountered. (ADR-0008 originally called this category `ACL-Routed`; renamed by ADR-0012.) | ADR-0008, ADR-0012, `docs/process/approval-gates-and-autonomy-rules.md` |
 | Dispatch decisions | Hard-blocker / soft-predecessor calls; any `## Sequencing` block failures or overrides. | ADR-0005 |
 
 If a retro cannot find the evidence it needs for one of the six questions, the gap itself is a finding — route it to the appropriate promotion path (typically backlog or ADR candidate).
@@ -143,7 +143,9 @@ The retro loop is not allowed to silently change its own governance.
 - ADR-0005 (dispatch / sequencing): `docs/decisions/0005-linear-dependency-and-sequencing-model.md`
 - ADR-0006 (agent run visibility schema): `docs/decisions/0006-agent-run-visibility-schema.md`
 - ADR-0007 (QA / review evidence): `docs/decisions/0007-qa-review-evidence-workflow.md`
-- ADR-0008 (agent control layer and Perplexity boundary): `docs/decisions/0008-agent-control-layer-and-perplexity-boundary.md`
+- ADR-0008 (Integration Control Plane and Perplexity boundary; originally titled "Agent Control Layer"): `docs/decisions/0008-agent-control-layer-and-perplexity-boundary.md`
+- ADR-0011 (Integration Control Plane language and runtime): `docs/decisions/0011-integration-control-plane-language-and-runtime.md`
+- ADR-0012 (Integration Control Plane software architecture; renames ACL → ICP): `docs/decisions/0012-integration-control-plane-software-architecture.md`
 - Process: `operating-model.md`, `intake-triage.md`, `qa-review-evidence.md`, `approval-gates-and-autonomy-rules.md`
 - Templates: `docs/templates/retro-report.md`, `docs/templates/agent-run-report.md`, `docs/templates/qa-report.md`, `docs/templates/pr-review-report.md`, `docs/templates/agent-ready-ticket.md`
 - Linear: `LAT-11` (this policy), `LAT-5`, `LAT-8`, `LAT-10`, `LAT-14`, `LAT-16`, `LAT-6`
