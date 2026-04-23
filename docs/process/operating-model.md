@@ -54,6 +54,8 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 
 Runaway cost risk is always a stop-and-ask event, even when product risk is otherwise low.
 
+The full category-by-action rule matrix — including Perplexity-direct vs Agent Control Layer routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008).
+
 ## PR ↔ Linear linking convention
 
 All PRs for Linear-tracked work must be discoverable from Linear without manual search. This is an **agent execution rule**, not just human advice — agents that open PRs must follow it.
@@ -110,6 +112,6 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`.`0008-agent-control-layer-and-perplexity-boundary.md`.
 - Process: `qa-review-evidence.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow).
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow). `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).
