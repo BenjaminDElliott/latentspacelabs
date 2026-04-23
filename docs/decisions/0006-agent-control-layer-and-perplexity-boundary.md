@@ -21,6 +21,8 @@ ADR-0001 chose Perplexity as the intake, reasoning, and control interface; Linea
 
 As the pilot has exercised Perplexity end-to-end, a pattern has emerged: **Perplexity's connectors are useful as convenience tools for read-heavy intake, triage, and drafting, but are not reliable as the long-term operational substrate when first-class APIs, native relations, deterministic dispatch semantics, or structured telemetry are required.** Perplexity is excellent at cognition — ruthless triage, draft generation, synthesis across threads. It is weaker at the parts of the workflow that must be deterministic, auditable, and repeatable: reading/writing Linear native relations, selecting the next dispatchable issue, starting coding or QA agents, opening PRs with the correct conventions, recording high-fidelity run reports, and enforcing cost/autonomy gates.
 
+Research into the Linear API (recorded during LAT-16) confirms the other side of that boundary is directly available to us: the **Linear GraphQL API exposes first-class CRUD for native issue relations** via `issueRelationCreate`, inline `issue.relations`, and `issueRelationDelete`. `IssueRelationType` carries `blocks`, `related`, and `duplicate`; `blocked` is the inferred inverse of `blocks`. Issue status fields, parent/child links, labels, and pagination are also first-class through the same API. This means an owned ACL adapter talking to the Linear GraphQL endpoint can implement the ADR-0005 dispatch algorithm — including native-relation reads, hard-blocker verification, and next-dispatchable selection — deterministically, without waiting on Perplexity's connector to improve. The ACL is therefore **not speculative for dependency and dispatch handling**; it is the reliable operational substrate we already have a clear path to build.
+
 Without an explicit boundary, two failure modes are likely:
 
 1. **Silent capability drift.** Perplexity gains or loses connector features unpredictably. Processes built on those features silently break (e.g. an agent that depended on reading `blocks` relations stops working when the connector changes shape).
@@ -31,7 +33,7 @@ We need to name, now, what belongs on Perplexity's side of the line and what bel
 ## Decision Drivers
 
 - Perplexity is the cognitive front door; it must not also be the operational substrate for actions that require determinism, auditability, or relation-level Linear semantics.
-- First-class Linear features (native relations, projects, dispatch queries) must be reachable through an owned adapter that we can evolve independently of Perplexity's connector roadmap.
+- First-class Linear features (native relations, projects, dispatch queries) must be reachable through an owned adapter that we can evolve independently of Perplexity's connector roadmap. The Linear GraphQL API exposes `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`, status / parent / child / label fields, and pagination, so this is a concrete adapter path, not a speculative one.
 - The pilot must not block on building a full orchestrator. The ACL can start as a set of deterministic skills / adapters in this repo, not a service.
 - Every action with blast radius beyond the current workspace needs a defined autonomy level and a failure posture.
 - Approval gates must be legible to both humans and agents without reading prose — they need a rule matrix.
@@ -60,6 +62,16 @@ We need to name, now, what belongs on Perplexity's side of the line and what bel
 - May be invoked by Perplexity (as a skill call) or by a human directly, but the rule matrix is the same in either case.
 
 The ACL can grow into a service later — when a real need forces it (e.g. a shared queue, cross-run coordination, or a telemetry ingest). Until then, it's skills and adapters only.
+
+### First implementation implication
+
+Because the Linear GraphQL API already exposes first-class CRUD for native issue relations (see Context), **the first concrete capability of the ACL should be a direct Linear GraphQL adapter** that implements:
+
+- Create / read / delete of native issue relations (`blocks`, `related`, `duplicate`; `blocked` inferred from `blocks`) via `issueRelationCreate`, inline `issue.relations`, and `issueRelationDelete`.
+- Next-dispatchable issue selection per the ADR-0005 dispatch algorithm, using native relations + issue status + parent/child + labels + pagination rather than the `## Sequencing` block.
+- The dispatch decision record that feeds the run report and Linear write-back.
+
+This is the smallest capability that moves dispatch determinism off the `## Sequencing` block and onto first-class Linear semantics, and it demotes the `## Sequencing` block to a human-readable mirror (per ADR-0005's stated revisit trigger). Everything else (run reports, PR linking enforcement, cost-band checks) can follow once this adapter exists.
 
 ### The four action categories
 
@@ -125,16 +137,18 @@ Good:
 Bad / open:
 
 - Two surfaces for "where does this action live" add a tiny decision cost per new capability. Mitigated by the rule matrix in the process doc.
-- Until the ACL adapters actually exist as code, ACL-Routed items are policy, not enforcement. Early runs rely on discipline.
+- Until the ACL adapters actually exist as code, ACL-Routed items are policy, not enforcement. Early runs rely on discipline. The Linear GraphQL adapter is the first scoped adapter work and closes this gap for dispatch/dependency handling specifically.
 - The boundary will shift as Perplexity's connectors improve. Expect at least one follow-up ADR when native Linear relations become first-class through the connector.
 - "ACL is just skills and adapters" is a deliberate under-investment. If cross-run coordination, a queue, or shared state becomes necessary, we will need to revisit; this ADR does not pre-decide that move.
 
 ## Open Questions
 
 1. Where exactly the ACL skills/adapters live in the repo (likely `skills/` and a future `adapters/` directory; ties into the ADR-0004 docs-vs-skills split).
-2. Which native Linear relations we implement first when we build the owned adapter (likely `blocks` / `blocked by`, to satisfy ADR-0005 dispatch and demote the `## Sequencing` block to a mirror).
-3. Whether L3 approval can be batched (e.g. "approve the next three L3 dispatches") or must be per-action — leaning per-action during pilot.
-4. Cost-band semantics: currently qualitative (`elevated`) per ADR-0003. A follow-up ADR under telemetry substrate work should make this quantitative.
+2. Whether L3 approval can be batched (e.g. "approve the next three L3 dispatches") or must be per-action — leaning per-action during pilot.
+3. Cost-band semantics: currently qualitative (`elevated`) per ADR-0003. A follow-up ADR under telemetry substrate work should make this quantitative.
+4. Authentication mode for the Linear GraphQL adapter (personal API key vs. OAuth app) and where credentials live — to be decided when the adapter is scoped.
+
+Resolved during LAT-16 research: which native Linear relations to implement first — `blocks` / `blocked` (inferred inverse) first, with `related` and `duplicate` available because `IssueRelationType` exposes them on the same endpoint.
 
 ## Confirmation
 

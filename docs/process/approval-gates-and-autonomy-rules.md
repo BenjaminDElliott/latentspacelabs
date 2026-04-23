@@ -12,7 +12,9 @@ This document is the rule matrix that operationalizes that boundary. It is inten
 
 ## Core finding
 
-**Perplexity connectors are useful convenience tools, but not reliable as the long-term operational substrate when first-class APIs, Linear native relations, deterministic dispatch, or high-fidelity telemetry are required.** Use Perplexity for cognition (triage, drafting, synthesis, read-heavy analysis) and for cheap, reversible Linear writes. Route anything else through the ACL.
+**Perplexity connectors are useful convenience tools for bounded direct actions and drafting, but not the authoritative dispatch/dependency substrate.** Use Perplexity for cognition (triage, drafting, synthesis, read-heavy analysis) and for cheap, reversible Linear writes. Route anything that needs first-class API semantics, native Linear relations, deterministic dispatch, or high-fidelity telemetry through the ACL.
+
+**The ACL side of the boundary is concrete, not speculative.** The Linear GraphQL API already exposes first-class CRUD for native issue relations — `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete` — with `IssueRelationType` covering `blocks`, `related`, and `duplicate` (`blocked` is the inferred inverse of `blocks`). Combined with issue status fields, parent/child links, labels, and pagination, this is enough to build deterministic next-dispatchable issue selection in an owned adapter. The first ACL capability should therefore be a **direct Linear GraphQL adapter** for issue-relation CRUD and next-dispatchable selection (see ADR-0006, "First implementation implication").
 
 ## The four action categories
 
@@ -65,8 +67,9 @@ Each row lists the category, the minimum autonomy level at which the action is p
 | Create Linear **project** | P-Propose | L2 → human | Draft only; explicit Ben approval required before creation. See ADR-0003. |
 | Read `## Sequencing` block for humans / triage | P-Direct | L1 | Reading for context. |
 | Read `## Sequencing` block for dispatch decision | ACL-Routed | L3 | Dispatch determinism per ADR-0005. |
-| Create native Linear issue relation (`blocks` / `blocked by` / `related`) | ACL-Routed | L2 | Connector cannot be relied on (ADR-0005). ACL adapter writes. |
-| Read native Linear issue relations for dispatch | ACL-Routed | L3 | Same reason. |
+| Create native Linear issue relation (`blocks` / `blocked by` / `related` / `duplicate`) | ACL-Routed | L2 | ACL adapter writes via Linear GraphQL `issueRelationCreate`. Perplexity connector is not authoritative here. |
+| Read native Linear issue relations for dispatch | ACL-Routed | L3 | ACL adapter reads via inline `issue.relations`; `blocked` is inferred inverse of `blocks`. |
+| Delete native Linear issue relation | ACL-Routed | L2 | ACL adapter via `issueRelationDelete`. |
 | Add / remove labels (state classification only) | P-Direct | L2 | Labels are filters, not dependencies. Must not encode blockers. |
 | Select next dispatchable `LAT-*` issue | ACL-Routed | L3 | Must execute the ADR-0005 dispatch algorithm; records decision. |
 | Reassign or change owner | P-Propose | L2 → human | Touches accountability; confirm first. |
@@ -130,11 +133,13 @@ Each row lists the category, the minimum autonomy level at which the action is p
 
 The ACL's canonical responsibilities during the pilot:
 
-- Execute the ADR-0005 dispatch algorithm: read the candidate's `## Sequencing` block, re-verify hard blockers in Linear, stop on unresolved hard blockers, flag unresolved soft predecessors, ignore parent/child and comment-based claims.
+- Execute the ADR-0005 dispatch algorithm: read the candidate's `## Sequencing` block, re-verify hard blockers in Linear via the GraphQL adapter's native-relation read (`blocks` / inferred `blocked`), stop on unresolved hard blockers, flag unresolved soft predecessors, ignore parent/child and comment-based claims.
 - Write the Linear write-back per ADR-0003's five-element contract.
 - Enforce the PR ↔ Linear linking convention (`operating-model.md`) when opening a PR on behalf of an agent.
 - Record the run report (`docs/templates/agent-run-report.md`) until the telemetry substrate ADR lands.
 - Apply the cost-band check before starting any agent that has non-trivial spend risk.
+
+**First ACL capability to build:** a direct Linear GraphQL adapter that implements native issue-relation CRUD (`issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`) and next-dispatchable issue selection. This is the adapter that moves dispatch determinism from the `## Sequencing` block to first-class Linear semantics. See ADR-0006 ("First implementation implication").
 
 The ACL is, for now, deterministic skills and adapters committed to this repo — not a standalone service. It graduates to a service only when a real need forces it.
 
@@ -151,11 +156,11 @@ If none of these fit cleanly, treat the action as **P-Propose** and ask. Over-ac
 
 ## Sequencing
 
-Hard blockers: LAT-15
+Hard blockers: none (LAT-15 / ADR-0005 has merged to main)
 Recommended predecessors: none
 Related context: LAT-6, LAT-9, LAT-10, LAT-12, LAT-13
-Dispatch status: blocked
-Dispatch note: Blocked by LAT-15 (ADR-0005) — the boundary rules here reference the dispatch algorithm defined in ADR-0005, which must merge first.
+Dispatch status: ready
+Dispatch note: LAT-15 (ADR-0005) merged; the dispatch algorithm this doc references is now on `main`. This doc is ready for review and merge as a standalone change.
 
 ## Related
 
