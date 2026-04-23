@@ -1,10 +1,14 @@
 # Agent Run Report
 
-> Minimum envelope for every agent run. The canonical high-fidelity trace should live in a dedicated telemetry substrate (see ADR-0003). Linear receives a short summary with links; this template is the structure the summary and the full report both follow.
+> Canonical agent-run envelope for the pilot. Schema is governed by **ADR-0006** (agent run visibility schema). The high-fidelity trace store is deferred to a follow-up ADR (see ADR-0003 open questions). Until that substrate exists, this run report — in the PR body, a PR comment, or a committed file — is the canonical form, and Linear receives a bounded write-back with links.
+
+## Applicability
+
+One envelope for all agent types in the pilot: `coding`, `qa`, `review`, `sre`, `pm`, `research`, `observability`. Agent-type-specific fields live inside the open sub-objects (`agent_metadata`, `cost`, `correlation`) or in the narrative sections — **not** as new top-level keys.
 
 ## Envelope (JSON)
 
-All fields other than `run_id`, `agent_type`, `status`, `started_at`, and `ended_at` are optional and forward-compatible. New fields may be added over time; consumers must ignore fields they do not recognize.
+Required core fields: `run_id`, `agent_type`, `status`, `started_at`, `ended_at`. All other fields are optional and forward-compatible. Adding a field is a non-breaking change; renaming or removing a field is ADR-worthy. Consumers must ignore fields they do not recognize.
 
 ```json
 {
@@ -69,9 +73,21 @@ All fields other than `run_id`, `agent_type`, `status`, `started_at`, and `ended
 }
 ```
 
-### Extensibility note
+### Field notes by agent type
 
-Treat `agent_metadata`, `cost`, and `correlation` as open objects. Adding a key is a minor, non-breaking change; renaming or removing a key is a breaking change and should be ADR-worthy. Consumers of this envelope (Linear formatter, telemetry substrate) should tolerate unknown keys.
+All types share the envelope above; the fields below are the ones each type should prioritize populating.
+
+- **coding** — `correlation.pr_url`, `correlation.pr_branch`, `correlation.commit_sha`, `tests_run`, `output_artifacts` (changed files). `summary` should state scope of change.
+- **qa** — `tests_run` (with per-test status), `errors`, `correlation.pr_url` of the PR under test, `risk_level`.
+- **review** — `decisions` (approve / request changes / comment), `correlation.pr_url`, `correlation.github_comment_url`, `next_actions` for the PR author.
+- **sre** — `correlation.trace_id` and/or a paged-alert ID inside `correlation` (agreed key), `errors`, `risk_level`, `next_actions` (runbook steps taken / recommended).
+- **pm** — `output_artifacts` (PRD URL, ticket URLs), `decisions` (scope calls), `linear_issue_id` when refining a specific issue.
+- **research** — `output_artifacts` (source URLs and derived artifacts), `decisions` (recommendations), `summary` with the headline finding.
+- **research / observability dashboards, alerts, SLO checks** — `output_artifacts` (dashboard / alert URLs), `decisions` (thresholds changed), `risk_level` for surfaced regressions.
+
+### Extensibility
+
+Treat `agent_metadata`, `cost`, and `correlation` as open objects. Add keys when a new signal is needed; do not add new top-level keys without an ADR. Consumers (Linear formatter, future telemetry substrate, Perplexity) must tolerate unknown keys.
 
 ## Human-readable summary
 
@@ -112,7 +128,7 @@ One or two paragraphs. What did the agent set out to do, what did it do, and wha
 
 ## Linear write-back (paste this into the issue comment)
 
-This is the bounded summary that goes back to Linear under the ADR-0003 write-back contract. Keep it scannable — see the comment size/shape guideline in ADR-0003. Everything else stays in this run report, the PR, or the telemetry substrate.
+Bounded summary per the ADR-0003 write-back contract and the ADR-0006 envelope→comment mapping. Keep it scannable — see the comment size/shape guideline in ADR-0003. Everything else stays in this run report, the PR, or the future telemetry substrate.
 
 ```md
 **Outcome:** <one or two sentences on what happened>
@@ -123,4 +139,25 @@ This is the bounded summary that goes back to Linear under the ADR-0003 write-ba
 **Open questions:** <blocking questions, or "none">
 ```
 
-Do not paste raw traces, full diffs, or long rationale into the Linear comment. Link to them instead.
+Mapping from envelope fields to comment lines:
+
+- `Outcome` ← `summary`.
+- `Evidence` ← `correlation.pr_url` + run-report URL + selected `output_artifacts`.
+- `Risks` ← `risk_level`, and `cost_band` if not `normal`, plus any flagged `errors`.
+- `PR` ← `correlation.pr_url`.
+- `Next action` ← first entry in `next_actions`.
+- `Open questions` ← unresolved items needing human input.
+
+Do not paste `decisions`, `tests_run`, raw traces, or `agent_metadata` into the Linear comment. Link them via the run report URL.
+
+## Visibility questions this envelope must answer
+
+The run report is considered sufficient if, across a set of runs, Perplexity (or any reader of these reports + Linear + GitHub) can answer the following without bespoke tooling. See ADR-0006 for the full rationale.
+
+1. **What are agents currently doing?** — recent runs by `agent_type`, `linear_issue_id`, `status`, `started_at`, `summary`.
+2. **What is blocked, and on what?** — runs with `status = needs_human`, plus open `next_actions` and Linear write-back `Open questions`, grouped by `linear_issue_id`.
+3. **Which runs are costly, and why?** — runs with `cost_band != normal` or `risk_level = high`, segmented by `agent_type` and `agent_metadata.model`, sorted by `cost.spent_usd`.
+4. **Where are agents failing repeatedly?** — runs with `status = failed` grouped by `agent_type` and by `linear_issue_id` / `correlation.pr_branch`.
+5. **What changed in the last <window>?** — runs filtered by `started_at`, grouped by `agent_type` and `status`.
+
+If a new operational question cannot be answered from the envelope, that is the trigger to extend the schema — open sub-object when possible, ADR when a top-level change is needed.

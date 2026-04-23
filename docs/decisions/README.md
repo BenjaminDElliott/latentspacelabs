@@ -53,9 +53,10 @@ The table below is for scanning. Status is copied from each ADR's frontmatter at
 | [0001](0001-use-perplexity-linear-and-github-as-control-plane.md) | Use Perplexity, Linear, and GitHub as the control plane | accepted |
 | [0002](0002-store-process-docs-and-adrs-in-the-monorepo.md) | Store process docs and ADRs in the monorepo | accepted |
 | [0003](0003-linear-persistence-boundary.md) | Linear persistence boundary | accepted |
-| [0004](0004-process-docs-vs-agent-skills.md) | Process docs vs agent skills and commands | proposed |
+| [0004](0004-process-docs-vs-agent-skills.md) | Process docs vs agent skills and commands | accepted |
 | [0005](0005-linear-dependency-and-sequencing-model.md) | Linear dependency and sequencing model | accepted |
-| [0006](0006-agent-control-layer-and-perplexity-boundary.md) | Agent Control Layer and Perplexity boundary | proposed |
+| [0006](0006-agent-run-visibility-schema.md) | Agent run visibility schema (pilot) | accepted |
+| [0008](0008-agent-control-layer-and-perplexity-boundary.md) | Agent Control Layer and Perplexity boundary | proposed |
 
 ## Anti-astronautics guardrail
 

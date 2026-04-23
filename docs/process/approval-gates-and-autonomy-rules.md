@@ -1,12 +1,12 @@
 # Approval gates and autonomy rules
 
-Operational rule matrix for the Agentic Development Flywheel pilot. Companion to ADR-0006 (which captures the architecture decision); this document captures the day-to-day rules a human or agent can look up without re-deriving policy.
+Operational rule matrix for the Agentic Development Flywheel pilot. Companion to ADR-0008 (which captures the architecture decision); this document captures the day-to-day rules a human or agent can look up without re-deriving policy.
 
-If this doc and ADR-0006 disagree, the ADR wins until superseded. If this doc and `operating-model.md` disagree, update the one that's wrong in the same PR that flagged the conflict.
+If this doc and ADR-0008 disagree, the ADR wins until superseded. If this doc and `operating-model.md` disagree, update the one that's wrong in the same PR that flagged the conflict.
 
 ## Why this document exists
 
-ADR-0001 chose Perplexity / Linear / GitHub as the control plane. ADR-0003 bounded what Linear stores. ADR-0005 defined dispatch readiness and noted that Perplexity's Linear connector does not reliably expose first-class native relations. ADR-0006 names the follow-on: **Perplexity is the cognitive front door; an owned Agent Control Layer (ACL) is the operational substrate for anything requiring first-class APIs, deterministic dispatch, or auditable runs.**
+ADR-0001 chose Perplexity / Linear / GitHub as the control plane. ADR-0003 bounded what Linear stores. ADR-0005 defined dispatch readiness and noted that Perplexity's Linear connector does not reliably expose first-class native relations. ADR-0008 names the follow-on: **Perplexity is the cognitive front door; an owned Agent Control Layer (ACL) is the operational substrate for anything requiring first-class APIs, deterministic dispatch, or auditable runs.**
 
 This document is the rule matrix that operationalizes that boundary. It is intended to be concrete enough that a future agent can classify a new action in seconds.
 
@@ -14,7 +14,7 @@ This document is the rule matrix that operationalizes that boundary. It is inten
 
 **Perplexity connectors are useful convenience tools for bounded direct actions and drafting, but not the authoritative dispatch/dependency substrate.** Use Perplexity for cognition (triage, drafting, synthesis, read-heavy analysis) and for cheap, reversible Linear writes. Route anything that needs first-class API semantics, native Linear relations, deterministic dispatch, or high-fidelity telemetry through the ACL.
 
-**The ACL side of the boundary is concrete, not speculative.** The Linear GraphQL API already exposes first-class CRUD for native issue relations — `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete` — with `IssueRelationType` covering `blocks`, `related`, and `duplicate` (`blocked` is the inferred inverse of `blocks`). Combined with issue status fields, parent/child links, labels, and pagination, this is enough to build deterministic next-dispatchable issue selection in an owned adapter. The first ACL capability should therefore be a **direct Linear GraphQL adapter** for issue-relation CRUD and next-dispatchable selection (see ADR-0006, "First implementation implication").
+**The ACL side of the boundary is concrete, not speculative.** The Linear GraphQL API already exposes first-class CRUD for native issue relations — `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete` — with `IssueRelationType` covering `blocks`, `related`, and `duplicate` (`blocked` is the inferred inverse of `blocks`). Combined with issue status fields, parent/child links, labels, and pagination, this is enough to build deterministic next-dispatchable issue selection in an owned adapter. The first ACL capability should therefore be a **direct Linear GraphQL adapter** for issue-relation CRUD and next-dispatchable selection (see ADR-0008, "First implementation implication").
 
 ## The four action categories
 
@@ -107,7 +107,7 @@ Each row lists the category, the minimum autonomy level at which the action is p
 | Draft an ADR, PRD, process doc, or template change | P-Direct | L1 | Drafts only. |
 | Open a PR updating docs / ADRs / templates | P-Propose → ACL-Routed | L2 | Propose the draft; open the PR through the usual convention. Merge is Stop. |
 | Merge a docs / ADR / template PR | Stop | — | Human only. |
-| Change approval gates or autonomy rules (edit this doc or ADR-0006) | Stop | — | Requires an ADR. Agents may draft; humans decide. |
+| Change approval gates or autonomy rules (edit this doc or ADR-0008) | Stop | — | Requires an ADR. Agents may draft; humans decide. |
 | Raise an autonomy level beyond the pilot default | Stop | — | Requires explicit approval. L4+ requires an ADR. |
 
 ### Communication and external surfaces
@@ -139,7 +139,7 @@ The ACL's canonical responsibilities during the pilot:
 - Record the run report (`docs/templates/agent-run-report.md`) until the telemetry substrate ADR lands.
 - Apply the cost-band check before starting any agent that has non-trivial spend risk.
 
-**First ACL capability to build:** a direct Linear GraphQL adapter that implements native issue-relation CRUD (`issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`) and next-dispatchable issue selection. This is the adapter that moves dispatch determinism from the `## Sequencing` block to first-class Linear semantics. See ADR-0006 ("First implementation implication").
+**First ACL capability to build:** a direct Linear GraphQL adapter that implements native issue-relation CRUD (`issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`) and next-dispatchable issue selection. This is the adapter that moves dispatch determinism from the `## Sequencing` block to first-class Linear semantics. See ADR-0008 ("First implementation implication").
 
 The ACL is, for now, deterministic skills and adapters committed to this repo — not a standalone service. It graduates to a service only when a real need forces it.
 
@@ -164,7 +164,7 @@ Dispatch note: LAT-15 (ADR-0005) merged; the dispatch algorithm this doc referen
 
 ## Related
 
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0006-agent-control-layer-and-perplexity-boundary.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`.
 - Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`.
 - Templates: `docs/templates/agent-ready-ticket.md`, `docs/templates/agent-run-report.md`.
 - Linear: `LAT-16` (this boundary), `LAT-6` (autonomy dial / operating posture).

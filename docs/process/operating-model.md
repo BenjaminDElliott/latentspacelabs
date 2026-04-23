@@ -54,7 +54,7 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 
 Runaway cost risk is always a stop-and-ask event, even when product risk is otherwise low.
 
-The full category-by-action rule matrix — including Perplexity-direct vs Agent Control Layer routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0006).
+The full category-by-action rule matrix — including Perplexity-direct vs Agent Control Layer routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008).
 
 ## PR ↔ Linear linking convention
 
@@ -79,6 +79,8 @@ Before any agent is dispatched to a `LAT-*` issue, the dispatcher must check the
 
 Full format, defaults, and the step-by-step dispatch algorithm live in ADR-0005. The `## Sequencing` block is the source of truth agents read; Linear's native `blocks` / `blocked by` relation remains the canonical human/UI representation when available.
 
+The `## Sequencing` block is a **transitional pilot bridge**, not the long-term architecture. Once the Agent Control Layer (or an equivalent canonical dependency graph) can read/write native Linear relations, the block is expected to be deprecated as the authoritative dispatch source per a follow-up ADR — possibly becoming a generated mirror or being removed from issue descriptions entirely. Until that follow-up ADR lands, agents must continue to treat the block as authoritative; it is the only connector-readable pilot mechanism today. See ADR-0005 "Deprecation and migration".
+
 ## Linear write-back contract
 
 Every agent run that touches a `LAT-*` issue must leave a single, bounded write-back comment on that issue. The comment contains, at minimum:
@@ -100,6 +102,6 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0006-agent-control-layer-and-perplexity-boundary.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`.
 - Process: `approval-gates-and-autonomy-rules.md` (full rule matrix and autonomy levels), `intake-triage.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (persistence boundaries), `LAT-15` (dependency and sequencing model), `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-16` (ACL and Perplexity boundary), `LAT-6` (autonomy dial).

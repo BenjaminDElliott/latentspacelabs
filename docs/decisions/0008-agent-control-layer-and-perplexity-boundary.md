@@ -1,5 +1,5 @@
 ---
-id: ADR-0006
+id: ADR-0008
 title: Agent Control Layer and Perplexity boundary
 status: proposed
 date: 2026-04-23
@@ -13,7 +13,7 @@ superseded_by:
 revisit_trigger: Revisit when Perplexity's connectors expose first-class create/read for Linear native relations and reliable dispatch semantics; when the first owned adapter ships; or when a Perplexity-direct action causes a production incident.
 ---
 
-# ADR-0006: Agent Control Layer and Perplexity boundary
+# ADR-0008: Agent Control Layer and Perplexity boundary
 
 ## Context
 
