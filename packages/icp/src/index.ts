@@ -51,7 +51,22 @@ export type {
 export { createPolicyEvaluator } from "./adapters/policy-evaluator.js";
 export { createRunRecorder } from "./adapters/run-recorder.js";
 export { createWriteBackFormatter } from "./adapters/write-back-formatter.js";
-export { createStubLinearAdapter } from "./adapters/linear-adapter.js";
+export {
+  createStubLinearAdapter,
+  createLinearAdapter,
+  loadLinearCredentialFromEnv,
+  LinearAdapterError,
+  buildSnapshotFromRaw,
+  parseDispatchFields,
+} from "./adapters/linear-adapter.js";
+export type {
+  StubLinearAdapterOptions,
+  LinearAdapterOptions,
+  LinearAdapterErrorKind,
+  LinearAdapterEvent,
+  FetchLike,
+  FetchLikeResponse,
+} from "./adapters/linear-adapter.js";
 export { createStubAgentAdapter } from "./adapters/agent-invocation-adapter.js";
 
 export {
