@@ -32,5 +32,6 @@ Perplexity threads and workspace Markdown files are **working drafts, not source
 ## Related Linear issues
 
 - `LAT-10` — Operating model / Perplexity-first intake scaffolding.
+- `LAT-11` — Retrospective learning loop (ADR-0009 + `process/retrospective-learning-loop.md` + `templates/retro-report.md`).
 - `LAT-12` — Persistence boundaries across Perplexity, Linear, and Git.
 - `LAT-13` — Architecture decision process and ADR structure.
