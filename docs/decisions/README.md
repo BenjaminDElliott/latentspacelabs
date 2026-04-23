@@ -40,23 +40,19 @@ Accepted ADRs are immutable in spirit: if the decision changes, write a new ADR 
 
 ## Source of truth
 
-Each ADR file is the sole source of truth for its own status, decision makers, and supersession links. The file's frontmatter is authoritative; anything outside the file (this index, Linear labels, PR descriptions) is a navigation aid only and may lag.
+**ADR files and their frontmatter are authoritative.** To find, list, or check the status of ADRs, read the files in this directory directly — their filenames carry the zero-padded ID and their frontmatter carries the canonical `status`, `supersedes`, and `superseded_by` fields.
 
-If this index and an ADR file disagree, **trust the file**. Fix the index in the same PR that changed the file's status.
+This README intentionally does **not** maintain a hand-edited table of ADR IDs, titles, or statuses. A prior version of this file kept such a table, and it drifted under parallel PRs: multiple branches claimed the same next ADR number (e.g. two PRs both taking `ADR-0006`) and the status column fell out of sync with the underlying files. Removing the table eliminates that drift surface. Until a generated/validated index exists, `ls docs/decisions/` and the file frontmatter are the answer.
 
-## Index (navigation aid — not authoritative)
+## Future validation (tracked under LAT-17)
 
-The table below is for scanning. Status is copied from each ADR's frontmatter at write time and will drift if not updated alongside the ADR. We accept that risk for now; a future CI check should validate that the index matches each file's frontmatter and fail the build on drift (tracked as a follow-up; see ADR-0004 for the broader docs-vs-skills automation question).
+The following are explicit follow-ups, not implemented here:
 
-| ID | Title | Status (see file) |
-|---|---|---|
-| [0001](0001-use-perplexity-linear-and-github-as-control-plane.md) | Use Perplexity, Linear, and GitHub as the control plane | accepted |
-| [0002](0002-store-process-docs-and-adrs-in-the-monorepo.md) | Store process docs and ADRs in the monorepo | accepted |
-| [0003](0003-linear-persistence-boundary.md) | Linear persistence boundary | accepted |
-| [0004](0004-process-docs-vs-agent-skills.md) | Process docs vs agent skills and commands | accepted |
-| [0005](0005-linear-dependency-and-sequencing-model.md) | Linear dependency and sequencing model | accepted |
-| [0006](0006-agent-run-visibility-schema.md) | Agent run visibility schema (pilot) | accepted |
+- **Duplicate ID detection.** Fail the build if two files under `docs/decisions/` share the same `NNNN-` prefix or the same `id:` in frontmatter.
+- **Filename / frontmatter consistency.** Fail the build if the `NNNN-` prefix in the filename does not match the `id:` field in the file's frontmatter.
+- **Generated or validated index.** If a navigation index is reintroduced, it must be generated from the ADR files (not hand-edited) and validated in CI against each file's frontmatter, so it cannot drift.
 
+Until those checks land, treat collisions as a process risk to watch for during review of parallel ADR PRs.
 
 ## Anti-astronautics guardrail
 
@@ -65,4 +61,4 @@ The table below is for scanning. Status is copied from each ADR's frontmatter at
 ## Related
 
 - Template: `docs/templates/adr.md`.
-- Linear: `LAT-13` (this ADR process).
+- Linear: `LAT-13` (this ADR process), `LAT-17` (automation follow-ups).
