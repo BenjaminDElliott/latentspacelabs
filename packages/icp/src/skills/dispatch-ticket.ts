@@ -1,10 +1,17 @@
 /**
- * dispatch-ticket@0.1.0 (ADR-0012 § "First vertical slice").
+ * dispatch-ticket@0.2.0 (ADR-0012 § "First vertical slice", LAT-61).
  *
  * Reads one agent-ready Linear ticket, evaluates the ADR-0005 / ADR-0008
  * dispatch policy, invokes one bounded coding-agent run with explicit human
  * approval, records the run against the ADR-0006 envelope, and posts the
  * five-element Linear write-back.
+ *
+ * LAT-61 bumps the skill from 0.1.0 → 0.2.0 because the adapter boundary
+ * now carries the ADR-0013 minimum run contract (repo, branch_target,
+ * ticket_context, budget_cap_usd, cost_band_observed, skill_name_and_version).
+ * The additions are optional inputs on this skill (non-breaking), but the
+ * request shape passed to the invocation adapter is richer, which is a
+ * MINOR bump per ADR-0016 §Q4.
  *
  * This is the runtime adapter for the three canonical docs named in
  * `derived_from`; the runner / registry enforce provenance and evidence.
@@ -20,6 +27,25 @@ export interface DispatchTicketInputs extends Record<string, unknown> {
   linear_issue_id: string;
   approve: boolean;
   dry_run: boolean;
+  /**
+   * Target repository for the coding-agent run, `owner/name`. LAT-61:
+   * required by the ADR-0013 minimum run contract for side-effecting
+   * invocations; the adapter refuses without it. Harnesses that dispatch
+   * against the pilot repo pass `BenjaminDElliott/latentspacelabs`.
+   */
+  repo?: string;
+  /** Base branch the agent should branch from; defaults to `main`. */
+  branch_target?: string;
+  /** Short human-readable ticket title surfaced to the provider. */
+  ticket_title?: string;
+  /** Short summary of what the ticket asks the provider to do. */
+  ticket_summary?: string;
+  /**
+   * Caller's best-known cost band per ADR-0009 before invocation. Defaults
+   * to `normal`; callers aware of elevated/runaway_risk context pass it
+   * explicitly so the adapter can refuse preflight.
+   */
+  cost_band_observed?: "normal" | "elevated" | "runaway_risk" | "unknown";
 }
 
 export type DispatchTicketOutputs = {
@@ -40,11 +66,16 @@ export const dispatchTicketSkill: SkillDefinition<
   DispatchTicketOutputs
 > = {
   name: "dispatch-ticket",
-  version: "0.1.0",
+  version: "0.2.0",
   inputs: [
     { name: "linear_issue_id", type: "string", required: true },
     { name: "approve", type: "boolean", required: false },
     { name: "dry_run", type: "boolean", required: false },
+    { name: "repo", type: "string", required: false },
+    { name: "branch_target", type: "string", required: false },
+    { name: "ticket_title", type: "string", required: false },
+    { name: "ticket_summary", type: "string", required: false },
+    { name: "cost_band_observed", type: "string", required: false },
   ],
   required_tools: [
     "linear-adapter",
@@ -140,12 +171,35 @@ export const dispatchTicketSkill: SkillDefinition<
 
     // The runner has already enforced the approval gate. Caution with approval
     // is allowed: approval is the acknowledgement that the caution is known.
+    // LAT-61: the invocation request now carries the ADR-0013 minimum run
+    // contract (repo, branch_target, ticket_context, budget_cap_usd,
+    // cost_band_observed, skill_name_and_version). The adapter refuses
+    // structurally when any required field is missing.
     const agentResult = await ctx.tools.agents.invoke({
       agent_type: "coding",
       linear_issue_id: linearIssueId,
       autonomy_level: AUTONOMY,
       approve: ctx.approve,
       dry_run: false,
+      repo: ctx.inputs.repo,
+      branch_target: ctx.inputs.branch_target ?? "main",
+      branch_naming: `lat-${issueNumber(linearIssueId)}-<slug>`,
+      ticket_context: {
+        title: ctx.inputs.ticket_title ?? linearIssueId,
+        summary:
+          ctx.inputs.ticket_summary ??
+          issue.sequencing.dispatch_note ??
+          `Dispatch ${linearIssueId} per ADR-0005 / ADR-0013.`,
+        guardrails: [
+          "No auto-merge; all PRs are human-reviewed (ADR-0008).",
+          "No secret values in PR body, logs, or run report (ADR-0017 Rule 5).",
+          "ADR-0009 cost bands apply; runaway risk halts dispatch.",
+        ],
+        non_goals: [],
+      },
+      budget_cap_usd: issue.budget_cap_usd,
+      cost_band_observed: ctx.inputs.cost_band_observed ?? "normal",
+      skill_name_and_version: "dispatch-ticket@0.2.0",
     });
 
     const endedAt = ctx.now();
@@ -237,6 +291,11 @@ function runStatusFrom(signal: string): SkillStatus {
     default:
       return "failed";
   }
+}
+
+function issueNumber(issueId: string): string {
+  const m = /-(\d+)$/.exec(issueId);
+  return m ? (m[1] as string) : "nn";
 }
 
 function formatWriteBack(
