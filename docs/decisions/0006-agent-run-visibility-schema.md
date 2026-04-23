@@ -46,14 +46,15 @@ Backend selection (JSONL-in-repo, SQLite, Postgres, Langfuse/Helicone, OpenTelem
 
 Every run report must populate at least:
 
+- `schema_version` — SemVer string stamping which envelope revision the report conforms to (LAT-36; current value `1.0.0`). Canonical source lives in `packages/icp/src/runtime/contract.ts` as `RUN_REPORT_SCHEMA_VERSION`.
 - `run_id` — stable, unique per run.
-- `agent_type` — one of `coding | qa | review | sre | pm | research | observability`.
+- `agent_type` — one of `coding | qa | review | sre | pm | research | observability`. `retro` is deliberately **not** an agent type; retros are a process artefact (ADR-0010) and a retro run is recorded under `pm` or `research`.
 - `status` — one of `started | succeeded | failed | cancelled | needs_human`.
 - `started_at`, `ended_at` — ISO-8601 timestamps (UTC).
 
 ### Strongly-recommended fields (populate when known)
 
-- `triggered_by` — `user | linear_status | schedule | webhook | agent | github_comment`.
+- `triggered_by` — `user | linear_status | schedule | webhook | agent | github_comment | hook | mcp`. (`hook` is a Claude Code harness hook callback; `mcp` is an MCP server callback. Both were added in LAT-36 as non-breaking additions per the extensibility rule below.)
 - `linear_issue_id`, `project_id` — so runs can be grouped by issue or project.
 - `input_artifacts`, `output_artifacts` — list of URLs or repo-relative paths.
 - `summary` — one or two sentences, same content as the Linear write-back's `Outcome:` line.
@@ -71,7 +72,7 @@ Agent-type-specific fields live inside these sub-objects or in the narrative sec
 
 ### Linear write-back format (reaffirming ADR-0003)
 
-The write-back comment on a Linear issue is the *bounded projection* of the run envelope. It contains exactly five elements, in this order:
+The write-back comment on a Linear issue is the *bounded projection* of the run envelope. ADR-0003 fixes the contract at **five elements** (outcome, evidence, risks, PR, next action + open questions). The rendered comment uses **six lines** because the fifth element is split into an explicit `Next action` line and an explicit `Open questions` line — either is allowed to read `"none"`, and splitting them prevents ambiguity when only one of the two applies. LAT-36 reconciled this: the five-element contract and the six-line render are the same contract. The formatter (`packages/icp/src/adapters/write-back-formatter.ts`) is the single source of truth for the rendered shape.
 
 ```md
 **Outcome:** <one or two sentences on what happened>

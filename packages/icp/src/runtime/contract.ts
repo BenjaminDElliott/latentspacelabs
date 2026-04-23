@@ -4,14 +4,40 @@
  * Pure types / interfaces. Defines the shape every skill file conforms to and
  * the shared result envelopes skills produce. This module is a leaf: it does
  * not call adapters, register skills, or execute them.
+ *
+ * LAT-36 reconciles the enum surface so the code, the ADR-0006 template, and
+ * the ADR-0013 minimum run contract agree: autonomy uses the `L1..L4` ADR-0008
+ * notation; `agent_type`, `triggered_by`, and the run-report `status` are the
+ * single source of truth for their respective enums; and `SkillStatus` has an
+ * explicit mapping to the narrower run-report `status` (see `toRunStatus`).
  */
 
+/**
+ * Schema version for the ADR-0006 envelope produced by the run recorder and
+ * consumed by the write-back formatter. Bumped only when a breaking change
+ * to the envelope lands (per ADR-0006's extensibility rule: additions are
+ * non-breaking; renames/removals require an ADR).
+ */
+export const RUN_REPORT_SCHEMA_VERSION = "1.0.0";
+
+/**
+ * Autonomy notation per ADR-0008 (L0–L5). The pilot runtime operates between
+ * L1 and L4; L0 is Perplexity-only "observe/draft" and L5 is the out-of-scope
+ * autonomous-merge-and-deploy level.
+ */
 export type AutonomyLevel =
   | "L1-read-only"
   | "L2-propose"
   | "L3-with-approval"
   | "L4-autonomous";
 
+/**
+ * SkillStatus is the **runner-facing** outcome of a single skill invocation.
+ * It is broader than RunReport["status"] because it also carries pre-execution
+ * verdicts (`ready`, `caution`, `blocked`) the runner emits without ever
+ * reaching the agent. `stopped` is the skill-side term for a cancelled run.
+ * Use `toRunStatus` to project onto the ADR-0006 run-report status enum.
+ */
 export type SkillStatus =
   | "ready"
   | "succeeded"
@@ -24,23 +50,92 @@ export type SkillStatus =
 export type PolicyVerdict = "ready" | "caution" | "blocked" | "stop";
 
 /**
+ * ADR-0006 canonical agent types. Keep in sync with
+ * `docs/templates/agent-run-report.md`. Note: `retro` is deliberately NOT an
+ * agent_type — retros are a process (ADR-0010), not a runnable agent. A retro
+ * run is recorded under `pm` or `research` depending on who authored it.
+ */
+export type AgentType =
+  | "coding"
+  | "qa"
+  | "review"
+  | "sre"
+  | "pm"
+  | "research"
+  | "observability";
+
+/**
+ * ADR-0006 run-report status enum (the narrow lifecycle-facing enum written
+ * to `runs/<run_id>.json`). Distinct from `SkillStatus` on purpose: a run
+ * report is only written for a run that actually reached the invocation
+ * boundary, so pre-execution verdicts like `ready`/`caution`/`blocked` are
+ * projected onto `needs_human` or `failed` via `toRunStatus`.
+ */
+export type RunReportStatus =
+  | "started"
+  | "succeeded"
+  | "failed"
+  | "cancelled"
+  | "needs_human";
+
+/**
+ * ADR-0006 `triggered_by` surface. LAT-36 adds `hook` (Claude Code harness
+ * hook callback) and `mcp` (MCP server callback) to the three existing
+ * programmatic surfaces (`schedule`, `webhook`, `agent`) alongside the
+ * Linear/GitHub-originated surfaces. Additions are non-breaking per ADR-0006.
+ */
+export type TriggeredBy =
+  | "user"
+  | "linear_status"
+  | "schedule"
+  | "webhook"
+  | "agent"
+  | "github_comment"
+  | "hook"
+  | "mcp";
+
+/**
+ * Projects a SkillStatus onto the narrower RunReportStatus enum the run
+ * recorder persists. `ready`/`caution`/`blocked` all mean the skill never
+ * reached the agent — from the run-report's perspective that is either
+ * `needs_human` (human decision required) or `failed` (runtime rejected).
+ * `stopped` → `cancelled` is the skill↔run-report rename of the same event.
+ */
+export function toRunStatus(s: SkillStatus): RunReportStatus {
+  switch (s) {
+    case "succeeded":
+      return "succeeded";
+    case "failed":
+      return "failed";
+    case "needs_human":
+    case "blocked":
+    case "caution":
+    case "ready":
+      return "needs_human";
+    case "stopped":
+      return "cancelled";
+    default:
+      return "failed";
+  }
+}
+
+/**
  * Minimum-viable projection of the ADR-0006 run report envelope.
  * The full envelope (agent_metadata / cost / correlation open sub-objects)
  * is produced by the run recorder; this shape is what the skill runner
  * needs to enforce the evidence contract.
  */
 export interface RunReport {
+  /**
+   * Envelope schema version (`RUN_REPORT_SCHEMA_VERSION`). Written into the
+   * run report so consumers (Linear formatter, future telemetry substrate,
+   * Perplexity) can branch on version without re-reading ADR-0006.
+   */
+  schema_version: string;
   run_id: string;
-  agent_type:
-    | "coding"
-    | "qa"
-    | "review"
-    | "sre"
-    | "pm"
-    | "research"
-    | "observability";
-  status: "started" | "succeeded" | "failed" | "cancelled" | "needs_human";
-  triggered_by: "user" | "linear_status" | "schedule" | "webhook" | "agent";
+  agent_type: AgentType;
+  status: RunReportStatus;
+  triggered_by: TriggeredBy;
   linear_issue_id: string;
   autonomy_level: AutonomyLevel;
   started_at: string;
