@@ -9,7 +9,7 @@ related_linear:
   - LAT-15
 supersedes:
 superseded_by:
-revisit_trigger: Revisit when the Linear connector exposes first-class relation create/read operations, when a custom Linear API path is introduced, or when the `## Sequencing` block fails in practice during agent dispatch.
+revisit_trigger: Revisit (and plan deprecation of the `## Sequencing` block as the authoritative dispatch source) when the Agent Control Layer or a custom Linear API path can read/write native Linear issue relations, when another canonical dependency graph becomes available to agents, or when the block fails in practice during agent dispatch.
 ---
 
 # ADR-0005: Linear dependency and sequencing model
@@ -105,6 +105,25 @@ Before dispatching any agent to a `LAT-*` issue:
 ### Relationship to Linear native relations
 
 When the Linear connector begins to expose native `blocks` / `blocked by` create/read operations, the `## Sequencing` block remains the dispatch source and the native relation remains the canonical human/UI representation. At that point, a follow-up ADR may promote native relations to the authoritative dispatch source and demote the block to a mirror — but not before. Until then, native relations are a human navigation aid, not a dispatch input.
+
+### Status: transitional pilot bridge
+
+The `## Sequencing` block is a **pilot bridge**, not the long-term architecture. It exists because the current Linear connector cannot reliably read or write native issue relations, and agents need *some* connector-readable dependency graph today. Duplicating the dependency graph into issue descriptions is accepted as the lowest-cost way to unblock the pilot, not as the desired steady state.
+
+### Deprecation and migration
+
+This ADR must be revisited and the block deprecated as the authoritative dispatch source once **either** of the following is true:
+
+- The Agent Control Layer (or a custom Linear API path) can read and write native Linear issue relations — `blocks` / `blocked by` — reliably enough for dispatch decisions, **or**
+- Another canonical dependency graph (e.g. a dedicated control-plane store) becomes available to agents with equivalent or better guarantees than the `## Sequencing` block.
+
+At that point:
+
+- A follow-up ADR (or an amendment to this one) is **required** before the migration happens. That ADR must define: the new source of truth, the migration path for existing tickets, the sync behavior between the new source and any remaining description-level representation, and stale-data handling during and after cutover.
+- The `## Sequencing` block may then be **demoted to a generated mirror / cache** for human readability in the Linear UI, or **removed from issue descriptions entirely**, depending on what the follow-up ADR decides.
+- Agents must not silently start reading native relations or an alternative graph as the dispatch source before that follow-up ADR lands. Behavior change on the dispatch source is an ADR-gated event.
+
+Until that follow-up ADR exists, agents **must** continue to treat the `## Sequencing` block as authoritative, because it remains the only connector-readable pilot mechanism for dispatch. Running ahead of the migration risks silent dispatch across unresolved blockers.
 
 ### Sub-issues and labels
 

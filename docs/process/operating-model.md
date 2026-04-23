@@ -77,6 +77,8 @@ Before any agent is dispatched to a `LAT-*` issue, the dispatcher must check the
 
 Full format, defaults, and the step-by-step dispatch algorithm live in ADR-0005. The `## Sequencing` block is the source of truth agents read; Linear's native `blocks` / `blocked by` relation remains the canonical human/UI representation when available.
 
+The `## Sequencing` block is a **transitional pilot bridge**, not the long-term architecture. Once the Agent Control Layer (or an equivalent canonical dependency graph) can read/write native Linear relations, the block is expected to be deprecated as the authoritative dispatch source per a follow-up ADR — possibly becoming a generated mirror or being removed from issue descriptions entirely. Until that follow-up ADR lands, agents must continue to treat the block as authoritative; it is the only connector-readable pilot mechanism today. See ADR-0005 "Deprecation and migration".
+
 ## Linear write-back contract
 
 Every agent run that touches a `LAT-*` issue must leave a single, bounded write-back comment on that issue. The comment contains, at minimum:
