@@ -85,7 +85,7 @@ Each row lists the category, the minimum autonomy level at which the action is p
 | Add PR comments | P-Direct | L2 | |
 | Request review | ICP-Routed | L2 | Through the ICP when the agent that opened the PR is dispatched. |
 | Approve a PR | Stop | — | Agents are never authorized to approve PRs. |
-| Merge a PR | Stop | — | Human only during the pilot. |
+| Merge a PR | Stop | — | Human only during the pilot. An agent may mechanically execute a merge Ben has approved in-thread, but only when every check in [`thread-approved-merge-authority.md`](thread-approved-merge-authority.md) → *Ready-to-merge gate* passes; otherwise refuse. Thread approval is a delegation of a Ben decision, not a new autonomy level. |
 | Force-push / rewrite shared history | Stop | — | Always human and always explicitly asked for. |
 | Delete a branch with unmerged work | Stop | — | Confirm first. |
 | Deploy | Stop | — | Human only during the pilot. |

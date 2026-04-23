@@ -22,6 +22,7 @@ Docs are canonical; skills and commands are downstream operational adapters. A s
 - `qa-review-evidence.md` — Verification workflow for code-producing runs.
 - `approval-gates-and-autonomy-rules.md` — Rule matrix for Perplexity-direct / propose / ICP-routed / stop classifications. (ADR-0008 originally named the routed category `ACL-Routed`; ADR-0012 renamed it to `ICP-Routed`.)
 - `coding-agent-preflight.md` — Preflight guardrails a coding or documentation agent runs against its own instructions before the first file edit. Runtime companion to `approval-gates-and-autonomy-rules.md`.
+- `thread-approved-merge-authority.md` — When an agent may mechanically execute a PR merge under Ben's explicit in-thread approval, the pre-merge ready-to-merge gate, refusal cases, the terse approval packet, and the post-merge Linear write-back.
 - `retrospective-learning-loop.md` — Bounded retro step: how evidence from run reports, QA/review, intake, and dispatch becomes prompt/template/backlog/ADR changes.
 
 ## What does not live here
