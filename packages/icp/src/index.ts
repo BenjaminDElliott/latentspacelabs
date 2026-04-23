@@ -97,3 +97,25 @@ export {
   type DispatchTicketInputs,
   type DispatchTicketOutputs,
 } from "./skills/dispatch-ticket.js";
+
+export {
+  evaluateReadiness,
+  evaluateCodingRun,
+  aggregateRunsForRetro,
+} from "./evaluation/index.js";
+export type {
+  Recommendation,
+  Severity,
+  FailureCategory,
+  EvaluationFinding,
+  EvaluationReport,
+  EvaluationRunInput,
+  ReadinessVerdict,
+  ReadinessReason,
+  ReadinessReport,
+  ReadinessTicketInput,
+  AggregatableRun,
+  RetroCandidate,
+  RetroAggregationResult,
+  RetroAggregationOptions,
+} from "./evaluation/index.js";
