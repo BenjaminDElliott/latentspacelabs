@@ -155,11 +155,19 @@ When in doubt about reversibility, treat as non-reversible.
 
 ## Backlog refinement loop
 
-1. On a regular cadence (cadence TBD; see ADR-0003 open questions), Ben reviews Linear items labeled `intake` or `needs-refinement`.
-2. Items are promoted to `agent-ready` only after passing the pre-flight checks in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md` → *Pre-flight: refuse to mark agent-ready if any of these fail*), including a populated `## Sequencing` block per ADR-0005.
-3. A dispatcher (human or agent) that encounters a ticket labeled `agent-ready` but failing pre-flight must **refuse** to dispatch it, move it back to `needs-refinement`, and leave the refusal block on the Linear issue as a comment. Silently proceeding on a vague ticket is a policy violation, not a courtesy.
-4. Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision) or to a PRD (if the blocker is scope ambiguity).
-5. Retro learnings feed back into updates to this document, the triage prompt, and the PRD + ticket templates.
+**Cadence (pilot default).** Ben runs a backlog-refinement pass at least **weekly**, and additionally whenever the `intake` + `needs-refinement` queue crosses ~15 open items, whichever comes first. The pass is short and ruthless — it is not a grooming meeting. Triage-created items that are not picked up in the next refinement pass are candidates for pruning, not a permanent backlog.
+
+**What the pass does, in order.**
+
+1. **Review agent-created and intake-labelled items.** Read Linear items labeled `intake`, `needs-refinement`, or created by a triage / research agent in the last cadence window. Agent-created issues are allowed at L2 per ADR-0008 precisely because the refinement pass catches them; skipping the pass breaks that assumption.
+2. **Prune aggressively.** Archive or `Cancel` anything stale, duplicative, out of scope, or not worth doing. Do not leave low-value items to rot — they dilute the backlog and waste future triage cycles. "Not worth doing yet" without a concrete trigger is "not worth doing."
+3. **Reprioritize what's left.** Confirm or change priority on the items that survive. Resequence `## Sequencing` blocks when a new hard blocker has emerged.
+4. **Promote to `agent-ready` only when the pre-flight passes.** Items are promoted to `agent-ready` only after passing the pre-flight checks in the agent-ready ticket template (`docs/templates/agent-ready-ticket.md` → *Pre-flight: refuse to mark agent-ready if any of these fail*), including a populated `## Sequencing` block per ADR-0005 and a numeric `Budget cap` per ADR-0009 / `cost-controls.md`.
+5. **Dispatcher refusal still applies.** A dispatcher (human or agent) that encounters a ticket labeled `agent-ready` but failing pre-flight must **refuse** to dispatch it, move it back to `needs-refinement`, and leave the refusal block on the Linear issue as a comment. Silently proceeding on a vague ticket is a policy violation, not a courtesy.
+6. **Escalate unfinishable items.** Items that cannot be made agent-ready are either archived or escalated to an ADR (if the blocker is a design decision) or to a PRD (if the blocker is scope ambiguity).
+7. **Feed retro learnings back.** Retro learnings feed back into updates to this document, the triage prompt, and the PRD + ticket templates.
+
+**Agent-created Linear issues.** Low-risk Linear issue creation by triage / research agents is permitted at L2 per ADR-0008 (rule matrix: *Create Linear issue (intake / refinement)*). The refinement pass is the checkpoint where humans can review, prune, and reprioritize those agent-created items. An agent that creates a Linear issue is writing into a surface a human will audit at the next refinement pass — not issuing a commitment. Agents must therefore label auto-created issues with `needs-refinement` unless triage explicitly determined the item is already refinement-complete.
 
 ## What triage is not
 
@@ -174,6 +182,7 @@ When in doubt about reversibility, treat as non-reversible.
 - `mobile-intake-ux.md` — low-friction chat/mobile interaction contract for the capture step.
 - `qa-review-evidence.md` (verification of code-producing runs).
 - `docs/templates/agent-ready-ticket.md`
-- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`.
+- ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`.
 - ADR-0007: `docs/decisions/0007-qa-review-evidence-workflow.md` (QA and PR-review evidence workflow).
-- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence).
+- Process: `cost-controls.md` (cost bands and runaway-cost interrupt), `approval-gates-and-autonomy-rules.md` (full rule matrix).
+- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence), `LAT-6` (approval and cost-control gates).

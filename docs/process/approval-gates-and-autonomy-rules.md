@@ -49,7 +49,7 @@ Severity classification follows `intake-triage.md`. The severity check overrides
 | Low / reversible | Proceed and flag. Leave a breadcrumb for review. |
 | Medium | Take the safest reversible action. Ask if uncertain. Do not persist irreversible artifacts. |
 | High / security / data-loss / destructive | **Stop and ask.** Do not act. |
-| Runaway-cost | **Always stop and ask.** No autonomy level overrides this. |
+| Runaway-cost | **Always stop and ask.** No autonomy level overrides this. See `cost-controls.md` and ADR-0009 for the three cost bands, the concrete runaway-cost triggers, and the interrupt protocol. |
 
 A Low/reversible classification never promotes an action out of its category: a Stop-category item stays Stop even if the individual action looks cheap.
 
@@ -61,7 +61,7 @@ Each row lists the category, the minimum autonomy level at which the action is p
 
 | Action | Category | Min level | Notes |
 |---|---|---|---|
-| Create Linear issue (intake / refinement) | P-Direct | L2 | Cheap and reversible. Must follow `intake-triage.md`; never auto-create for personal items. |
+| Create Linear issue (intake / refinement) | P-Direct | L2 | Cheap and reversible. Must follow `intake-triage.md`; never auto-create for personal items. Agent-created issues default to `needs-refinement` and are audited at the next backlog refinement pass (`intake-triage.md` → *Backlog refinement loop*). |
 | Update Linear issue description | P-Direct | L2 | Keep `## Sequencing` block intact; see ADR-0005. |
 | Add Linear comment / agent write-back | P-Direct | L2 | Must follow the Linear write-back contract (ADR-0003): outcome, evidence, risk flags, PR link, next action. |
 | Create Linear **project** | P-Propose | L2 → human | Draft only; explicit Ben approval required before creation. See ADR-0003. |
@@ -94,11 +94,12 @@ Each row lists the category, the minimum autonomy level at which the action is p
 
 | Action | Category | Min level | Notes |
 |---|---|---|---|
-| Start coding agent | ACL-Routed | L3 | Human-approved per dispatch during pilot. |
-| Start QA / review agent | ACL-Routed | L3 | Same. |
+| Start coding agent | ACL-Routed | L3 | **Early pilot: explicit Ben approval per dispatch.** L3 approval is per-action, not batched (ADR-0008 Open Question #2 — leaning per-action during pilot). Dispatcher must verify: `agent-ready`, `## Sequencing` clear, numeric `Budget cap` set (`cost-controls.md`), no prior runaway-cost halt without unblock comment. |
+| Start QA / review agent | ACL-Routed | L3 | Same as coding agent: per-dispatch human approval during pilot. |
 | Run a self-contained evaluation or spike inside the agent's own workspace | P-Direct | L1 | No external writes. |
-| Record an agent run report | ACL-Routed | L2 | Write-back contract enforcement (ADR-0003). |
+| Record an agent run report | ACL-Routed | L2 | Write-back contract enforcement (ADR-0003). `cost.band` is required on every run report per ADR-0009 / `cost-controls.md` — never omit. |
 | Write high-fidelity telemetry / traces | ACL-Routed | L2 | Into the future telemetry substrate; until it exists, a committed Markdown run report (see `docs/templates/agent-run-report.md`). |
+| Resume / re-dispatch a ticket whose last run halted for runaway-cost | Stop | — | Dispatcher MUST refuse unless a subsequent unblock comment from Ben has landed on the Linear issue (cap raise, re-scope, or cancel). See `cost-controls.md` → *Unblocking a halted ticket*. |
 
 ### Docs, ADRs, templates, and rules
 
@@ -121,11 +122,15 @@ Each row lists the category, the minimum autonomy level at which the action is p
 
 ### Cost and environment
 
+Concrete cost-band definitions, runaway-cost triggers, the interrupt protocol, and the unblock rule live in `cost-controls.md` (ADR-0009). The matrix below is the short form.
+
 | Action | Category | Min level | Notes |
 |---|---|---|---|
 | Read connector status / quotas | P-Direct | L0 | |
-| Spend that stays inside the agreed cost band for the current run | P-Direct | L2 | Cost band defined in the run brief; elevated bands must be flagged per ADR-0003. |
-| Any action that would exceed the cost band, or whose cost is unknown | Stop | — | Runaway-cost is always Stop. |
+| Spend that stays inside the ticket's `Budget cap` and keeps `cost.band = normal` | P-Direct | L2 | Report band on every run report per ADR-0009. |
+| Spend that enters `elevated` band (approaching cap, repeated retries, unexpectedly large context) | P-Direct | L2 | **Continue but flag.** Run report + Linear write-back `Risks:` line must surface the band. |
+| Any action that would cross the `Budget cap`, trigger a non-productive loop ≥3x, invoke an unknown-cost action, or reach for a new paid external service | Stop | — | **Runaway-cost interrupt.** Halt, write run report with `cost.band = runaway_risk`, route to `needs-human`. See `cost-controls.md` → *Runaway-cost interrupt protocol*. Autonomy level does not override this. |
+| Dispatch a ticket without a numeric `Budget cap` | Stop | — | Pre-flight failure. Move ticket back to `needs-refinement` per `intake-triage.md`. |
 | Provision new infrastructure / services | Stop | — | Human only. |
 | Change secrets, tokens, connector permissions | Stop | — | Human only. |
 
@@ -164,7 +169,7 @@ Dispatch note: LAT-15 (ADR-0005) merged; the dispatch algorithm this doc referen
 
 ## Related
 
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`.
-- Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`.
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`.
+- Process: `docs/process/operating-model.md`, `docs/process/intake-triage.md`, `docs/process/cost-controls.md`.
 - Templates: `docs/templates/agent-ready-ticket.md`, `docs/templates/agent-run-report.md`.
-- Linear: `LAT-16` (this boundary), `LAT-6` (autonomy dial / operating posture).
+- Linear: `LAT-16` (this boundary), `LAT-6` (approval and cost-control gates).
