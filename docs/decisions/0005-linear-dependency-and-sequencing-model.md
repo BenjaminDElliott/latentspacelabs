@@ -37,6 +37,7 @@ We need a model that:
 - Humans must still see the dependency graph natively in Linear during backlog refinement.
 - The model must not require custom tooling to launch — pilot ships with what the connector already exposes.
 - Parent/child decomposition must not silently become a hard dependency.
+- Sub-issues and labels are good for human navigation and filtering but cannot, alone, encode an ordered `LAT-*` dependency graph for agents.
 - Comments are breadcrumbs, not contracts. They must not drive dispatch decisions.
 - Over-strict blocking stalls the flywheel; under-strict blocking breaks correctness on architecture/ADR work.
 
@@ -104,6 +105,23 @@ Before dispatching any agent to a `LAT-*` issue:
 ### Relationship to Linear native relations
 
 When the Linear connector begins to expose native `blocks` / `blocked by` create/read operations, the `## Sequencing` block remains the dispatch source and the native relation remains the canonical human/UI representation. At that point, a follow-up ADR may promote native relations to the authoritative dispatch source and demote the block to a mirror — but not before. Until then, native relations are a human navigation aid, not a dispatch input.
+
+### Sub-issues and labels
+
+Sub-issues (parent/child hierarchy) and labels are useful for human navigation, backlog decomposition, and filtering — they are **not** an authoritative dependency graph for agent dispatch in the pilot. Specifically:
+
+- **Sub-issues** express *work breakdown*, not *execution order*. A parent issue such as "Decision backlog" with child ADR tickets is a legitimate organizational pattern; agents dispatching any child still read that child's `## Sequencing` block to determine dependencies. A sub-issue only becomes a hard dependency for its sibling or parent when the relationship is explicitly listed in a `## Sequencing` block or encoded as a Linear native `blocks` relation.
+- **Labels** classify issue *kind* or *coarse state* — for example `decision`, `policy`, `template`, `executable-adapter`, `blocked`, `caution`, `ready`. They are scannable filters for humans and may mirror a `Dispatch status` value, but labels alone cannot encode an ordered dependency list because they cannot point to specific blocking `LAT-*` IDs. An agent must never resolve a blocker from a label.
+
+The table below summarizes how each Linear mechanism is used under this ADR.
+
+| Mechanism | Primary purpose | Authoritative for dispatch? | Who reads it |
+|---|---|---|---|
+| Linear native `blocks` / `blocked by` | Canonical human/UI dependency view | Not during pilot (connector cannot reliably read/write); may be promoted in a follow-up ADR | Humans in Linear UI; agents once connector supports it |
+| `## Sequencing` block in description | Structured, connector-readable dependency declaration | **Yes** — authoritative for agents during the pilot | Agents (at dispatch) and humans (during refinement) |
+| Sub-issues (parent/child) | Work decomposition / epic → child breakdown | No — decomposition only, never an implicit dependency | Humans for navigation; agents ignore unless lifted into `## Sequencing` |
+| Labels | Classify kind (`decision`, `policy`, `template`, `executable-adapter`) or coarse state (`blocked`, `caution`, `ready`) | No — cannot encode ordered `LAT-*` dependencies | Humans for filtering; agents may use for triage, never for blocker resolution |
+| Comments | Breadcrumbs, rationale, write-back | No — must not drive dispatch | Humans and agents for context; lifted into `## Sequencing` if a real dependency is discovered |
 
 ## Consequences
 

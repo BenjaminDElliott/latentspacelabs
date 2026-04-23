@@ -70,7 +70,8 @@ Before any agent is dispatched to a `LAT-*` issue, the dispatcher must check the
 - **Hard blockers** must be `Done`, `Cancelled`, or `Superseded` before dispatch. A hard blocker is an entry on the `Hard blockers:` line of the issue's `## Sequencing` block — not a parent/child relation and not a comment.
 - **Recommended predecessors** are preferences, not gates. Dispatch may proceed with soft predecessors unresolved only if the work is low-risk and reversible (per `intake-triage.md`) and the budget cap is intact. Unresolved soft predecessors must be flagged in the run report and the Linear write-back.
 - **Related context** never blocks dispatch.
-- **Parent/child hierarchy** signals decomposition, not dependency. It is not a blocker unless the relationship is explicitly listed in the child's `## Sequencing` block.
+- **Parent/child hierarchy (sub-issues)** signals decomposition, not dependency. Sub-issues are fine for grouped backlog work — e.g. a "Decision backlog" parent with child ADR tickets — but an agent dispatching any child still reads that child's `## Sequencing` block. A sub-issue is not a blocker unless the relationship is explicitly listed there or encoded as a Linear native `blocks` relation.
+- **Labels** classify issue *kind* or *coarse state* (e.g. `decision`, `policy`, `template`, `executable-adapter`, `blocked`, `caution`, `ready`) and are useful for human filtering. Labels cannot encode an ordered `LAT-*` dependency list and must not be used alone to resolve blockers.
 - **Comments** are breadcrumbs, not contracts. Agents must not infer dependencies from comments when deciding whether to dispatch.
 - **Architecture/ADR tickets** missing a `## Sequencing` block fail safely to `caution`, not `ready`. The dispatcher should flag for refinement rather than proceed.
 
