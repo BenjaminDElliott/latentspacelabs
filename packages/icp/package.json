@@ -24,7 +24,7 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/index.test.ts src/runtime/*.test.ts src/adapters/*.test.ts src/skills/*.test.ts"
+    "test": "tsx --test src/index.test.ts src/runtime/*.test.ts src/adapters/*.test.ts src/skills/*.test.ts src/evaluation/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
