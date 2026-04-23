@@ -135,7 +135,6 @@ The retro does not re-derive evidence; it reads from the run report envelope (AD
 
 ## Related
 
-- PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0007-qa-review-evidence-workflow.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0010-retrospective-learning-loop.md`, `0011-integration-control-plane-language-and-runtime.md`, `0012-integration-control-plane-software-architecture.md`.
-- Process: `qa-review-evidence.md`, `retrospective-learning-loop.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (low-friction intake UX — see `process/mobile-intake-ux.md`), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence workflow), `LAT-11` (retrospective learning loop), `LAT-16` (ICP and Perplexity boundary; historically named "ACL"), `LAT-6` (autonomy dial).
+Cross-links to ADRs, sibling process docs, and Linear issues are maintained inline where they are load-bearing (each section above links directly to the ADR or process doc it relies on). This document intentionally does not keep a hand-maintained footer index of every related ADR and `LAT-*` issue — prior versions of that footer drifted under parallel PRs and turned every unrelated doc change into a merge conflict here.
+
+To enumerate related material: `ls docs/decisions/`, `ls docs/process/`, and read the frontmatter of any file whose motivation you need to check.
