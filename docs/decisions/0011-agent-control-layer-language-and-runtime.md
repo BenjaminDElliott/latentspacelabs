@@ -1,5 +1,5 @@
 ---
-id: ADR-0009
+id: ADR-0011
 title: Agent Control Layer language, runtime, and package location
 status: proposed
 date: 2026-04-23
@@ -12,7 +12,7 @@ superseded_by:
 revisit_trigger: Revisit when (a) the ACL outgrows a single-process CLI and needs a long-running service, shared queue, or cross-run state; (b) a required integration (a specific agent runner SDK, a telemetry substrate client) ships only for another language and proxying is awkward; (c) TypeScript/Node friction on agent-driven maintenance exceeds the cost of a rewrite; or (d) Ben's personal stack preferences shift decisively toward Elixir/BEAM for owned services.
 ---
 
-# ADR-0009: Agent Control Layer language, runtime, and package location
+# ADR-0011: Agent Control Layer language, runtime, and package location
 
 ## Context
 
