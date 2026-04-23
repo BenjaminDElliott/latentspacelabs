@@ -63,6 +63,19 @@ All PRs for Linear-tracked work must be discoverable from Linear without manual 
 - **Multiple issues:** put the primary key in the title; list secondary keys in the PR body (e.g. `Also: LAT-10, LAT-12`).
 - **No Linear issue yet?** Stop and create/triage the issue first via the intake flow, unless the human has explicitly instructed you to open a PR without one. Do not invent a ticket number.
 
+## Dispatch readiness and dependency model
+
+Before any agent is dispatched to a `LAT-*` issue, the dispatcher must check the issue's dependency state using the model defined in ADR-0005. In summary:
+
+- **Hard blockers** must be `Done`, `Cancelled`, or `Superseded` before dispatch. A hard blocker is an entry on the `Hard blockers:` line of the issue's `## Sequencing` block — not a parent/child relation and not a comment.
+- **Recommended predecessors** are preferences, not gates. Dispatch may proceed with soft predecessors unresolved only if the work is low-risk and reversible (per `intake-triage.md`) and the budget cap is intact. Unresolved soft predecessors must be flagged in the run report and the Linear write-back.
+- **Related context** never blocks dispatch.
+- **Parent/child hierarchy** signals decomposition, not dependency. It is not a blocker unless the relationship is explicitly listed in the child's `## Sequencing` block.
+- **Comments** are breadcrumbs, not contracts. Agents must not infer dependencies from comments when deciding whether to dispatch.
+- **Architecture/ADR tickets** missing a `## Sequencing` block fail safely to `caution`, not `ready`. The dispatcher should flag for refinement rather than proceed.
+
+Full format, defaults, and the step-by-step dispatch algorithm live in ADR-0005. The `## Sequencing` block is the source of truth agents read; Linear's native `blocks` / `blocked by` relation remains the canonical human/UI representation when available.
+
 ## Linear write-back contract
 
 Every agent run that touches a `LAT-*` issue must leave a single, bounded write-back comment on that issue. The comment contains, at minimum:
@@ -84,5 +97,5 @@ Anything beyond that — raw traces, long rationale, large diffs, log dumps — 
 ## Related
 
 - PRD: *Agentic Flywheel Observability and Control Plane* (workspace draft; to be promoted).
-- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`.
-- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (persistence boundaries).
+- ADRs: `docs/decisions/0001-use-perplexity-linear-and-github-as-control-plane.md`, `0002-store-process-docs-and-adrs-in-the-monorepo.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`.
+- Linear: `LAT-9` (persistence model), `LAT-10` (operating model), `LAT-12` (persistence boundaries), `LAT-15` (dependency and sequencing model).
