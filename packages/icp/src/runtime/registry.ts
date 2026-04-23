@@ -3,11 +3,27 @@
  *
  * Responsibility: discover, validate, and index the set of skills the runner
  * can execute. Load-time validation is the runtime enforcement of ADR-0004's
- * provenance regime and ADR-0012's fail-fast-on-malformed-skill requirement.
+ * provenance regime, ADR-0012's fail-fast-on-malformed-skill requirement, and
+ * ADR-0016's rule that `derived_from:` must point into a canonical docs
+ * directory (`docs/decisions/`, `docs/prds/`, `docs/process/`, or
+ * `docs/templates/`).
  */
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { SkillDefinition, SkillStatus, ToolName } from "./contract.js";
+
+/**
+ * Canonical-doc roots a skill's `derived_from:` entry may point into
+ * (ADR-0016 §Q3). Kept as a narrow allowlist so a skill cannot cite a
+ * code file, a `.claude/` harness file, or an external URL as its
+ * provenance source — the canonical regime is `docs/`.
+ */
+const CANONICAL_DOC_ROOTS = [
+  "docs/decisions/",
+  "docs/prds/",
+  "docs/process/",
+  "docs/templates/",
+] as const;
 
 // Skills declare more specific input/output types than the registry stores.
 // The registry treats them uniformly, so we erase the generics here.
@@ -96,6 +112,15 @@ export class SkillRegistry {
       );
     }
     for (const rel of def.derived_from) {
+      // Normalise backslashes so a path authored on Windows still validates
+      // against the POSIX-style canonical roots below.
+      const norm = rel.replace(/\\/g, "/");
+      if (!CANONICAL_DOC_ROOTS.some((root) => norm.startsWith(root))) {
+        throw new SkillRegistryError(
+          def.name,
+          `derived_from path must point into ${CANONICAL_DOC_ROOTS.join(", ")} (ADR-0016): ${rel}`,
+        );
+      }
       const abs = resolve(this.options.repoRoot, rel);
       try {
         await access(abs);
