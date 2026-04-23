@@ -2,8 +2,12 @@
 
 Integration Control Plane (ICP) — skills framework plus a thin CLI harness.
 
-Scaffold only. No runtime behaviour ships in this package yet; see the ADRs for
-the shape the implementation tickets will fill in.
+Current state (LAT-52): skill contract, registry, runner, and the
+`dispatch-ticket@0.1.0` skill are in place. Linear and coding-agent adapters
+ship as stubs — production Linear GraphQL and real agent-runner invocation
+land in their own tickets (see ADR-0008 open question 4 and ADR-0013). The
+CLI harness is also deferred; for now the skill runner is invoked directly
+(see `src/skills/dispatch-ticket.test.ts` for the end-to-end shape).
 
 ## Design references
 
