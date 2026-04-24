@@ -1,0 +1,158 @@
+# ICP agent runtime harness — dry-run only (LAT-72).
+#
+# This workflow is the *shell* of the GitHub Actions + Claude Code Action runtime
+# chosen in ADR-0018 (docs/decisions/0018-first-icp-agent-runtime.md). It does not
+# yet call Anthropic, does not yet invoke the Claude Code Action, and does not
+# require ANTHROPIC_API_KEY. The live provider wiring lands in LAT-69 (secret /
+# workflow configuration) and LAT-67 (first end-to-end dispatch).
+#
+# What this harness does today:
+#   - Accepts a workflow_dispatch trigger with ICP-shaped inputs (ticket, skill,
+#     dry-run flag, optional cost band).
+#   - With dry_run=true (default): runs `npm run check` and emits a sanitized
+#     summary + artifact proving the runtime shell is wired correctly.
+#   - With dry_run=false: refuses explicitly. Live provider invocation is owned
+#     by LAT-69 + LAT-67.
+#
+# Security posture (ADR-0018, ADR-0017, ADR-0008):
+#   - Least-privilege `permissions:` — contents: read only for dry-run.
+#   - No secrets referenced in this file. ANTHROPIC_API_KEY is not read.
+#   - No provider response content is emitted. The summary/artifact contains
+#     only operator-supplied inputs and local build/test status. Operators who
+#     extend this file must continue to keep provider output out of logs and
+#     artifacts, and mask any sensitive value with `::add-mask::` at emission.
+#   - Fork-PR triggers are out of scope (workflow_dispatch only).
+#
+# When editing this file: remember ADR-0008's Stop list — agents do not edit CI.
+# Changes land through a reviewed operator PR.
+
+name: icp-runtime-harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticket:
+        description: "Linear ticket identifier (e.g. LAT-72). Used only for labelling the run."
+        required: true
+        type: string
+      skill:
+        description: "ICP skill / mode to dispatch (e.g. dispatch-ticket). Informational in dry-run."
+        required: true
+        type: string
+        default: dispatch-ticket
+      dry_run:
+        description: "Dry-run only. Must be true until LAT-69/LAT-67 wire the live provider path."
+        required: true
+        type: boolean
+        default: true
+      cost_band:
+        description: "Optional ADR-0009 cost band label (low|medium|high). Informational in dry-run."
+        required: false
+        type: string
+        default: low
+
+concurrency:
+  group: icp-runtime-harness-${{ github.ref }}-${{ inputs.ticket }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: ICP runtime dry-run
+    if: ${{ inputs.dry_run == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Explicit: no secrets read in this job. ANTHROPIC_API_KEY is not referenced.
+    steps:
+      - name: Validate inputs
+        env:
+          TICKET: ${{ inputs.ticket }}
+          SKILL: ${{ inputs.skill }}
+          COST_BAND: ${{ inputs.cost_band }}
+        run: |
+          set -euo pipefail
+          # Ticket must look like LAT-<digits>. Keep the check defensive but
+          # non-leaky: we echo the sanitized value only.
+          if ! printf '%s' "$TICKET" | grep -Eq '^LAT-[0-9]+$'; then
+            echo "::error::ticket input must match LAT-<digits>; refusing to continue."
+            exit 1
+          fi
+          if [ -z "$SKILL" ]; then
+            echo "::error::skill input is required."
+            exit 1
+          fi
+          echo "ticket=$TICKET"
+          echo "skill=$SKILL"
+          echo "cost_band=${COST_BAND:-low}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run guardrails (npm run check)
+        run: npm run check
+
+      - name: Build sanitized run summary
+        id: summary
+        env:
+          TICKET: ${{ inputs.ticket }}
+          SKILL: ${{ inputs.skill }}
+          COST_BAND: ${{ inputs.cost_band }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          # Sanitized-by-construction: only operator inputs + fixed strings.
+          # No provider response content, no env values, no secrets.
+          SUMMARY_FILE="artifacts/icp-runtime-dry-run.md"
+          {
+            echo "# ICP runtime harness — dry-run summary"
+            echo
+            echo "- Ticket: ${TICKET}"
+            echo "- Skill: ${SKILL}"
+            echo "- Cost band: ${COST_BAND:-low}"
+            echo "- Dry-run: true"
+            echo "- Provider call: SKIPPED (LAT-72 is dry-run only; live wiring lands in LAT-69 / LAT-67)"
+            echo "- Guardrails: npm run check PASSED"
+            echo
+            echo "This artifact proves the GitHub Actions + Claude Code Action"
+            echo "runtime shell executes and that repo guardrails still pass."
+            echo "It intentionally contains no provider response content and"
+            echo "no secret material. See ADR-0018 for the evidence model."
+          } > "$SUMMARY_FILE"
+          {
+            echo "## ICP runtime harness — dry-run"
+            echo
+            cat "$SUMMARY_FILE"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "summary_path=$SUMMARY_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload sanitized summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: icp-runtime-dry-run-${{ inputs.ticket }}
+          path: artifacts/icp-runtime-dry-run.md
+          if-no-files-found: error
+          retention-days: 14
+
+  refuse-live:
+    name: Refuse live provider invocation
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Refuse
+        run: |
+          echo "::error::Live provider invocation is not implemented in LAT-72."
+          echo "::error::This workflow is dry-run only. Re-run with dry_run=true."
+          echo "::error::Live wiring lands in LAT-69 (secret + workflow) and LAT-67 (first end-to-end dispatch)."
+          exit 1
