@@ -8,6 +8,9 @@ dist/
 coverage/
 .turbo/
 
+# LAT-138: per-invocation dispatcher worktrees and scratch dirs.
+.dispatch-worktrees/
+
 # MCP credential files — only the placeholder-only `.mcp.json` and
 # `.mcp.example.json` template are tracked. Any local override holding a
 # real bearer token must live in `.mcp.local.json` and stay untracked.

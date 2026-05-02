@@ -50,7 +50,9 @@ export type DispatchOutcome =
    * explicit local diff path). The dispatcher refuses to promote such
    * runs because there is nothing for a reviewer to look at.
    */
-  | "no_review_artifact";
+  | "no_review_artifact"
+  /** LAT-138: same ticket already in flight in this process. */
+  | "duplicate_in_flight";
 
 /** Sanitised summary the dispatcher prints / persists. */
 export interface DispatchReport {
@@ -80,6 +82,14 @@ export interface DispatchReport {
   controlLoopExitCode: number | null;
   /** One-line, secret-safe explanation suitable for stdout / Linear. */
   message: string;
+  /**
+   * LAT-138: worktree branch this run was sandboxed in, when one was
+   * allocated. `null` when no worktree was allocated (e.g. config
+   * errors that abort before ticket selection).
+   */
+  worktreeBranch?: string | null;
+  /** LAT-138: absolute path to the worktree directory, when allocated. */
+  worktreePath?: string | null;
 }
 
 /** Result of running the control loop child process. */
