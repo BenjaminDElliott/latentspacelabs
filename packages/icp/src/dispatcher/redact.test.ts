@@ -16,7 +16,7 @@ test("redactOutput: scrubs GitHub PAT, OpenAI, Anthropic, Bearer", () => {
       "ghp_zzzzzzzzzzzzzzzzzzz",
       "github_pat_AAAAAAAA",
       "sk-ant-api03_XYZ",
-      "sk-1234567890abcdef1234567890",
+      "sk-FAKE_OPENAI_TEST01",
       "Bearer abc.def.ghi",
     ].join("\n"),
   );
