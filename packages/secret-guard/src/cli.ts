@@ -6,6 +6,7 @@ import { scanPaths, formatResult, hasBlockingFindings } from "./scan.js";
 
 interface CliArgs {
   staged: boolean;
+  tracked: boolean;
   paths: string[];
   help: boolean;
 }
@@ -13,23 +14,26 @@ interface CliArgs {
 function parseArgs(argv: string[]): CliArgs {
   const paths: string[] = [];
   let staged = false;
+  let tracked = false;
   let help = false;
   for (const a of argv) {
     if (a === "--staged") staged = true;
+    else if (a === "--tracked") tracked = true;
     else if (a === "--help" || a === "-h") help = true;
     else paths.push(a);
   }
-  return { staged, paths, help };
+  return { staged, tracked, paths, help };
 }
 
 function usage(): string {
   return [
-    "Usage: secret-guard [--staged] [paths...]",
+    "Usage: secret-guard [--staged | --tracked] [paths...]",
     "",
-    "Blocks commits that would include local .env files or obvious literal",
-    "API keys / tokens. With --staged, reads the staged file list from git",
-    "(added/copied/modified/renamed, relative to repo root). Without it,",
-    "scans the paths passed on the argv.",
+    "Blocks commits / merges that would include local .env files or obvious",
+    "literal API keys / tokens.",
+    "  --staged   read the staged file list from git (pre-commit hook mode).",
+    "  --tracked  scan every git-tracked file in the repo (CI mode).",
+    "  (default)  scan the paths passed on the argv.",
     "",
     "Exits 0 on clean, 1 on blocking finding, 2 on internal error.",
     "",
@@ -62,6 +66,22 @@ function stagedFiles(repoRoot: string): string[] {
     .map((rel) => resolve(repoRoot, rel));
 }
 
+function trackedFiles(repoRoot: string): string[] {
+  const r = spawnSync(
+    "git",
+    ["ls-files", "-z"],
+    { cwd: repoRoot, encoding: "utf8", maxBuffer: 1024 * 1024 * 64 },
+  );
+  if (r.status !== 0) {
+    throw new Error(`git ls-files failed: ${r.stderr.trim()}`);
+  }
+  return r.stdout
+    .split("\u0000")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map((rel) => resolve(repoRoot, rel));
+}
+
 function stagedBlob(repoRoot: string, relPath: string): string | null {
   const r = spawnSync("git", ["show", `:${relPath}`], {
     cwd: repoRoot,
@@ -79,6 +99,11 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  if (args.staged && args.tracked) {
+    process.stderr.write("secret-guard: --staged and --tracked are mutually exclusive\n");
+    process.exit(2);
+  }
+
   let files: string[];
   let reader: ((path: string) => Promise<string>) | undefined;
   if (args.staged) {
@@ -93,6 +118,9 @@ async function main(): Promise<void> {
       }
       return blob;
     };
+  } else if (args.tracked) {
+    const root = gitRepoRoot();
+    files = trackedFiles(root);
   } else {
     if (args.paths.length === 0) {
       process.stderr.write(usage());

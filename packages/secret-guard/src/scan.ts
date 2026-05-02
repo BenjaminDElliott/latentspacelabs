@@ -52,6 +52,16 @@ const LITERAL_PATTERNS: LiteralPattern[] = [
     describe: "AWS access key id",
   },
   {
+    rule: "perplexity-agent-proxy-token",
+    regex: /\bagp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/,
+    describe: "Perplexity agent-proxy bearer token (agp_<uuid>)",
+  },
+  {
+    rule: "linear-api-key",
+    regex: /\blin_api_[A-Za-z0-9]{20,}\b/,
+    describe: "Linear personal API key",
+  },
+  {
     rule: "github-token",
     regex: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/,
     describe: "GitHub personal / OAuth / server / user / refresh token",
@@ -89,7 +99,7 @@ const LITERAL_PATTERNS: LiteralPattern[] = [
 ];
 
 const ASSIGNMENT_REGEX =
-  /(?:^|[\s,;{(])([A-Z][A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD|PASSWD|PWD|CREDENTIAL|CREDENTIALS)[A-Z0-9_]*)\s*[:=]\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^"'\s,;}\)]+))/;
+  /(?:^|[\s,;{("'])"?([A-Z][A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD|PASSWD|PWD|CREDENTIAL|CREDENTIALS)[A-Z0-9_]*)"?\s*[:=]\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^"'\s,;}\)]+))/;
 
 /**
  * Values we treat as obvious placeholders — never a real secret. Comparison is
