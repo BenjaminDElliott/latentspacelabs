@@ -37,20 +37,20 @@ test("evaluateEligibility: allows valid issue with explicit override", () => {
   assert.equal(r.eligible, true);
 });
 
-test("evaluateEligibility: refuses risky scope keyword", () => {
+test("evaluateEligibility: refuses risky deploy scope", () => {
   const r = evaluateEligibility(
     issue({
-      title: "Investigate deploy pipeline",
-      description: issue().description,
+      title: "Deploy the inference router to production",
     }),
     { explicitOverride: true },
   );
   assert.equal(r.eligible, false);
+  assert.match(r.reason, /deploy|release|publish/i);
 });
 
 test("evaluateEligibility: refuses vague title verbs", () => {
   const r = evaluateEligibility(
-    issue({ title: "Investigate auth" }),
+    issue({ title: "Investigate auth", description: issue().description }),
     { explicitOverride: true },
   );
   assert.equal(r.eligible, false);
@@ -59,7 +59,10 @@ test("evaluateEligibility: refuses vague title verbs", () => {
 
 test("evaluateEligibility: refuses missing acceptance section", () => {
   const r = evaluateEligibility(
-    issue({ description: "Just a paragraph with no acceptance heading and reasonable length to pass the minimum size check easily." }),
+    issue({
+      description:
+        "Just a paragraph with no acceptance heading and reasonable length to pass the minimum size check easily.",
+    }),
     { explicitOverride: true },
   );
   assert.equal(r.eligible, false);
@@ -76,34 +79,31 @@ test("evaluateEligibility: refuses too-short description", () => {
 });
 
 test("evaluateEligibility: refuses empty title", () => {
-  const r = evaluateEligibility(
-    issue({ title: "   " }),
-    { explicitOverride: true },
-  );
+  const r = evaluateEligibility(issue({ title: "   " }), {
+    explicitOverride: true,
+  });
   assert.equal(r.eligible, false);
 });
 
 test("evaluateEligibility: refuses missing UUID", () => {
-  const r = evaluateEligibility(
-    issue({ uuid: "" }),
-    { explicitOverride: true },
-  );
+  const r = evaluateEligibility(issue({ uuid: "" }), { explicitOverride: true });
   assert.equal(r.eligible, false);
 });
 
-test("evaluateEligibility: catches risky keyword in description body", () => {
+test("evaluateEligibility: refuses scope that rotates a credential", () => {
   const r = evaluateEligibility(
     issue({
       description: [
         "## Summary",
-        "We rotate the credential while the service runs.",
+        "We rotate the production credential while the service runs.",
         "",
         "## Acceptance Criteria",
         "- [ ] credential rotated",
-        "long body to satisfy minimum description length threshold for the dispatcher.",
+        "Long body to satisfy minimum description length threshold for the dispatcher.",
       ].join("\n"),
     }),
     { explicitOverride: true },
   );
   assert.equal(r.eligible, false);
+  assert.match(r.reason, /rotat|credential|secret/i);
 });

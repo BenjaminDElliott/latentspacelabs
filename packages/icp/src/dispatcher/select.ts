@@ -1,122 +1,57 @@
 /**
- * Eligibility check for one Linear issue under the LAT-129 MVP rules.
+ * Eligibility check for one Linear issue.
  *
- * The MVP is conservative: only obviously-safe coding work is eligible,
- * and an explicit per-invocation override (`LAT_DISPATCH_ISSUE`) is the
- * only way to actually dispatch in this slice. Label-driven polling is
- * the documented next step (see README) — exposing the same eligibility
- * shape now keeps the next iteration small.
+ * The original LAT-129 keyword scan flagged a few false positives
+ * because it could not tell *risky scope* (e.g. "rotate the production
+ * secret") from *risk context* (e.g. "do not touch secrets" or "see
+ * existing architecture decision ADR-0012"). LAT-131 replaces the scan
+ * with a structured classifier (see `classifier.ts`). The classifier
+ * emits a validated `ClassifierOutput`; the dispatcher then asks this
+ * thin wrapper for a yes/no plus a sanitised reason.
  *
- * Risky work is excluded by keyword scan over title + description. The
- * scan is intentionally crude; the goal is "fail safe and surface the
- * reason" rather than "perfect classification."
+ * The wrapper still exists so callers that only care about
+ * dispatchability (e.g. the dispatcher orchestration) do not have to
+ * destructure the full classifier output.
  */
 
+import {
+  classifyIssue,
+  validateClassifierOutput,
+  type ClassifierOptions,
+  type ClassifierOutput,
+} from "./classifier.js";
 import type { DispatchIssue, EligibilityOutcome } from "./types.js";
 
-const RISK_KEYWORDS: ReadonlyArray<string> = [
-  "deploy",
-  "deployment",
-  "production",
-  "merge to main",
-  "auto-merge",
-  "autoMerge",
-  "secret",
-  "credential",
-  "token rotation",
-  "rotate token",
-  "rotate key",
-  "architecture decision",
-  "broad refactor",
-  "rewrite",
-];
-
-const VAGUE_TITLE_PATTERNS: ReadonlyArray<RegExp> = [
-  /^investigate\b/i,
-  /^explore\b/i,
-  /^think about\b/i,
-  /^discuss\b/i,
-  /^plan\b/i,
-];
-
-const ACCEPTANCE_HEADINGS: ReadonlyArray<RegExp> = [
-  /^#{1,6}\s+acceptance criteria\b/im,
-  /^#{1,6}\s+acceptance\b/im,
-  /^acceptance criteria\s*[:\-]/im,
-];
-
-export interface EligibilityOptions {
-  /**
-   * When true, treat the issue as the operator-approved explicit
-   * dispatch target. The eligibility scan still runs (so risky work is
-   * still refused), but the absence of an explicit-readiness label or
-   * status no longer disqualifies the issue.
-   */
-  explicitOverride: boolean;
-}
+export type EligibilityOptions = ClassifierOptions;
 
 export function evaluateEligibility(
   issue: DispatchIssue,
   opts: EligibilityOptions,
 ): EligibilityOutcome {
-  if (!opts.explicitOverride) {
+  const raw = classifyIssue(issue, opts);
+  const validated = validateClassifierOutput(raw);
+  if (!validated.ok) {
+    // Defensive: if the classifier ever returns a non-conforming shape,
+    // refuse rather than dispatch. Surfaces the schema error to the
+    // operator so the bug is visible.
     return {
       eligible: false,
-      reason:
-        "no explicit dispatch target. Set LAT_DISPATCH_ISSUE=LAT-NN to opt in (label-driven polling is a documented follow-up).",
+      reason: `classifier output failed schema validation: ${validated.errors.join("; ")}`,
     };
   }
+  return classifierToEligibility(validated.value);
+}
 
-  if (typeof issue.identifier !== "string" || issue.identifier.length === 0) {
-    return { eligible: false, reason: "issue has no identifier" };
+/**
+ * Project a full ClassifierOutput onto the legacy yes/no shape used by
+ * the dispatcher orchestration. Exported so callers (and tests) that
+ * already have a ClassifierOutput can avoid re-running the classifier.
+ */
+export function classifierToEligibility(
+  output: ClassifierOutput,
+): EligibilityOutcome {
+  if (output.dispatchable) {
+    return { eligible: true, reason: output.reason };
   }
-  if (typeof issue.uuid !== "string" || issue.uuid.length === 0) {
-    return { eligible: false, reason: "issue has no internal UUID" };
-  }
-
-  const title = issue.title ?? "";
-  const description = issue.description ?? "";
-
-  if (title.trim().length === 0) {
-    return { eligible: false, reason: "issue title is empty" };
-  }
-
-  for (const pat of VAGUE_TITLE_PATTERNS) {
-    if (pat.test(title)) {
-      return {
-        eligible: false,
-        reason: `title looks like a vague planning task: ${title.slice(0, 80)}`,
-      };
-    }
-  }
-
-  const haystack = (title + "\n" + description).toLowerCase();
-  for (const kw of RISK_KEYWORDS) {
-    if (haystack.includes(kw.toLowerCase())) {
-      return {
-        eligible: false,
-        reason: `description references risky scope keyword: "${kw}"`,
-      };
-    }
-  }
-
-  if (!ACCEPTANCE_HEADINGS.some((p) => p.test(description))) {
-    return {
-      eligible: false,
-      reason:
-        "issue description has no Acceptance Criteria section; refuse rather than guess scope",
-    };
-  }
-
-  if (description.trim().length < 80) {
-    return {
-      eligible: false,
-      reason: "issue description is too short to bound dispatch scope safely",
-    };
-  }
-
-  return {
-    eligible: true,
-    reason: `explicit override accepted for ${issue.identifier}`,
-  };
+  return { eligible: false, reason: output.reason };
 }

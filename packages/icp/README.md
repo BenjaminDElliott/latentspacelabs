@@ -73,7 +73,7 @@ Per invocation it does exactly one thing:
 
 1. Reads `LINEAR_API_KEY` from env (never logged).
 2. Selects one issue identified by `LAT_DISPATCH_ISSUE=LAT-NN`. (Label-driven polling is a documented follow-up; the explicit override is the only safe way to opt in for now.)
-3. Refuses if the issue is risky (deploy / merge / secret-rotation keywords, vague "investigate" titles, missing Acceptance Criteria, too-short body).
+3. Runs the issue through the **dispatch eligibility classifier** (LAT-131). The classifier is deterministic and context-aware: it distinguishes *risky scope* ("rotate the production token", "deploy the build", "merge the PR", "write a new ADR", vague spike with no Acceptance Criteria) from *risk context* ("do not touch secrets", "without exposing secrets", "see existing ADR-0012"). Hard-stop blockers in either class refuse the dispatch; safe-context phrasings no longer block.
 4. Generates a bounded ticket pack into a temp directory (never the repo tree).
 5. Invokes the existing control-loop CLI once with `--mode <mock|plan|live>` and `--format json`.
 6. Captures stdout/stderr, scrubs token-shaped values + non-Linear URLs + RunPod pod ids + literal env-supplied secret values, and posts the result as a Linear comment.
@@ -109,6 +109,59 @@ LINEAR_API_KEY=lin_api_... LAT_DISPATCH_ISSUE=LAT-126 \
 LINEAR_API_KEY=lin_api_... LAT_DISPATCH_ISSUE=LAT-126 \
   npm run dispatch:next -- --mode mock
 ```
+
+### Eligibility classifier (LAT-131)
+
+The classifier emits a structured `ClassifierOutput` (see
+`src/dispatcher/classifier.ts`) that the dispatcher schema-validates
+before acting. The shape:
+
+```ts
+interface ClassifierOutput {
+  dispatchable: boolean;
+  risk_class: "low" | "medium" | "high";
+  work_type:
+    | "code_change" | "docs_change" | "test_change"
+    | "research_spike" | "decision" | "ops" | "unknown";
+  reason: string;
+  required_human_approval: boolean;
+  hard_blockers: { code: HardBlockerCode; message: string }[];
+  pack_overrides?: {
+    max_turns?: number;
+    cost_class?: "small" | "medium" | "large";
+    extra_path_denies?: string[];
+  };
+}
+```
+
+Hard-stop blocker codes (stable, machine-readable):
+
+| Code | Meaning |
+| --- | --- |
+| `no_explicit_dispatch_target` | `LAT_DISPATCH_ISSUE` is not set (current MVP gate). |
+| `missing_identifier` / `missing_uuid` | Linear issue payload is malformed. |
+| `empty_title` | Title is blank or whitespace-only. |
+| `vague_planning_title` | Title starts with `investigate` / `explore` / `discuss` / `plan` / `think about`. |
+| `missing_acceptance_criteria` | Description has no Acceptance Criteria heading. |
+| `description_too_short` | Description body is too small to bound scope safely. |
+| `risky_scope_secret_rotation` | Asks the agent to rotate / revoke / reset secrets / credentials / tokens. |
+| `risky_scope_credential_handling` | Asks the agent to handle / store production credentials. |
+| `risky_scope_deploy_release` | Asks the agent to deploy / release / publish / ship. |
+| `risky_scope_auto_merge` | Asks the agent to auto-merge or merge a PR to main. |
+| `risky_scope_primary_decision` | Primary work is making a new ADR / architecture decision. |
+| `risky_scope_vague_spike` | Vague spike with no Acceptance Criteria. |
+
+Safe-context phrasings recognised (do **not** block):
+
+- `do not touch secrets` / `don't touch credentials` / `must not rotate tokens`
+- `no secrets`, `without exposing secrets`, `never log credentials`, `avoid touching api keys`
+- References to existing ADRs as background: `see ADR-0012`, `per architecture decision`,
+  `existing architecture decision`, any `ADR-NN` reference.
+
+The classifier is deterministic and runs locally — no LLM/API call,
+no network. The output schema is designed so a future LLM-backed
+classifier can drop in behind the same validator without changing the
+dispatcher.
 
 ### Guardrails
 
