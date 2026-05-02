@@ -9,6 +9,7 @@ import {
   resolveDispatcherConfig,
   runDispatcher,
 } from "./dispatch.js";
+import { WorktreeAllocator } from "./worktree.js";
 import type {
   DispatchIssue,
   DispatcherLinearClient,
@@ -74,9 +75,10 @@ interface SpawnPlan {
   exitCode: number;
 }
 
-function planSpawn(plan: SpawnPlan, captured: { args: ReadonlyArray<string>[] }): DispatcherSpawn {
-  return (_cmd, args) => {
+function planSpawn(plan: SpawnPlan, captured: { args: ReadonlyArray<string>[]; cwd: (string | undefined)[] }): DispatcherSpawn {
+  return (_cmd, args, options) => {
     captured.args.push(args);
+    captured.cwd.push(options.cwd);
     const stdoutE = new EventEmitter();
     const stderrE = new EventEmitter();
     const procE = new EventEmitter();
@@ -93,6 +95,28 @@ function planSpawn(plan: SpawnPlan, captured: { args: ReadonlyArray<string>[] })
     });
     return child;
   };
+}
+
+interface GitCall {
+  args: ReadonlyArray<string>;
+  cwd: string | undefined;
+}
+
+/**
+ * Builds a worktree allocator backed by a fake git runner that
+ * always succeeds. Suitable for the orchestration tests below where
+ * the focus is dispatch behaviour, not git semantics. The git
+ * semantics live in worktree.test.ts.
+ */
+function fakeWorktreeAllocator(repoRoot: string, opts: { gitLog?: GitCall[]; suffix?: () => string } = {}): WorktreeAllocator {
+  return new WorktreeAllocator({
+    repoRoot,
+    runner: async (_cmd, args, options) => {
+      opts.gitLog?.push({ args, cwd: options.cwd });
+      return { exitCode: 0, stderr: "" };
+    },
+    makeSuffix: opts.suffix ?? (() => "stable"),
+  });
 }
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
@@ -150,32 +174,38 @@ const REFUSED_JSON = JSON.stringify({
 test("runDispatcher: no eligible issue when dispatchIssueId is null", async () => {
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({}, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
-  const r = await runDispatcher({
-    config: {
-      linearApiKey: "lin_api_TEST_VALUE",
-      dispatchIssueId: null,
-      inReviewStateId: "state-in-review",
-      controlLoopCliPath: "/cli.js",
-      repoRoot: "/repo",
-      mode: "mock",
-      extraSecrets: [],
-      childEnv: {},
-    },
-    deps: { linear, spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured) },
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_TEST_VALUE",
+        dispatchIssueId: null,
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "mock",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
+        worktree: fakeWorktreeAllocator(dir),
+      },
+    });
+    assert.equal(r.outcome, "no_eligible_issue");
+    assert.equal(captured.args.length, 0);
+    assert.equal(log.reads.length, 0);
+    assert.equal(log.comments.length, 0);
+    assert.equal(log.states.length, 0);
   });
-  assert.equal(r.outcome, "no_eligible_issue");
-  assert.equal(captured.args.length, 0);
-  assert.equal(log.reads.length, 0);
-  assert.equal(log.comments.length, 0);
-  assert.equal(log.states.length, 0);
 });
 
 test("runDispatcher: ineligible issue is not dispatched and not promoted", async () => {
   const issue = fakeIssue({ title: "Investigate auth pipeline" });
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -191,7 +221,7 @@ test("runDispatcher: ineligible issue is not dispatched and not promoted", async
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "no_eligible_issue");
@@ -201,11 +231,11 @@ test("runDispatcher: ineligible issue is not dispatched and not promoted", async
   });
 });
 
-test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack", async () => {
+test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack inside worktree", async () => {
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -221,18 +251,21 @@ test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack", as
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
     assert.equal(r.promoted, true);
     assert.equal(r.commented, true);
     assert.equal(captured.args.length, 1);
-    // Pack file was actually written.
+    // Pack file path is inside the per-invocation worktree scratch dir.
     const packPath = r.packPath ?? "";
     assert.ok(packPath.endsWith("lat-126.pack.md"));
+    assert.match(packPath, /\.dispatch-worktrees\/lat-126-stable\/\.dispatch-invocation\//);
     const pack = await readFile(packPath, "utf8");
     assert.match(pack, /Linear ID:\*\* LAT-126/);
+    // Control loop spawn cwd is the worktree, not the operator repo root.
+    assert.match(captured.cwd[0] ?? "", /\.dispatch-worktrees\/lat-126-stable$/);
     assert.equal(log.states.length, 1);
     assert.equal(log.states[0]!.stateId, "state-in-review");
     assert.equal(log.comments.length, 1);
@@ -240,6 +273,9 @@ test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack", as
     // LAT-143: comment body must name the exact review target.
     assert.match(log.comments[0]!.body, /Review target/);
     assert.match(log.comments[0]!.body, /lat-126-small-focused-change/);
+    // LAT-138: comment body and report carry the worktree branch.
+    assert.match(log.comments[0]!.body, /dispatch\/lat-126-stable/);
+    assert.equal(r.worktreeBranch, "dispatch/lat-126-stable");
   });
 });
 
@@ -266,8 +302,8 @@ test("LAT-140: runDispatcher emits sanitised run artefact and references it in t
       },
       deps: {
         linear,
-        spawn: planSpawn({ stdout, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        spawn: planSpawn({ stdout, exitCode: 0 }, { args: captured.args, cwd: [] }),
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
@@ -329,8 +365,8 @@ test("LAT-140: refused run still produces an artefact with a refusal code", asyn
       },
       deps: {
         linear,
-        spawn: planSpawn({ stdout: refusedJson, exitCode: 2 }, captured),
-        makeTempDir: async () => dir,
+        spawn: planSpawn({ stdout: refusedJson, exitCode: 2 }, { args: captured.args, cwd: [] }),
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "refused");
@@ -345,7 +381,7 @@ test("runDispatcher: failed run posts comment but does NOT promote", async () =>
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -361,7 +397,7 @@ test("runDispatcher: failed run posts comment but does NOT promote", async () =>
       deps: {
         linear,
         spawn: planSpawn({ stdout: FAILED_JSON, exitCode: 3 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "failed");
@@ -375,7 +411,7 @@ test("runDispatcher: refused run posts comment, no promotion", async () => {
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -391,7 +427,7 @@ test("runDispatcher: refused run posts comment, no promotion", async () => {
       deps: {
         linear,
         spawn: planSpawn({ stdout: REFUSED_JSON, exitCode: 2 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "refused");
@@ -405,7 +441,7 @@ test("runDispatcher: comment body is sanitised before write-back", async () => {
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     await runDispatcher({
       config: {
@@ -430,7 +466,7 @@ test("runDispatcher: comment body is sanitised before write-back", async () => {
           },
           captured,
         ),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(log.comments.length, 1);
@@ -479,7 +515,7 @@ test("resolveDispatcherConfig: forwards safe env, never LINEAR_API_KEY", () => {
   assert.ok(r.config.extraSecrets.includes("RUNPOD_TEST"));
 });
 
-test("runDispatcher: read-issue failure returns refused outcome with no spawn", async () => {
+test("runDispatcher: read-issue failure returns failed outcome with no spawn", async () => {
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear: DispatcherLinearClient = {
     async readIssue() {
@@ -493,31 +529,7 @@ test("runDispatcher: read-issue failure returns refused outcome with no spawn", 
       log.states.push({ uuid: "?", stateId: "?" });
     },
   };
-  const captured = { args: [] as ReadonlyArray<string>[] };
-  const r = await runDispatcher({
-    config: {
-      linearApiKey: "lin_api_X",
-      dispatchIssueId: "LAT-126",
-      inReviewStateId: "state-in-review",
-      controlLoopCliPath: "/cli.js",
-      repoRoot: "/repo",
-      mode: "mock",
-      extraSecrets: [],
-      childEnv: {},
-    },
-    deps: { linear, spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured) },
-  });
-  assert.equal(r.outcome, "failed");
-  assert.equal(captured.args.length, 0);
-  assert.equal(log.comments.length, 0);
-  assert.equal(log.states.length, 0);
-});
-
-test("runDispatcher: comment-failure on READY does not silently promote", async () => {
-  const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
-  const linear = fakeLinear({ "LAT-126": issue }, log, { commentThrows: true });
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -533,7 +545,37 @@ test("runDispatcher: comment-failure on READY does not silently promote", async 
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
+      },
+    });
+    assert.equal(r.outcome, "failed");
+    assert.equal(captured.args.length, 0);
+    assert.equal(log.comments.length, 0);
+    assert.equal(log.states.length, 0);
+  });
+});
+
+test("runDispatcher: comment-failure on READY does not silently promote", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log, { commentThrows: true });
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "mock",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
@@ -547,7 +589,7 @@ test("runDispatcher: command construction passes pack path and mode", async () =
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     await runDispatcher({
       config: {
@@ -563,7 +605,7 @@ test("runDispatcher: command construction passes pack path and mode", async () =
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(captured.args.length, 1);
@@ -584,7 +626,7 @@ test("runDispatcher: LAT-143 ready_for_review with NO branch evidence is downgra
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -600,7 +642,7 @@ test("runDispatcher: LAT-143 ready_for_review with NO branch evidence is downgra
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON_NO_BRANCH, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "no_review_artifact");
@@ -620,7 +662,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit `branch: null` is no
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -636,7 +678,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit `branch: null` is no
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON_NULL_BRANCH, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "no_review_artifact");
@@ -649,7 +691,7 @@ test("runDispatcher: LAT-143 ready_for_review with empty/whitespace branch + prU
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -665,7 +707,7 @@ test("runDispatcher: LAT-143 ready_for_review with empty/whitespace branch + prU
       deps: {
         linear,
         spawn: planSpawn({ stdout: READY_JSON_EMPTY_BRANCH, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "no_review_artifact");
@@ -678,7 +720,7 @@ test("runDispatcher: LAT-143 ready_for_review with PR URL only (no branch ref) p
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
     schemaVersion: "1.0.0",
     evidence: {
@@ -702,7 +744,7 @@ test("runDispatcher: LAT-143 ready_for_review with PR URL only (no branch ref) p
       deps: {
         linear,
         spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
@@ -715,7 +757,7 @@ test("runDispatcher: LAT-143 ready_for_review with patch artifact (no branch / n
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
     schemaVersion: "1.0.0",
     evidence: {
@@ -739,7 +781,7 @@ test("runDispatcher: LAT-143 ready_for_review with patch artifact (no branch / n
       deps: {
         linear,
         spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
@@ -752,7 +794,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit local diff path prom
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
     schemaVersion: "1.0.0",
     evidence: {
@@ -776,7 +818,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit local diff path prom
       deps: {
         linear,
         spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "ready_for_review");
@@ -792,7 +834,7 @@ test("runDispatcher: LAT-143 exit-0 with unparseable summary is treated as no_re
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };
   const linear = fakeLinear({ "LAT-126": issue }, log);
-  const captured = { args: [] as ReadonlyArray<string>[] };
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
     const r = await runDispatcher({
       config: {
@@ -811,11 +853,171 @@ test("runDispatcher: LAT-143 exit-0 with unparseable summary is treated as no_re
           { stdout: "this is not json at all", exitCode: 0 },
           captured,
         ),
-        makeTempDir: async () => dir,
+        worktree: fakeWorktreeAllocator(dir),
       },
     });
     assert.equal(r.outcome, "no_review_artifact");
     assert.equal(r.promoted, false);
     assert.equal(log.states.length, 0);
+  });
+});
+
+test("runDispatcher: two simulated dispatches use distinct branches and worktree dirs", async () => {
+  // LAT-138 acceptance: two dispatches in the same process must not
+  // share branch state or scratch paths. We run them sequentially
+  // (the dispatcher has no internal concurrency) but the allocator
+  // hands out distinct identifiers, and the orchestration threads
+  // them through pack paths, child cwd, and Linear comments.
+  const issueA = fakeIssue({ identifier: "LAT-100", uuid: "uuid-100" });
+  const issueB = fakeIssue({ identifier: "LAT-200", uuid: "uuid-200" });
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-100": issueA, "LAT-200": issueB }, log);
+  const capA = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  const capB = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  await withTempDir(async (dir) => {
+    let n = 0;
+    const allocator = fakeWorktreeAllocator(dir, {
+      suffix: () => {
+        n += 1;
+        return `r${n}`;
+      },
+    });
+    const baseConfig = {
+      linearApiKey: "lin_api_X",
+      inReviewStateId: "state-in-review",
+      controlLoopCliPath: "/cli.js",
+      repoRoot: dir,
+      mode: "live" as const,
+      extraSecrets: [],
+      childEnv: {},
+    };
+    const ra = await runDispatcher({
+      config: { ...baseConfig, dispatchIssueId: "LAT-100" },
+      deps: {
+        linear,
+        spawn: planSpawn(
+          {
+            stdout: JSON.stringify({
+              schemaVersion: "1.0.0",
+              evidence: {
+                state: "ready_for_review",
+                ticket: "LAT-100",
+                branch: { branch: "lat-100-stub", prUrl: null },
+              },
+            }),
+            exitCode: 0,
+          },
+          capA,
+        ),
+        worktree: allocator,
+      },
+    });
+    const rb = await runDispatcher({
+      config: { ...baseConfig, dispatchIssueId: "LAT-200" },
+      deps: {
+        linear,
+        spawn: planSpawn(
+          {
+            stdout: JSON.stringify({
+              schemaVersion: "1.0.0",
+              evidence: {
+                state: "ready_for_review",
+                ticket: "LAT-200",
+                branch: { branch: "lat-200-stub", prUrl: null },
+              },
+            }),
+            exitCode: 0,
+          },
+          capB,
+        ),
+        worktree: allocator,
+      },
+    });
+    assert.equal(ra.outcome, "ready_for_review");
+    assert.equal(rb.outcome, "ready_for_review");
+    assert.notEqual(ra.worktreeBranch, rb.worktreeBranch);
+    assert.notEqual(ra.worktreePath, rb.worktreePath);
+    assert.notEqual(ra.packPath, rb.packPath);
+    assert.match(ra.worktreeBranch ?? "", /dispatch\/lat-100-/);
+    assert.match(rb.worktreeBranch ?? "", /dispatch\/lat-200-/);
+    // Each control-loop spawn ran in its own worktree cwd.
+    assert.notEqual(capA.cwd[0], capB.cwd[0]);
+    assert.match(capA.cwd[0] ?? "", /lat-100-/);
+    assert.match(capB.cwd[0] ?? "", /lat-200-/);
+  });
+});
+
+test("runDispatcher: refuses duplicate dispatch of same ticket while in flight", async () => {
+  // LAT-138 acceptance: the in-process duplicate guard short-circuits
+  // a second invocation for the same ticket while the first has not
+  // yet released its reservation. We simulate "in flight" by manually
+  // pre-reserving the slot before calling runDispatcher.
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  await withTempDir(async (dir) => {
+    const allocator = fakeWorktreeAllocator(dir);
+    // Simulate the first dispatch having already reserved the slot.
+    assert.equal(allocator.tryReserve("LAT-126"), true);
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "mock",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured),
+        worktree: allocator,
+      },
+    });
+    assert.equal(r.outcome, "duplicate_in_flight");
+    // Did not spawn the control loop, did not touch Linear.
+    assert.equal(captured.args.length, 0);
+    assert.equal(log.reads.length, 0);
+    assert.equal(log.comments.length, 0);
+    assert.equal(log.states.length, 0);
+  });
+});
+
+test("runDispatcher: forwards CONTROL_LOOP_WORKDIR to the control loop env", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
+  // Capture env separately by augmenting the spawn factory.
+  const envSeen: Record<string, string | undefined>[] = [];
+  await withTempDir(async (dir) => {
+    const spawnImpl: DispatcherSpawn = (cmd, args, options) => {
+      envSeen.push(options.env ?? {});
+      return planSpawn({ stdout: READY_JSON, exitCode: 0 }, captured)(cmd, args, options);
+    };
+    await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: { PATH: "/usr/bin" },
+      },
+      deps: {
+        linear,
+        spawn: spawnImpl,
+        worktree: fakeWorktreeAllocator(dir),
+      },
+    });
+    assert.equal(envSeen.length, 1);
+    const env = envSeen[0]!;
+    assert.equal(env["PATH"], "/usr/bin");
+    assert.match(env["CONTROL_LOOP_WORKDIR"] ?? "", /\.dispatch-worktrees\/lat-126-stable$/);
   });
 });

@@ -20,9 +20,8 @@
  *   the issue unpromoted, with a comment explaining why.
  */
 
-import { mkdtemp, writeFile, readFile, mkdir } from "node:fs/promises";
+import { writeFile, readFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,6 +43,7 @@ import {
   type RunArtefact,
   type RunArtefactOutcome,
 } from "../observability/run-artifact.js";
+import { WorktreeAllocator, type WorktreeAllocation } from "./worktree.js";
 import type {
   ControlLoopJsonSummary,
   DispatchOutcome,
@@ -75,8 +75,12 @@ export interface DispatcherConfig {
 export interface DispatcherDeps {
   linear: DispatcherLinearClient;
   spawn?: DispatcherSpawn;
-  /** Override temp dir factory for tests. */
-  makeTempDir?: () => Promise<string>;
+  /**
+   * LAT-138 worktree allocator. Required for live dispatches; tests
+   * inject one with a fake git runner so two simulated invocations
+   * can exercise distinct branches and scratch dirs without real git.
+   */
+  worktree: WorktreeAllocator;
   /** `now` injection for deterministic comment bodies in tests. */
   now?: () => Date;
 }
@@ -106,7 +110,7 @@ export async function runDispatcher(
   input: RunDispatcherInput,
 ): Promise<DispatchReport> {
   const { config, deps } = input;
-  const { linear } = deps;
+  const { worktree } = deps;
 
   if (!config.dispatchIssueId) {
     return makeReport({
@@ -116,13 +120,40 @@ export async function runDispatcher(
     });
   }
 
+  // LAT-138: refuse a concurrent re-dispatch of the same ticket in the
+  // same process. The reservation is cleared in the finally block
+  // below so a successful or failed run frees the slot for the next
+  // invocation.
+  if (!worktree.tryReserve(config.dispatchIssueId)) {
+    return makeReport({
+      outcome: "duplicate_in_flight",
+      issueIdentifier: config.dispatchIssueId,
+      message: `Refused: ${config.dispatchIssueId} is already in flight in this process.`,
+    });
+  }
+
+  try {
+    return await runDispatcherInner({ config, deps });
+  } finally {
+    worktree.release(config.dispatchIssueId);
+  }
+}
+
+async function runDispatcherInner(
+  input: RunDispatcherInput,
+): Promise<DispatchReport> {
+  const { config, deps } = input;
+  const { linear, worktree } = deps;
+  // dispatchIssueId was checked non-null in `runDispatcher`.
+  const dispatchIssueId = config.dispatchIssueId as string;
+
   let issue;
   try {
-    issue = await linear.readIssue(config.dispatchIssueId);
+    issue = await linear.readIssue(dispatchIssueId);
   } catch (err) {
     return makeReport({
       outcome: err instanceof DispatcherLinearError ? "refused" : "failed",
-      issueIdentifier: config.dispatchIssueId,
+      issueIdentifier: dispatchIssueId,
       message: `Failed to read Linear issue: ${shortMessage(err, config.extraSecrets)}`,
     });
   }
@@ -136,128 +167,143 @@ export async function runDispatcher(
     });
   }
 
-  const pack = buildTicketPack({ issue });
-  const tempDir = await (deps.makeTempDir
-    ? deps.makeTempDir()
-    : mkdtemp(join(tmpdir(), "lat129-dispatcher-")));
-  await mkdir(tempDir, { recursive: true });
-  const packPath = join(tempDir, pack.filename);
-  await writeFile(packPath, pack.content, "utf8");
-
-  const runOpts: RunControlLoopOptions = {
-    cliPath: config.controlLoopCliPath,
-    packPath,
-    mode: config.mode,
-    cwd: config.repoRoot,
-    env: config.childEnv,
-    extraSecrets: config.extraSecrets,
-    ...(deps.spawn ? { spawn: deps.spawn } : {}),
-  };
-
-  const startedAt = (deps.now ?? (() => new Date()))();
-  const invocationId = `run_${randomUUID()}`;
-
-  let runResult;
+  // LAT-138: allocate a per-invocation git worktree + scratch dir.
+  // The pack, logs, and any control-loop evidence go in the
+  // invocation dir; the control loop runs with cwd = worktree path so
+  // it never mutates the operator's main checkout.
+  let allocation: WorktreeAllocation;
   try {
-    runResult = await runControlLoopCli(runOpts);
+    allocation = await worktree.allocate(issue.identifier);
   } catch (err) {
+    return makeReport({
+      outcome: "failed",
+      issueIdentifier: issue.identifier,
+      message: `Failed to allocate worktree: ${shortMessage(err, config.extraSecrets)}`,
+    });
+  }
+
+  try {
+    const pack = buildTicketPack({ issue });
+    await mkdir(allocation.invocationDir, { recursive: true });
+    const packPath = join(allocation.invocationDir, pack.filename);
+    await writeFile(packPath, pack.content, "utf8");
+
+    // Forward the invocation's worktree to the control loop as the
+    // operator workdir. The live opencode adapter reads
+    // CONTROL_LOOP_WORKDIR; mock/plan modes ignore it.
+    const childEnv: Record<string, string> = {
+      ...config.childEnv,
+      CONTROL_LOOP_WORKDIR: allocation.worktreePath,
+    };
+
+    const runOpts: RunControlLoopOptions = {
+      cliPath: config.controlLoopCliPath,
+      packPath,
+      mode: config.mode,
+      cwd: allocation.worktreePath,
+      env: childEnv,
+      extraSecrets: config.extraSecrets,
+      ...(deps.spawn ? { spawn: deps.spawn } : {}),
+    };
+
+    const startedAt = (deps.now ?? (() => new Date()))();
+    const invocationId = `run_${randomUUID()}`;
+
+    let runResult;
+    try {
+      runResult = await runControlLoopCli(runOpts);
+    } catch (err) {
+      const endedAt = (deps.now ?? (() => new Date()))();
+      const artefact = buildRunArtefact({
+        invocation_id: invocationId,
+        surface: "dispatcher",
+        producer: "lat129-dispatcher",
+        outcome: "failed",
+        started_at: startedAt,
+        ended_at: endedAt,
+        ticket_id: issue.identifier,
+        pack_path: packPath,
+        pack_content: pack.content,
+        refusal_code: "control_loop_invocation_error",
+        refusal_message: shortMessage(err, config.extraSecrets),
+        extra_secrets: config.extraSecrets,
+      });
+      const artefactPath = await writeArtefact(
+        allocation.invocationDir,
+        invocationId,
+        artefact,
+      );
+      return makeReport({
+        outcome: "failed",
+        issueIdentifier: issue.identifier,
+        packPath,
+        artefactPath,
+        artefact,
+        worktreeBranch: allocation.branch,
+        worktreePath: allocation.worktreePath,
+        message: `Control loop invocation errored before exit: ${shortMessage(err, config.extraSecrets)}`,
+      });
+    }
+
+    const summaryState = runResult.jsonSummary?.evidence?.state ?? null;
+    const mappedOutcome = mapStateToOutcome(summaryState, runResult.exitCode);
+
+    // LAT-143: a `ready_for_review` run is only actionable when it produced
+    // something a reviewer can look at — a branch, a PR, a patch artifact,
+    // or an explicit local diff path. Without one of those, promotion to
+    // In Review would create a Linear issue that points at nothing, so we
+    // downgrade the outcome to `no_review_artifact` and refuse to promote.
+    // Regression coverage for the LAT-127 ready-with-no-branch/PR shape.
+    const reviewArtifact: ReviewArtifact | null =
+      mappedOutcome === "ready_for_review"
+        ? extractReviewArtifact(runResult.jsonSummary)
+        : null;
+    const outcome: DispatchOutcome =
+      mappedOutcome === "ready_for_review" && reviewArtifact === null
+        ? "no_review_artifact"
+        : mappedOutcome;
     const endedAt = (deps.now ?? (() => new Date()))();
+
     const artefact = buildRunArtefact({
       invocation_id: invocationId,
       surface: "dispatcher",
       producer: "lat129-dispatcher",
-      outcome: "failed",
+      outcome: outcomeToArtefactOutcome(outcome),
       started_at: startedAt,
       ended_at: endedAt,
       ticket_id: issue.identifier,
       pack_path: packPath,
       pack_content: pack.content,
-      refusal_code: "control_loop_invocation_error",
-      refusal_message: shortMessage(err, config.extraSecrets),
+      refusal_code: refusalCodeForOutcome(outcome, runResult),
+      refusal_message: refusalMessageForOutcome(outcome, runResult),
+      raw_stdout: runResult.stdout,
+      raw_stderr: runResult.stderr,
+      log_stdout_redacted: runResult.stdout,
       extra_secrets: config.extraSecrets,
     });
-    const artefactPath = await writeArtefact(tempDir, invocationId, artefact);
-    return makeReport({
-      outcome: "failed",
+    const artefactPath = await writeArtefact(
+      allocation.invocationDir,
+      invocationId,
+      artefact,
+    );
+
+    const commentBody = buildCommentBody({
       issueIdentifier: issue.identifier,
       packPath,
-      artefactPath,
-      artefact,
-      message: `Control loop invocation errored before exit: ${shortMessage(err, config.extraSecrets)}`,
-    });
-  }
-
-  const summaryState = runResult.jsonSummary?.evidence?.state ?? null;
-  const mappedOutcome = mapStateToOutcome(summaryState, runResult.exitCode);
-
-  // LAT-143: a `ready_for_review` run is only actionable when it produced
-  // something a reviewer can look at — a branch, a PR, a patch artifact,
-  // or an explicit local diff path. Without one of those, promotion to
-  // In Review would create a Linear issue that points at nothing, so we
-  // downgrade the outcome to `no_review_artifact` and refuse to promote.
-  // Regression coverage for the LAT-127 ready-with-no-branch/PR shape.
-  const reviewArtifact: ReviewArtifact | null =
-    mappedOutcome === "ready_for_review"
-      ? extractReviewArtifact(runResult.jsonSummary)
-      : null;
-  const outcome: DispatchOutcome =
-    mappedOutcome === "ready_for_review" && reviewArtifact === null
-      ? "no_review_artifact"
-      : mappedOutcome;
-  const endedAt = (deps.now ?? (() => new Date()))();
-
-  const artefact = buildRunArtefact({
-    invocation_id: invocationId,
-    surface: "dispatcher",
-    producer: "lat129-dispatcher",
-    outcome: outcomeToArtefactOutcome(outcome),
-    started_at: startedAt,
-    ended_at: endedAt,
-    ticket_id: issue.identifier,
-    pack_path: packPath,
-    pack_content: pack.content,
-    refusal_code: refusalCodeForOutcome(outcome, runResult),
-    refusal_message: refusalMessageForOutcome(outcome, runResult),
-    raw_stdout: runResult.stdout,
-    raw_stderr: runResult.stderr,
-    log_stdout_redacted: runResult.stdout,
-    extra_secrets: config.extraSecrets,
-  });
-  const artefactPath = await writeArtefact(tempDir, invocationId, artefact);
-
-  const commentBody = buildCommentBody({
-    issueIdentifier: issue.identifier,
-    packPath,
-    runResult,
-    outcome,
-    mode: config.mode,
-    reviewArtifact,
-    now: deps.now ?? (() => new Date()),
-    artefact,
-    artefactPath,
-  });
-
-  let commented = false;
-  try {
-    await linear.postComment(issue.uuid, commentBody);
-    commented = true;
-  } catch (err) {
-    return makeReport({
+      runResult,
       outcome,
-      issueIdentifier: issue.identifier,
-      packPath,
-      artefactPath,
+      mode: config.mode,
+      reviewArtifact,
+      now: deps.now ?? (() => new Date()),
       artefact,
-      controlLoopExitCode: runResult.exitCode,
-      message: `Run terminated as ${outcome}; failed to post Linear comment: ${shortMessage(err, config.extraSecrets)}`,
+      artefactPath,
+      worktreeBranch: allocation.branch,
     });
-  }
 
-  let promoted = false;
-  if (outcome === "ready_for_review") {
+    let commented = false;
     try {
-      await linear.setIssueState(issue.uuid, config.inReviewStateId);
-      promoted = true;
+      await linear.postComment(issue.uuid, commentBody);
+      commented = true;
     } catch (err) {
       return makeReport({
         outcome,
@@ -266,37 +312,70 @@ export async function runDispatcher(
         artefactPath,
         artefact,
         controlLoopExitCode: runResult.exitCode,
-        commented,
-        promoted: false,
-        message: `READY_FOR_REVIEW achieved; failed to promote issue: ${shortMessage(err, config.extraSecrets)}`,
+        worktreeBranch: allocation.branch,
+        worktreePath: allocation.worktreePath,
+        message: `Run terminated as ${outcome}; failed to post Linear comment: ${shortMessage(err, config.extraSecrets)}`,
       });
     }
-  }
 
-  return makeReport({
-    outcome,
-    issueIdentifier: issue.identifier,
-    packPath,
-    artefactPath,
-    artefact,
-    controlLoopExitCode: runResult.exitCode,
-    commented,
-    promoted,
-    message:
-      outcome === "ready_for_review"
-        ? `Promoted ${issue.identifier} to In Review (${describeArtifact(reviewArtifact)}).`
-        : outcome === "no_review_artifact"
-          ? `Control loop reported READY_FOR_REVIEW but produced no actionable review artifact (no branch, PR, patch, or diff path); ${issue.identifier} left unpromoted.`
-          : `Run terminated as ${outcome}; issue left unpromoted.`,
-  });
+    let promoted = false;
+    if (outcome === "ready_for_review") {
+      try {
+        await linear.setIssueState(issue.uuid, config.inReviewStateId);
+        promoted = true;
+      } catch (err) {
+        return makeReport({
+          outcome,
+          issueIdentifier: issue.identifier,
+          packPath,
+          artefactPath,
+          artefact,
+          controlLoopExitCode: runResult.exitCode,
+          commented,
+          promoted: false,
+          worktreeBranch: allocation.branch,
+          worktreePath: allocation.worktreePath,
+          message: `READY_FOR_REVIEW achieved; failed to promote issue: ${shortMessage(err, config.extraSecrets)}`,
+        });
+      }
+    }
+
+    return makeReport({
+      outcome,
+      issueIdentifier: issue.identifier,
+      packPath,
+      artefactPath,
+      artefact,
+      controlLoopExitCode: runResult.exitCode,
+      commented,
+      promoted,
+      worktreeBranch: allocation.branch,
+      worktreePath: allocation.worktreePath,
+      message:
+        outcome === "ready_for_review"
+          ? `Promoted ${issue.identifier} to In Review (${describeArtifact(reviewArtifact)}).`
+          : outcome === "no_review_artifact"
+            ? `Control loop reported READY_FOR_REVIEW but produced no actionable review artifact (no branch, PR, patch, or diff path); ${issue.identifier} left unpromoted.`
+            : `Run terminated as ${outcome}; issue left unpromoted.`,
+    });
+  } finally {
+    // LAT-138: best-effort cleanup. We swallow cleanup errors; the
+    // worktree path is in the report so the operator can still
+    // inspect it if anything is left behind.
+    try {
+      await worktree.cleanup(allocation);
+    } catch {
+      // intentionally ignored
+    }
+  }
 }
 
 async function writeArtefact(
-  tempDir: string,
+  dir: string,
   invocationId: string,
   artefact: RunArtefact,
 ): Promise<string> {
-  const path = join(tempDir, `${invocationId}.artefact.json`);
+  const path = join(dir, `${invocationId}.artefact.json`);
   await writeFile(path, renderRunArtefactJson(artefact), "utf8");
   return path;
 }
@@ -322,6 +401,8 @@ function outcomeToArtefactOutcome(o: DispatchOutcome): RunArtefactOutcome {
       // observability — the producer reported success but the run has no
       // reviewable output.
       return "failed";
+    case "duplicate_in_flight":
+      return "refused";
   }
 }
 
@@ -468,6 +549,8 @@ interface MakeReportInput {
   controlLoopExitCode?: number | null;
   commented?: boolean;
   promoted?: boolean;
+  worktreeBranch?: string | null;
+  worktreePath?: string | null;
   message: string;
 }
 
@@ -481,6 +564,8 @@ function makeReport(input: MakeReportInput): DispatchReport {
     artefactPath: input.artefactPath ?? null,
     artefact: input.artefact ?? null,
     controlLoopExitCode: input.controlLoopExitCode ?? null,
+    worktreeBranch: input.worktreeBranch ?? null,
+    worktreePath: input.worktreePath ?? null,
     message: input.message,
   };
 }
@@ -557,6 +642,7 @@ function buildCommentBody(input: {
   now: () => Date;
   artefact: RunArtefact;
   artefactPath: string;
+  worktreeBranch?: string;
 }): string {
   const { issueIdentifier, packPath, runResult, outcome, mode, reviewArtifact } = input;
   const ts = input.now().toISOString();
@@ -569,6 +655,9 @@ function buildCommentBody(input: {
   lines.push(`- **Control-loop exit code:** ${runResult.exitCode}`);
   lines.push(`- **Pack:** \`${packPath}\` (local; not checked in)`);
   lines.push(`- **Review target:** ${describeArtifact(reviewArtifact)}`);
+  if (input.worktreeBranch) {
+    lines.push(`- **Worktree branch:** \`${input.worktreeBranch}\` (LAT-138 sandbox; cleaned up after run)`);
+  }
   lines.push(`- **Timestamp:** ${ts}`);
   lines.push(
     `- **Artefact (LAT-140):** ${formatArtefactCompactRef({ artefact: input.artefact, artefactPath: input.artefactPath })}`,
@@ -638,5 +727,9 @@ export async function runDispatcherFromEnv(input: {
     });
   }
   const client = createDispatcherLinearClient({ apiKey: resolved.config.linearApiKey });
-  return runDispatcher({ config: resolved.config, deps: { linear: client } });
+  const worktree = new WorktreeAllocator({ repoRoot: resolved.config.repoRoot });
+  return runDispatcher({
+    config: resolved.config,
+    deps: { linear: client, worktree },
+  });
 }

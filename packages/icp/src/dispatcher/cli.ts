@@ -80,6 +80,7 @@ function exitCodeFor(outcome: DispatchOutcome): number {
     case "refused":
     case "planned":
     case "config_error":
+    case "duplicate_in_flight":
       return 2;
     case "checks_failed":
     case "failed":
