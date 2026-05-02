@@ -156,6 +156,42 @@ export type {
   EligibilityOutcome,
 } from "./dispatcher/types.js";
 
+/* LAT-140 structured run artefact (sanitised observability record).
+ * Pure module: produces the JSON / compact comment-ready summary; the
+ * caller decides where to persist it. Never uploads or externalises. */
+export {
+  RUN_ARTIFACT_SCHEMA_VERSION,
+  buildRunArtefact,
+  renderRunArtefactJson,
+  formatArtefactCompactRef,
+} from "./observability/run-artifact.js";
+export type {
+  RunArtefact,
+  RunArtefactInput,
+  RunArtefactOutcome,
+  RunSurface,
+  ArtefactClass,
+  ArtefactCheck,
+  AcceptanceCriterionCoverage,
+  ChangedFilesSummary,
+  ClassifierEvidence,
+  CostClass,
+  QualityLabel,
+  RedactionMetadata,
+  RiskClass,
+  TrainingEligibility,
+} from "./observability/run-artifact.js";
+export {
+  fromControlLoopSummary,
+  fromOpencodeDryRunSummary,
+} from "./observability/from-summaries.js";
+export type {
+  ControlLoopSummaryLike,
+  OpencodeDryRunSummaryLike,
+  FromControlLoopSummaryArgs,
+  FromOpencodeDryRunArgs,
+} from "./observability/from-summaries.js";
+
 /* ICP observability cockpit (LAT-55, PRD docs/prds/LAT-28). Read-through
  * projection of the ADR-0006 envelope onto the seven MVP views. */
 export { readRunsDir, parseRunJson } from "./cockpit/reader.js";
