@@ -120,6 +120,42 @@ export type {
   RetroAggregationOptions,
 } from "./evaluation/index.js";
 
+/* LAT-129 polling dispatcher MVP. Selects one eligible Linear issue,
+ * generates a bounded ticket pack, invokes the control-loop CLI once,
+ * and writes sanitised evidence back to Linear. */
+export {
+  runDispatcher,
+  resolveDispatcherConfig,
+  ensureControlLoopBuilt,
+  defaultControlLoopCliPath,
+  defaultRepoRoot,
+  runDispatcherFromEnv,
+} from "./dispatcher/dispatch.js";
+export type {
+  DispatcherConfig,
+  DispatcherDeps,
+  RunDispatcherInput,
+} from "./dispatcher/dispatch.js";
+export { redactOutput } from "./dispatcher/redact.js";
+export { evaluateEligibility } from "./dispatcher/select.js";
+export { buildTicketPack } from "./dispatcher/ticket-pack.js";
+export { runControlLoopCli } from "./dispatcher/control-loop-runner.js";
+export {
+  createDispatcherLinearClient,
+  DispatcherLinearError,
+} from "./dispatcher/linear-client.js";
+export type {
+  DispatchIssue,
+  DispatchOutcome,
+  DispatchReport,
+  DispatcherLinearClient,
+  DispatcherSpawn,
+  DispatcherSpawnedProcess,
+  ControlLoopRunResult,
+  ControlLoopJsonSummary,
+  EligibilityOutcome,
+} from "./dispatcher/types.js";
+
 /* ICP observability cockpit (LAT-55, PRD docs/prds/LAT-28). Read-through
  * projection of the ADR-0006 envelope onto the seven MVP views. */
 export { readRunsDir, parseRunJson } from "./cockpit/reader.js";

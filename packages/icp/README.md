@@ -64,3 +64,65 @@ npm run test --workspace @latentspacelabs/icp
 ```
 
 `npm run check` at the repo root runs typecheck, build, ADR validation, PRD validation, the policy scanner, and all workspace tests.
+
+## LAT-129 polling dispatcher (MVP)
+
+`icp-dispatch-next` (also wired as `npm run dispatch:next` from the repo root) is the first ICP-owned harness that closes the loop from "agent-ready Linear ticket" to "control-loop run with sanitised evidence back on the Linear issue."
+
+Per invocation it does exactly one thing:
+
+1. Reads `LINEAR_API_KEY` from env (never logged).
+2. Selects one issue identified by `LAT_DISPATCH_ISSUE=LAT-NN`. (Label-driven polling is a documented follow-up; the explicit override is the only safe way to opt in for now.)
+3. Refuses if the issue is risky (deploy / merge / secret-rotation keywords, vague "investigate" titles, missing Acceptance Criteria, too-short body).
+4. Generates a bounded ticket pack into a temp directory (never the repo tree).
+5. Invokes the existing control-loop CLI once with `--mode <mock|plan|live>` and `--format json`.
+6. Captures stdout/stderr, scrubs token-shaped values + non-Linear URLs + RunPod pod ids + literal env-supplied secret values, and posts the result as a Linear comment.
+7. Promotes the issue to `In Review` only when the control-loop JSON summary reports `state: "ready_for_review"`. Refused or failed runs leave the issue unpromoted, with the reason in the comment.
+
+### Required env
+
+| Variable | Purpose |
+| --- | --- |
+| `LINEAR_API_KEY` | Personal API key (`lin_api_*`). Never logged or forwarded to child processes. |
+| `LAT_DISPATCH_ISSUE` | Explicit `LAT-NN` to dispatch. Without it the dispatcher exits cleanly with `no_eligible_issue`. |
+
+### Optional env
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `LAT_DISPATCH_MODE` | `mock` | `mock` / `plan` / `live`. Forwarded to the control-loop CLI. |
+| `LAT_LINEAR_IN_REVIEW_STATE_ID` | LAT team In Review UUID (current value) | Override when targeting a different workspace/team. |
+
+`live` mode also requires the env the control loop itself documents (`CONTROL_LOOP_LIVE_ENABLED`, `CONTROL_LOOP_PROVIDER`, `CONTROL_LOOP_WORKDIR`, `RUNPOD_API_KEY`, `RUNPOD_POD_ID`, optionally `RUNPOD_VLLM_API_KEY`). The dispatcher forwards those into the child, but never `LINEAR_API_KEY`.
+
+### Local usage
+
+```sh
+# 1. Build everything (the dispatcher refuses if the control-loop dist is missing).
+npm run build
+
+# 2. Resolve config without making any network calls.
+LINEAR_API_KEY=lin_api_... LAT_DISPATCH_ISSUE=LAT-126 \
+  npm run dispatch:next -- --dry-run
+
+# 3. One-shot mock dispatch (no real provider, no cost).
+LINEAR_API_KEY=lin_api_... LAT_DISPATCH_ISSUE=LAT-126 \
+  npm run dispatch:next -- --mode mock
+```
+
+### Guardrails
+
+- No auto-merge, no deploy, no daemon, no concurrency. One invocation = one ticket = one run.
+- Linear API key is never forwarded to the child process or echoed in any output.
+- All captured subprocess output passes through `redactOutput` before being written back to Linear.
+- The dispatcher never modifies the repo tree; the generated pack lives in a `tmpdir()` directory.
+- If config is missing, the dispatcher reports `config_error` and exits 2; it never silently falls back to a different cost class or provider.
+
+### Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| 0 | `ready_for_review` — Linear comment posted and issue promoted. |
+| 2 | `no_eligible_issue` / `refused` / `planned` / `config_error` (recoverable). |
+| 3 | `failed` / `checks_failed`. |
+| 64 | Bad CLI arguments. |
