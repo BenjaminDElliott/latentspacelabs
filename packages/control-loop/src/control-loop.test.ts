@@ -149,7 +149,7 @@ describe("runControlLoop — refusal modes", () => {
 
   it("refuses a pack containing a secret-shaped string (guardrail)", async () => {
     const original = await readFile(READY_PACK, "utf8");
-    const tainted = original + "\n\n<!-- accidental: AKIAABCDEFGHIJKLMNOP -->\n";
+    const tainted = original + "\n\n<!-- accidental: AKIAABCDEFGHIJKLMNOP -->\n"; // secret-guard:allow fake fixture for guardrail test
     await inTmp("tainted.md", tainted, async (path) => {
       let runCalled = false;
       const adapter: RuntimeAdapter = {
