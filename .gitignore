@@ -7,3 +7,9 @@ dist/
 .DS_Store
 coverage/
 .turbo/
+
+# MCP credential files — only the placeholder-only `.mcp.json` and
+# `.mcp.example.json` template are tracked. Any local override holding a
+# real bearer token must live in `.mcp.local.json` and stay untracked.
+.mcp.local.json
+.mcp.*.local.json

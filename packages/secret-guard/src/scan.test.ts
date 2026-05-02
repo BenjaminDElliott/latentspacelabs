@@ -155,6 +155,60 @@ test("inline secret-guard:allow directive suppresses line findings", () => {
   assert.deepEqual(findings, []);
 });
 
+test("scanText flags Perplexity agent-proxy bearer token (LAT-118)", () => {
+  const findings = scanText({
+    file: ".mcp.json",
+    text: `        "AUTH_TOKEN": "agp_aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"`, // secret-guard:allow fake fixture
+  });
+  assert.ok(
+    findings.some(
+      (f) => f.rule === "perplexity-agent-proxy-token" || f.rule === "credential-assignment",
+    ),
+    formatResult({ findings, filesScanned: 0 }),
+  );
+});
+
+test("scanText flags Linear personal API key (LAT-118)", () => {
+  const findings = scanText({
+    file: "leak.env",
+    text: `LINEAR_API_KEY=lin_api_abcdefghij0123456789klmnopqr`, // secret-guard:allow fake fixture
+  });
+  assert.ok(
+    findings.some((f) => f.rule === "linear-api-key" || f.rule === "credential-assignment"),
+  );
+});
+
+test("scanText catches JSON-quoted credential assignment in .mcp.json shape (LAT-118)", () => {
+  const findings = scanText({
+    file: ".mcp.json",
+    text: [
+      `{`,
+      `  "env": {`,
+      `    "AUTH_TOKEN": "ZkQw9vP2nT4rB7yL3xH8uMcEgJdF0sA6"`, // secret-guard:allow fake fixture
+      `  }`,
+      `}`,
+    ].join("\n"),
+  });
+  assert.ok(
+    findings.some((f) => f.rule === "credential-assignment"),
+    formatResult({ findings, filesScanned: 0 }),
+  );
+});
+
+test("scanText accepts placeholder ${VAR} in JSON-quoted form (LAT-118)", () => {
+  const findings = scanText({
+    file: ".mcp.json",
+    text: [
+      `{`,
+      `  "env": {`,
+      `    "AUTH_TOKEN": "\${AUTH_TOKEN}"`,
+      `  }`,
+      `}`,
+    ].join("\n"),
+  });
+  assert.deepEqual(findings, [], formatResult({ findings, filesScanned: 0 }));
+});
+
 test("formatResult summarises clean and dirty results", () => {
   assert.match(
     formatResult({ findings: [], filesScanned: 3 }),

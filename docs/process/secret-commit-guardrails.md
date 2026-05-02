@@ -11,13 +11,14 @@ Local pre-commit defence against accidentally committing credentials. Landed for
 
 ## How it is enforced
 
-1. `.gitignore` already excludes `.env` and `.env.*` but whitelists `.env.example`, so local dotenv files can exist on disk without ever being tracked.
-2. `@latentspacelabs/secret-guard` (under `packages/secret-guard`) provides a staged-file scanner that blocks:
+1. `.gitignore` already excludes `.env` and `.env.*` but whitelists `.env.example`, so local dotenv files can exist on disk without ever being tracked. `.mcp.local.json` (the local override for the MCP bridge) is also ignored, so engineers can keep a real-token copy on disk without ever staging it.
+2. `@latentspacelabs/secret-guard` (under `packages/secret-guard`) provides a scanner with three entry points (staged set, tracked set, ad-hoc paths). It blocks:
    - any staged `.env` / `.env.<anything>` except `.env.example`, `.env.sample`, `.env.template`, `.env.dist`;
-   - literal credentials matching well-known formats (AWS, GitHub, Slack, OpenAI, Anthropic, Google, Stripe live, PEM private key);
-   - generic `*_KEY=` / `*_SECRET=` / `*_TOKEN=` / `*_PASSWORD=` assignments whose value looks like a credible high-entropy token (≥20 chars, mixed digits + letters, not a placeholder).
-3. A local git pre-commit hook runs the scanner against the staged set on every `git commit`.
-4. Test fixtures and documentation examples that legitimately need a fake credential can opt out of a single line with a `secret-guard:allow` trailing comment. Never apply this to a real secret.
+   - literal credentials matching well-known formats (AWS, Perplexity agent-proxy `agp_<uuid>`, Linear `lin_api_*`, GitHub, Slack, OpenAI, Anthropic, Google, Stripe live, PEM private key);
+   - generic `*_KEY` / `*_SECRET` / `*_TOKEN` / `*_PASSWORD` assignments — including JSON-quoted forms like `"AUTH_TOKEN": "<value>"` used in `.mcp.json` — whose value looks like a credible high-entropy token (≥20 chars, mixed digits + letters, not a placeholder).
+3. A local git pre-commit hook runs the scanner against the staged set on every `git commit` (`secret-guard --staged`).
+4. `npm run check` (and therefore CI) runs `secret-guard --tracked`, which scans every git-tracked file in the repo. This catches credentials that slip past the local hook because the hook is opt-in per clone.
+5. Test fixtures and documentation examples that legitimately need a fake credential can opt out of a single line with a `secret-guard:allow` trailing comment. Never apply this to a real secret.
 
 The scanner runs only on staged content, is TypeScript/Node only, and has no runtime dependencies outside Node's stdlib and `git`. Fully self-contained, following the same pattern as `@latentspacelabs/policy-scanner`.
 
@@ -41,6 +42,9 @@ npm run secret-guard -- path/to/file.ts .env.example
 
 # Scan the staged set without committing
 npm run secret-guard:staged
+
+# Scan every git-tracked file (the mode CI runs)
+npm run secret-guard:tracked
 ```
 
 Exit codes: `0` clean, `1` blocking finding, `2` internal error.
