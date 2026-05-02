@@ -13,9 +13,11 @@ A small TypeScript/Node entrypoint that:
    - `live` — invokes the local `opencode` CLI against a configured
      RunPod-hosted vLLM runtime (LAT-121). Requires
      `CONTROL_LOOP_LIVE_ENABLED=1`, `CONTROL_LOOP_PROVIDER`,
-     `CONTROL_LOOP_WORKDIR`, `RUNPOD_VLLM_API_KEY`, and `RUNPOD_POD_ID`.
-     Optional: `CONTROL_LOOP_OPENCODE_BIN` (default `opencode`),
-     `CONTROL_LOOP_OPENCODE_MODEL`, `CONTROL_LOOP_TIMEOUT_MS`
+     `CONTROL_LOOP_WORKDIR`, `RUNPOD_API_KEY` (RunPod **console** API key
+     for `rest.runpod.io` only), and `RUNPOD_POD_ID`. Optional:
+     `RUNPOD_VLLM_API_KEY` (vLLM / inference bearer for opencode — **not**
+     sent to RunPod’s management API), `CONTROL_LOOP_OPENCODE_BIN` (default `opencode`),
+     `CONTROL_LOOP_OPENCODE_MODEL`, and `CONTROL_LOOP_TIMEOUT_MS`
      (default 300000). Any missing or invalid value, or a non-running
      pod, refuses with `missing_runtime_config` before opencode is
      invoked.
@@ -51,13 +53,15 @@ Exit codes:
 
 The live adapter spawns the local `opencode` CLI inside a per-run
 sandbox directory, passes the ticket pack on disk (never on argv),
-forwards `RUNPOD_VLLM_API_KEY` / `RUNPOD_POD_ID` to the child via env,
-and runs the pack's required checks once opencode exits cleanly.
+forwards `RUNPOD_POD_ID` and, if set, `RUNPOD_VLLM_API_KEY` to the child
+via env (never forwards `RUNPOD_API_KEY`), and runs the pack's required
+checks once opencode exits cleanly.
 
 Before running, the adapter calls `GET https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID`
-to confirm the pod's `desiredStatus === "RUNNING"`. If the API call
-fails or the pod is stopped, the adapter refuses without invoking
-opencode.
+with **`Authorization: Bearer $RUNPOD_API_KEY`** (RunPod account key from
+the console — not your vLLM inference key) to confirm the pod's
+`desiredStatus === "RUNNING"`. If the API call fails or the pod is
+stopped, the adapter refuses without invoking opencode.
 
 The adapter never opens a PR, never auto-merges, never deploys, and
 never returns the token, pod id, or RunPod URL in any field of the
@@ -75,8 +79,9 @@ export CONTROL_LOOP_WORKDIR=/path/to/sandbox/checkout
 export CONTROL_LOOP_OPENCODE_BIN=opencode    # or absolute path
 export CONTROL_LOOP_OPENCODE_MODEL=qwen3-coder-30b
 export CONTROL_LOOP_TIMEOUT_MS=600000
-export RUNPOD_VLLM_API_KEY=...               # never commit
+export RUNPOD_API_KEY=...                   # RunPod console API key — never commit
 export RUNPOD_POD_ID=...                     # never commit
+export RUNPOD_VLLM_API_KEY=...              # optional: inference key for opencode — never commit
 
 npm run --workspace=@latentspacelabs/control-loop run-loop -- \
   path/to/ticket-pack.md --mode live --format json

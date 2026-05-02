@@ -141,6 +141,7 @@ export function selectAdapter(opts: SelectAdapterOptions): RuntimeAdapter {
         CONTROL_LOOP_OPENCODE_BIN: opts.env["CONTROL_LOOP_OPENCODE_BIN"],
         CONTROL_LOOP_OPENCODE_MODEL: opts.env["CONTROL_LOOP_OPENCODE_MODEL"],
         CONTROL_LOOP_TIMEOUT_MS: opts.env["CONTROL_LOOP_TIMEOUT_MS"],
+        RUNPOD_API_KEY: opts.env["RUNPOD_API_KEY"],
         RUNPOD_VLLM_API_KEY: opts.env["RUNPOD_VLLM_API_KEY"],
         RUNPOD_POD_ID: opts.env["RUNPOD_POD_ID"],
       };

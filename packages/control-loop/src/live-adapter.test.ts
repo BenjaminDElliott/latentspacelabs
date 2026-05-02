@@ -17,7 +17,10 @@ import {
 import { MissingConfigError } from "./types.js";
 import type { AdapterRequest } from "./types.js";
 
-const FAKE_TOKEN = "example-rp-test-token-not-real-abcdef0123";
+/** RunPod **console** API key shape (management REST only). */
+const FAKE_RUNPOD_API = "example-runpod-console-api-key-not-real-abcdef012345";
+/** vLLM / inference bearer (optional child env only). */
+const FAKE_VLLM_KEY = "example-vllm-inference-key-not-real-ghij678901234";
 const FAKE_POD = "pod_TEST_NOT_REAL_xyz";
 
 function makeReq(overrides: Partial<AdapterRequest> = {}): AdapterRequest {
@@ -43,7 +46,8 @@ function makeEnv(overrides: Partial<LiveAdapterEnv> = {}): LiveAdapterEnv {
     CONTROL_LOOP_PROVIDER: "opencode-runpod",
     CONTROL_LOOP_WORKDIR: "/tmp/sandbox-irrelevant",
     CONTROL_LOOP_OPENCODE_BIN: "opencode-fake",
-    RUNPOD_VLLM_API_KEY: FAKE_TOKEN,
+    RUNPOD_API_KEY: FAKE_RUNPOD_API,
+    RUNPOD_VLLM_API_KEY: FAKE_VLLM_KEY,
     RUNPOD_POD_ID: FAKE_POD,
     ...overrides,
   };
@@ -100,8 +104,8 @@ describe("LiveOpencodeAdapter.prepare — env validation", () => {
             "CONTROL_LOOP_LIVE_ENABLED=1",
             "CONTROL_LOOP_PROVIDER",
             "CONTROL_LOOP_WORKDIR",
+            "RUNPOD_API_KEY",
             "RUNPOD_POD_ID",
-            "RUNPOD_VLLM_API_KEY",
           ].sort(),
         );
         return true;
@@ -114,12 +118,12 @@ describe("LiveOpencodeAdapter.prepare — env validation", () => {
       env: {
         // Partial — only one of the secrets present, plus a non-secret tag.
         CONTROL_LOOP_PROVIDER: "opencode-runpod",
-        RUNPOD_VLLM_API_KEY: FAKE_TOKEN,
+        RUNPOD_API_KEY: FAKE_RUNPOD_API,
       },
     });
     await assert.rejects(adapter.prepare(), (err: unknown) => {
       assert.ok(err instanceof MissingConfigError);
-      assert.doesNotMatch(err.message, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(err.message, new RegExp(FAKE_RUNPOD_API));
       assert.doesNotMatch(err.message, /opencode-runpod/);
       return true;
     });
@@ -134,7 +138,8 @@ describe("LiveOpencodeAdapter.prepare — env validation", () => {
       assert.ok(err instanceof MissingConfigError);
       assert.match(err.message, /not RUNNING/);
       assert.match(err.message, /EXITED/);
-      assert.doesNotMatch(err.message, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(err.message, new RegExp(FAKE_RUNPOD_API));
+      assert.doesNotMatch(err.message, new RegExp(FAKE_VLLM_KEY));
       assert.doesNotMatch(err.message, new RegExp(FAKE_POD));
       return true;
     });
@@ -143,7 +148,7 @@ describe("LiveOpencodeAdapter.prepare — env validation", () => {
   it("redacts the token and pod id from a RunPod fetch failure", async () => {
     const failing: RunPodFetcher = async () => {
       throw new Error(
-        `connect failed for https://rest.runpod.io/v1/pods/${FAKE_POD} with Authorization: Bearer ${FAKE_TOKEN}`,
+        `connect failed for https://rest.runpod.io/v1/pods/${FAKE_POD} with Authorization: Bearer ${FAKE_RUNPOD_API}`,
       );
     };
     const adapter = new LiveOpencodeAdapter({
@@ -152,7 +157,7 @@ describe("LiveOpencodeAdapter.prepare — env validation", () => {
     });
     await assert.rejects(adapter.prepare(), (err: unknown) => {
       assert.ok(err instanceof MissingConfigError);
-      assert.doesNotMatch(err.message, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(err.message, new RegExp(FAKE_RUNPOD_API));
       assert.doesNotMatch(err.message, new RegExp(FAKE_POD));
       assert.match(err.message, /\[REDACTED\]/);
       return true;
@@ -201,7 +206,7 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
       const { runProcess } = makeProcessRunner([
         { exitCode: 0 }, // opencode passes
         { exitCode: 0 }, // first check passes
-        { exitCode: 1, stderr: `oops involving ${FAKE_TOKEN}` }, // second check fails
+        { exitCode: 1, stderr: `oops involving ${FAKE_VLLM_KEY}` }, // second check fails
       ]);
       const adapter = new LiveOpencodeAdapter({
         env: makeEnv(),
@@ -223,7 +228,7 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
       assert.equal(result.checks[0]?.outcome, "passed");
       assert.equal(result.checks[1]?.outcome, "failed");
       const detail = result.checks[1]?.detail ?? "";
-      assert.doesNotMatch(detail, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(detail, new RegExp(FAKE_VLLM_KEY));
       assert.match(detail, /\[REDACTED\]/);
     });
   });
@@ -231,7 +236,7 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
   it("returns failed when opencode exits non-zero", async () => {
     await withSandbox(async (sandbox) => {
       const { runProcess } = makeProcessRunner([
-        { exitCode: 7, stderr: `crash with token=${FAKE_TOKEN}` },
+        { exitCode: 7, stderr: `crash with token=${FAKE_VLLM_KEY}` },
       ]);
       const adapter = new LiveOpencodeAdapter({
         env: makeEnv(),
@@ -245,7 +250,7 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
       assert.ok(result.refusals && result.refusals.length > 0);
       const msg = result.refusals?.[0]?.message ?? "";
       assert.match(msg, /opencode exited with code 7/);
-      assert.doesNotMatch(msg, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(msg, new RegExp(FAKE_VLLM_KEY));
     });
   });
 
@@ -268,7 +273,7 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
   it("never includes the RunPod token or pod id in any returned field", async () => {
     await withSandbox(async (sandbox) => {
       const { runProcess } = makeProcessRunner([
-        { exitCode: 0, stdout: `bearer=${FAKE_TOKEN} pod=${FAKE_POD}` },
+        { exitCode: 0, stdout: `bearer=${FAKE_VLLM_KEY} mgmt=${FAKE_RUNPOD_API} pod=${FAKE_POD}` },
         { exitCode: 0 },
       ]);
       const adapter = new LiveOpencodeAdapter({
@@ -280,12 +285,13 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
       await adapter.prepare();
       const result = await adapter.run(makeReq());
       const json = JSON.stringify(result);
-      assert.doesNotMatch(json, new RegExp(FAKE_TOKEN));
+      assert.doesNotMatch(json, new RegExp(FAKE_VLLM_KEY));
+      assert.doesNotMatch(json, new RegExp(FAKE_RUNPOD_API));
       assert.doesNotMatch(json, new RegExp(FAKE_POD));
     });
   });
 
-  it("forwards the RunPod credential to the spawned child via env, never argv", async () => {
+  it("forwards inference key and pod id to the child via env, never argv; never forwards console API key", async () => {
     await withSandbox(async (sandbox) => {
       const { runProcess, calls } = makeProcessRunner([{ exitCode: 0 }, { exitCode: 0 }]);
       const adapter = new LiveOpencodeAdapter({
@@ -298,14 +304,48 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
       await adapter.run(makeReq());
       const opencodeCall = calls[0];
       assert.ok(opencodeCall);
-      // Token and pod id must NOT appear on argv.
       for (const a of opencodeCall.args) {
-        assert.doesNotMatch(a, new RegExp(FAKE_TOKEN));
+        assert.doesNotMatch(a, new RegExp(FAKE_RUNPOD_API));
+        assert.doesNotMatch(a, new RegExp(FAKE_VLLM_KEY));
         assert.doesNotMatch(a, new RegExp(FAKE_POD));
       }
-      // They MUST be present in env (the spawned opencode needs them).
-      assert.equal(opencodeCall.env["RUNPOD_VLLM_API_KEY"], FAKE_TOKEN);
+      assert.equal(opencodeCall.env["RUNPOD_VLLM_API_KEY"], FAKE_VLLM_KEY);
       assert.equal(opencodeCall.env["RUNPOD_POD_ID"], FAKE_POD);
+      assert.notEqual(
+        opencodeCall.env["RUNPOD_API_KEY"],
+        FAKE_RUNPOD_API,
+        "adapter must not inject RUNPOD_API_KEY into the child; console key is management-only",
+      );
+    });
+  });
+
+  it("forwards the ticket pack to opencode via -f and uses workdir as cwd", async () => {
+    await withSandbox(async (sandbox) => {
+      const workdir = "/tmp/sandbox-irrelevant";
+      const { runProcess, calls } = makeProcessRunner([{ exitCode: 0 }, { exitCode: 0 }]);
+      const adapter = new LiveOpencodeAdapter({
+        env: makeEnv({ CONTROL_LOOP_WORKDIR: workdir }),
+        runpod: runPodOk(),
+        runProcess,
+        makeSandbox: async () => ({ path: sandbox, cleanup: async () => {} }),
+      });
+      await adapter.prepare();
+      await adapter.run(makeReq());
+      const opencodeCall = calls[0];
+      assert.ok(opencodeCall);
+      assert.equal(opencodeCall.cwd, workdir);
+      assert.ok(!opencodeCall.args.includes("--pack"));
+      assert.ok(!opencodeCall.args.includes("--workdir"));
+      const fIdx = opencodeCall.args.indexOf("-f");
+      assert.ok(fIdx >= 0, "expected -f before pack path");
+      assert.equal(opencodeCall.args[fIdx + 1], join(sandbox, "ticket-pack.md"));
+      assert.ok(opencodeCall.args.includes("run"));
+      assert.ok(opencodeCall.args.includes("--print-logs"));
+      const msg =
+        "Implement the attached ticket pack exactly. Refuse if anything is unclear or out of scope.";
+      const msgIdx = opencodeCall.args.indexOf(msg);
+      const fIdx2 = opencodeCall.args.indexOf("-f");
+      assert.ok(msgIdx >= 0 && fIdx2 >= 0 && msgIdx < fIdx2, "message must precede -f so yargs does not treat the prompt as another --file path");
     });
   });
 
@@ -321,10 +361,10 @@ describe("LiveOpencodeAdapter.run — outcomes", () => {
 describe("redactSecrets", () => {
   it("replaces the literal token and pod id everywhere they appear", () => {
     const out = redactSecrets(
-      `token=${FAKE_TOKEN}, pod=${FAKE_POD}, repeated=${FAKE_TOKEN}`,
-      [FAKE_TOKEN, FAKE_POD],
+      `token=${FAKE_RUNPOD_API}, pod=${FAKE_POD}, repeated=${FAKE_RUNPOD_API}`,
+      [FAKE_RUNPOD_API, FAKE_POD],
     );
-    assert.doesNotMatch(out, new RegExp(FAKE_TOKEN));
+    assert.doesNotMatch(out, new RegExp(FAKE_RUNPOD_API));
     assert.doesNotMatch(out, new RegExp(FAKE_POD));
     assert.match(out, /\[REDACTED\]/);
   });

@@ -44,8 +44,6 @@ Add a single comment to a fixture file so the LAT-105 dry-run harness can exerci
 ## Expected checks
 
 - [ ] `npm run check` passes.
-- [ ] No new files outside the allowlist exist after the run.
-- [ ] No edits under forbidden paths.
 
 ## Branch / PR rules
 

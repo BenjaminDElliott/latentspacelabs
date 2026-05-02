@@ -80,7 +80,7 @@ function usage(): string {
     "Dispatches one bounded opencode agent into a sandboxed runtime selected by --mode.",
     "Default mode is 'mock' (deterministic, offline). 'plan' runs guardrails but does not",
     "dispatch. 'live' requires CONTROL_LOOP_LIVE_ENABLED=1, CONTROL_LOOP_PROVIDER,",
-    "CONTROL_LOOP_WORKDIR, RUNPOD_VLLM_API_KEY, and RUNPOD_POD_ID. Optional:",
+    "CONTROL_LOOP_WORKDIR, RUNPOD_API_KEY (RunPod console), RUNPOD_POD_ID, and optionally RUNPOD_VLLM_API_KEY (inference). Optional:",
     "CONTROL_LOOP_OPENCODE_BIN, CONTROL_LOOP_OPENCODE_MODEL, CONTROL_LOOP_TIMEOUT_MS.",
     "",
     "The control loop never opens a PR, never auto-merges, and never deploys.",
