@@ -212,6 +212,104 @@ test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack", as
   });
 });
 
+test("LAT-140: runDispatcher emits sanitised run artefact and references it in the Linear comment", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  // The control-loop child echoes a token-shaped substring; the dispatcher
+  // must scrub it from the artefact's free-text fields.
+  const stdout =
+    READY_JSON + "\nfine-grained token ghp_ZZZZZZZZZZZZZZZZZZZZ surfaced\n";
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: ["topsecretvalue1234"],
+        childEnv: { PATH: "/usr/bin" },
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "ready_for_review");
+    // Artefact emitted alongside the pack.
+    assert.ok(r.artefactPath, "artefact path should be set");
+    assert.ok(r.artefact, "artefact in-memory object should be set");
+    assert.equal(r.artefact?.surface, "dispatcher");
+    assert.equal(r.artefact?.outcome, "ready_for_review");
+    assert.equal(r.artefact?.ticket_id, "LAT-126");
+    assert.equal(r.artefact?.artefact_class, "operational_log");
+    assert.equal(r.artefact?.training_eligibility, "needs_human_decision");
+    // Pack hash recorded.
+    assert.match(r.artefact?.pack_sha256 ?? "", /^[0-9a-f]{64}$/);
+    // Redaction metadata stamped.
+    assert.equal(r.artefact?.redaction.redactor, "dispatcher.redactOutput");
+    assert.match(
+      r.artefact?.redaction.pre_redaction_payload_sha256 ?? "",
+      /^[0-9a-f]{64}$/,
+    );
+    // Persisted artefact JSON exists and contains no token-shaped substring.
+    const json = await readFile(r.artefactPath!, "utf8");
+    assert.doesNotMatch(json, /ghp_ZZZZZZZZZZZZZZZZZZZZ/);
+    assert.doesNotMatch(json, /topsecretvalue1234/);
+    // Linear comment carries the compact artefact reference.
+    assert.equal(log.comments.length, 1);
+    const body = log.comments[0]!.body;
+    assert.match(body, /Artefact \(LAT-140\):/);
+    assert.match(body, /payload-sha256: `[0-9a-f]{12}`/);
+    // Comment must not echo the secret either.
+    assert.doesNotMatch(body, /topsecretvalue1234/);
+    assert.doesNotMatch(body, /ghp_ZZZZZZZZZZZZZZZZZZZZ/);
+  });
+});
+
+test("LAT-140: refused run still produces an artefact with a refusal code", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  const refusedJson = JSON.stringify({
+    schemaVersion: "1.0.0",
+    evidence: {
+      state: "refused",
+      ticket: "LAT-126",
+      refusals: [{ code: "missing_runtime_config", message: "no provider" }],
+    },
+  });
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: refusedJson, exitCode: 2 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "refused");
+    assert.equal(r.artefact?.outcome, "refused");
+    assert.equal(r.artefact?.refusal_code, "missing_runtime_config");
+    assert.equal(r.artefact?.refusal_message, "no provider");
+    assert.equal(r.promoted, false);
+  });
+});
+
 test("runDispatcher: failed run posts comment but does NOT promote", async () => {
   const issue = fakeIssue();
   const log: FakeLinearLog = { reads: [], comments: [], states: [] };

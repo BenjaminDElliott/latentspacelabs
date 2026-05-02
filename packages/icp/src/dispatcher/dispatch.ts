@@ -18,6 +18,7 @@
  */
 
 import { mkdtemp, writeFile, readFile, mkdir } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,6 +34,13 @@ import {
   createDispatcherLinearClient,
   DispatcherLinearError,
 } from "./linear-client.js";
+import {
+  buildRunArtefact,
+  formatArtefactCompactRef,
+  renderRunArtefactJson,
+  type RunArtefact,
+  type RunArtefactOutcome,
+} from "../observability/run-artifact.js";
 import type {
   DispatchOutcome,
   DispatchReport,
@@ -141,20 +149,61 @@ export async function runDispatcher(
     ...(deps.spawn ? { spawn: deps.spawn } : {}),
   };
 
+  const startedAt = (deps.now ?? (() => new Date()))();
+  const invocationId = `run_${randomUUID()}`;
+
   let runResult;
   try {
     runResult = await runControlLoopCli(runOpts);
   } catch (err) {
+    const endedAt = (deps.now ?? (() => new Date()))();
+    const artefact = buildRunArtefact({
+      invocation_id: invocationId,
+      surface: "dispatcher",
+      producer: "lat129-dispatcher",
+      outcome: "failed",
+      started_at: startedAt,
+      ended_at: endedAt,
+      ticket_id: issue.identifier,
+      pack_path: packPath,
+      pack_content: pack.content,
+      refusal_code: "control_loop_invocation_error",
+      refusal_message: shortMessage(err, config.extraSecrets),
+      extra_secrets: config.extraSecrets,
+    });
+    const artefactPath = await writeArtefact(tempDir, invocationId, artefact);
     return makeReport({
       outcome: "failed",
       issueIdentifier: issue.identifier,
       packPath,
+      artefactPath,
+      artefact,
       message: `Control loop invocation errored before exit: ${shortMessage(err, config.extraSecrets)}`,
     });
   }
 
   const summaryState = runResult.jsonSummary?.evidence?.state ?? null;
   const outcome = mapStateToOutcome(summaryState, runResult.exitCode);
+  const endedAt = (deps.now ?? (() => new Date()))();
+
+  const artefact = buildRunArtefact({
+    invocation_id: invocationId,
+    surface: "dispatcher",
+    producer: "lat129-dispatcher",
+    outcome: outcomeToArtefactOutcome(outcome),
+    started_at: startedAt,
+    ended_at: endedAt,
+    ticket_id: issue.identifier,
+    pack_path: packPath,
+    pack_content: pack.content,
+    refusal_code: refusalCodeForOutcome(outcome, runResult),
+    refusal_message: refusalMessageForOutcome(outcome, runResult),
+    raw_stdout: runResult.stdout,
+    raw_stderr: runResult.stderr,
+    log_stdout_redacted: runResult.stdout,
+    extra_secrets: config.extraSecrets,
+  });
+  const artefactPath = await writeArtefact(tempDir, invocationId, artefact);
 
   const commentBody = buildCommentBody({
     issueIdentifier: issue.identifier,
@@ -163,6 +212,8 @@ export async function runDispatcher(
     outcome,
     mode: config.mode,
     now: deps.now ?? (() => new Date()),
+    artefact,
+    artefactPath,
   });
 
   let commented = false;
@@ -174,6 +225,8 @@ export async function runDispatcher(
       outcome,
       issueIdentifier: issue.identifier,
       packPath,
+      artefactPath,
+      artefact,
       controlLoopExitCode: runResult.exitCode,
       message: `Run terminated as ${outcome}; failed to post Linear comment: ${shortMessage(err, config.extraSecrets)}`,
     });
@@ -189,6 +242,8 @@ export async function runDispatcher(
         outcome,
         issueIdentifier: issue.identifier,
         packPath,
+        artefactPath,
+        artefact,
         controlLoopExitCode: runResult.exitCode,
         commented,
         promoted: false,
@@ -201,6 +256,8 @@ export async function runDispatcher(
     outcome,
     issueIdentifier: issue.identifier,
     packPath,
+    artefactPath,
+    artefact,
     controlLoopExitCode: runResult.exitCode,
     commented,
     promoted,
@@ -209,6 +266,63 @@ export async function runDispatcher(
         ? `Promoted ${issue.identifier} to In Review.`
         : `Run terminated as ${outcome}; issue left unpromoted.`,
   });
+}
+
+async function writeArtefact(
+  tempDir: string,
+  invocationId: string,
+  artefact: RunArtefact,
+): Promise<string> {
+  const path = join(tempDir, `${invocationId}.artefact.json`);
+  await writeFile(path, renderRunArtefactJson(artefact), "utf8");
+  return path;
+}
+
+function outcomeToArtefactOutcome(o: DispatchOutcome): RunArtefactOutcome {
+  switch (o) {
+    case "ready_for_review":
+      return "ready_for_review";
+    case "checks_failed":
+      return "checks_failed";
+    case "failed":
+      return "failed";
+    case "refused":
+      return "refused";
+    case "planned":
+      return "planned";
+    case "no_eligible_issue":
+      return "no_eligible_issue";
+    case "config_error":
+      return "config_error";
+  }
+}
+
+function refusalCodeForOutcome(
+  outcome: DispatchOutcome,
+  runResult: { jsonSummary: { evidence: { refusals?: ReadonlyArray<{ code: string }> } } | null },
+): string | null {
+  if (outcome === "ready_for_review" || outcome === "planned") return null;
+  const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
+  if (refusal && typeof refusal.code === "string") return refusal.code;
+  if (outcome === "refused") return "control_loop_refused";
+  if (outcome === "checks_failed") return "control_loop_checks_failed";
+  if (outcome === "failed") return "control_loop_failed";
+  return null;
+}
+
+function refusalMessageForOutcome(
+  outcome: DispatchOutcome,
+  runResult: {
+    jsonSummary: {
+      evidence: { refusals?: ReadonlyArray<{ code: string; message: string }> };
+    } | null;
+    exitCode: number;
+  },
+): string {
+  if (outcome === "ready_for_review" || outcome === "planned") return "";
+  const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
+  if (refusal && typeof refusal.message === "string") return refusal.message;
+  return `control-loop exit ${runResult.exitCode}`;
 }
 
 /**
@@ -317,6 +431,8 @@ interface MakeReportInput {
   outcome: DispatchOutcome;
   issueIdentifier?: string | null;
   packPath?: string | null;
+  artefactPath?: string | null;
+  artefact?: RunArtefact | null;
   controlLoopExitCode?: number | null;
   commented?: boolean;
   promoted?: boolean;
@@ -330,6 +446,8 @@ function makeReport(input: MakeReportInput): DispatchReport {
     promoted: input.promoted ?? false,
     commented: input.commented ?? false,
     packPath: input.packPath ?? null,
+    artefactPath: input.artefactPath ?? null,
+    artefact: input.artefact ?? null,
     controlLoopExitCode: input.controlLoopExitCode ?? null,
     message: input.message,
   };
@@ -357,6 +475,8 @@ function buildCommentBody(input: {
   outcome: DispatchOutcome;
   mode: string;
   now: () => Date;
+  artefact: RunArtefact;
+  artefactPath: string;
 }): string {
   const { issueIdentifier, packPath, runResult, outcome, mode } = input;
   const ts = input.now().toISOString();
@@ -369,6 +489,9 @@ function buildCommentBody(input: {
   lines.push(`- **Control-loop exit code:** ${runResult.exitCode}`);
   lines.push(`- **Pack:** \`${packPath}\` (local; not checked in)`);
   lines.push(`- **Timestamp:** ${ts}`);
+  lines.push(
+    `- **Artefact (LAT-140):** ${formatArtefactCompactRef({ artefact: input.artefact, artefactPath: input.artefactPath })}`,
+  );
   lines.push("");
   lines.push("#### Control-loop stdout (sanitised)");
   lines.push("");

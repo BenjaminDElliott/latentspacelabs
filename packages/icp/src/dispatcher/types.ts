@@ -56,6 +56,19 @@ export interface DispatchReport {
   commented: boolean;
   /** Path to the generated ticket pack on disk, when one was generated. */
   packPath: string | null;
+  /**
+   * LAT-140: path to the sanitised structured run artefact JSON the
+   * dispatcher emitted, when one was emitted (any outcome where a pack
+   * was generated). `null` for early aborts (no eligible issue, config
+   * error before any work was done).
+   */
+  artefactPath: string | null;
+  /**
+   * LAT-140: the in-memory structured run artefact, when one was built.
+   * Carries sanitised fields only; never raw stdout/stderr. Useful for
+   * tests asserting on the emission shape without reading the JSON.
+   */
+  artefact: import("../observability/run-artifact.js").RunArtefact | null;
   /** Exit code of the control-loop child process when invoked, else null. */
   controlLoopExitCode: number | null;
   /** One-line, secret-safe explanation suitable for stdout / Linear. */
