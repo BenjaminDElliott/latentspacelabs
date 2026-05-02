@@ -84,7 +84,7 @@ After PARA, assign one or more action classes. An intake item can carry more tha
 - **PRD candidate** — an outcome large enough to warrant a product requirements doc before any ticket is cut.
 - **Ticket candidate** — a discrete unit of agent-ready or human-ready work, routable to Linear.
 - **ADR candidate** — an architecturally significant decision that must be captured as an ADR before code is written.
-- **Research task** — a time-boxed investigation whose output is a writeup, not a shipped change.
+- **Research task** — a time-boxed investigation whose output is a writeup, not a shipped change. The bounded lifecycle (intake contract, stop conditions, graduation rules) lives in [`research-spike-lifecycle.md`](research-spike-lifecycle.md); triage produces the spike intake packet, the spike itself runs under that doc.
 - **Risk** — a hazard, regression, cost, security, or quality concern that must be tracked even if no ticket is cut today.
 - **Open question** — unresolved ambiguity that blocks routing; parked explicitly rather than guessed.
 - **Retro learning** — an observation about *how we work* that should feed back into process docs, templates, or the triage prompt itself.
