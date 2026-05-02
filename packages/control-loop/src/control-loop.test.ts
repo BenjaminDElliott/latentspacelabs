@@ -188,13 +188,12 @@ describe("runControlLoop — refusal modes", () => {
     assert.equal(summary.evidence.provider, null);
   });
 
-  it("refuses live mode even with provider+runtime set, until LIVE_ENABLED=1", async () => {
+  it("refuses live mode even with provider set, until LIVE_ENABLED=1", async () => {
     const summary = await runControlLoop({
       packPath: READY_PACK,
       mode: "live",
       env: {
         CONTROL_LOOP_PROVIDER: "opencode-runpod",
-        CONTROL_LOOP_RUNTIME_ID: "qwen-3-6-30b",
       },
       now: FROZEN_NOW,
     });
@@ -202,21 +201,23 @@ describe("runControlLoop — refusal modes", () => {
     assert.ok(summary.evidence.refusals.some((r) => /CONTROL_LOOP_LIVE_ENABLED/.test(r.message)));
   });
 
-  it("with LIVE_ENABLED=1 the live adapter still refuses (not implemented), never silently mocks", async () => {
+  it("refuses live mode when RunPod env is missing even with LIVE_ENABLED=1", async () => {
     const summary = await runControlLoop({
       packPath: READY_PACK,
       mode: "live",
       env: {
         CONTROL_LOOP_PROVIDER: "opencode-runpod",
-        CONTROL_LOOP_RUNTIME_ID: "qwen-3-6-30b",
         CONTROL_LOOP_LIVE_ENABLED: "1",
+        CONTROL_LOOP_WORKDIR: "/tmp/sandbox",
       },
       now: FROZEN_NOW,
     });
     assert.equal(summary.evidence.state, "refused");
     assert.ok(
-      summary.evidence.refusals.some((r) => /not yet implemented/.test(r.message)),
-      "live adapter should refuse with a 'not yet implemented' message — never fall back to mock",
+      summary.evidence.refusals.some(
+        (r) => /RUNPOD_VLLM_API_KEY/.test(r.message) && /RUNPOD_POD_ID/.test(r.message),
+      ),
+      "live adapter should list missing RunPod env vars and never fall back to mock",
     );
   });
 });
@@ -295,14 +296,20 @@ describe("runControlLoop — failed checks and adapter errors", () => {
 
 describe("LiveOpencodeAdapter.prepare", () => {
   it("lists every missing env var in MissingConfigError.missingKeys", async () => {
-    const adapter = new LiveOpencodeAdapter({});
+    const adapter = new LiveOpencodeAdapter({ env: {} });
     await assert.rejects(
       adapter.prepare(),
       (err: unknown) => {
         assert.ok(err instanceof MissingConfigError);
         assert.deepEqual(
           [...err.missingKeys].sort(),
-          ["CONTROL_LOOP_LIVE_ENABLED=1", "CONTROL_LOOP_PROVIDER", "CONTROL_LOOP_RUNTIME_ID"].sort(),
+          [
+            "CONTROL_LOOP_LIVE_ENABLED=1",
+            "CONTROL_LOOP_PROVIDER",
+            "CONTROL_LOOP_WORKDIR",
+            "RUNPOD_POD_ID",
+            "RUNPOD_VLLM_API_KEY",
+          ].sort(),
         );
         return true;
       },
