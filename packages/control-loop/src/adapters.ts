@@ -1,13 +1,11 @@
 /**
  * Runtime adapter implementations.
  *
- * Two adapters live here: a deterministic mock used by CI and tests, and a
- * placeholder live adapter that refuses unless explicitly configured. The
- * live adapter is intentionally minimal — LAT-117 is the first vertical
- * slice; the real opencode/sandbox wiring will land behind this seam in a
- * follow-up. What matters now is that:
+ * The deterministic mock used by CI/tests lives here. The real live
+ * adapter (LAT-121) lives in `live-adapter.ts` and is re-exported below
+ * so existing imports keep working. The selection rules:
  *
- *   1. The adapter selection is config-driven (env), not hardcoded.
+ *   1. Adapter selection is config-driven (env), not hardcoded.
  *   2. A live request without config refuses cleanly via `MissingConfigError`.
  *   3. No URL, token, or runtime hostname is ever embedded in this file.
  */
@@ -18,7 +16,21 @@ import type {
   CheckResult,
   RuntimeAdapter,
 } from "./types.js";
-import { MissingConfigError } from "./types.js";
+
+import { LiveOpencodeAdapter } from "./live-adapter.js";
+import type { LiveAdapterEnv } from "./live-adapter.js";
+
+export { LiveOpencodeAdapter } from "./live-adapter.js";
+export type {
+  LiveAdapterEnv,
+  LiveOpencodeAdapterOptions,
+  RunPodFetcher,
+  RunPodFetchOptions,
+  RunPodMetadata,
+  ProcessRunner,
+  ProcessSpawnOptions,
+  ProcessResult,
+} from "./live-adapter.js";
 
 export interface MockAdapterOptions {
   /** Force a particular outcome. Default: all checks pass. */
@@ -111,60 +123,6 @@ export class MockRuntimeAdapter implements RuntimeAdapter {
   }
 }
 
-/**
- * Live opencode/sandbox adapter — placeholder. The first vertical slice
- * (LAT-117) deliberately stops short of wiring opencode. This adapter
- * checks for the env vars a real implementation would need and refuses
- * cleanly when any are missing. When all are present it still refuses
- * with `live_adapter_not_implemented`, so a misconfigured live run can
- * never silently fall through to a mock or spend cloud cost.
- */
-export interface LiveAdapterEnv {
-  /** Stable provider id, e.g. `opencode-runpod`. NEVER a URL. */
-  CONTROL_LOOP_PROVIDER?: string | undefined;
-  /** Sandbox/runtime identifier. NEVER the endpoint URL. */
-  CONTROL_LOOP_RUNTIME_ID?: string | undefined;
-  /** Indicates the operator wired credentials at the boundary. */
-  CONTROL_LOOP_LIVE_ENABLED?: string | undefined;
-}
-
-export class LiveOpencodeAdapter implements RuntimeAdapter {
-  readonly id = "opencode-live";
-  private readonly env: LiveAdapterEnv;
-
-  constructor(env: LiveAdapterEnv) {
-    this.env = env;
-  }
-
-  async prepare(): Promise<void> {
-    const missing: string[] = [];
-    if (!this.env.CONTROL_LOOP_PROVIDER || this.env.CONTROL_LOOP_PROVIDER.length === 0) {
-      missing.push("CONTROL_LOOP_PROVIDER");
-    }
-    if (!this.env.CONTROL_LOOP_RUNTIME_ID || this.env.CONTROL_LOOP_RUNTIME_ID.length === 0) {
-      missing.push("CONTROL_LOOP_RUNTIME_ID");
-    }
-    if (this.env.CONTROL_LOOP_LIVE_ENABLED !== "1") {
-      missing.push("CONTROL_LOOP_LIVE_ENABLED=1");
-    }
-    if (missing.length > 0) {
-      throw new MissingConfigError(
-        `live opencode adapter is missing required configuration: ${missing.join(", ")}. ` +
-          "The control loop refuses to run live without explicit configuration.",
-        missing,
-      );
-    }
-  }
-
-  async run(_req: AdapterRequest): Promise<AdapterRunResult> {
-    throw new MissingConfigError(
-      "live opencode adapter is not yet implemented in this MVP slice. " +
-        "Set up the live adapter behind this seam in a follow-up; do not silently fall back to mock.",
-      ["live_adapter_not_implemented"],
-    );
-  }
-}
-
 export interface SelectAdapterOptions {
   mode: "mock" | "plan" | "live";
   env: NodeJS.ProcessEnv;
@@ -175,11 +133,18 @@ export function selectAdapter(opts: SelectAdapterOptions): RuntimeAdapter {
     case "mock":
     case "plan":
       return new MockRuntimeAdapter();
-    case "live":
-      return new LiveOpencodeAdapter({
-        CONTROL_LOOP_PROVIDER: opts.env["CONTROL_LOOP_PROVIDER"],
-        CONTROL_LOOP_RUNTIME_ID: opts.env["CONTROL_LOOP_RUNTIME_ID"],
+    case "live": {
+      const env: LiveAdapterEnv = {
         CONTROL_LOOP_LIVE_ENABLED: opts.env["CONTROL_LOOP_LIVE_ENABLED"],
-      });
+        CONTROL_LOOP_PROVIDER: opts.env["CONTROL_LOOP_PROVIDER"],
+        CONTROL_LOOP_WORKDIR: opts.env["CONTROL_LOOP_WORKDIR"],
+        CONTROL_LOOP_OPENCODE_BIN: opts.env["CONTROL_LOOP_OPENCODE_BIN"],
+        CONTROL_LOOP_OPENCODE_MODEL: opts.env["CONTROL_LOOP_OPENCODE_MODEL"],
+        CONTROL_LOOP_TIMEOUT_MS: opts.env["CONTROL_LOOP_TIMEOUT_MS"],
+        RUNPOD_VLLM_API_KEY: opts.env["RUNPOD_VLLM_API_KEY"],
+        RUNPOD_POD_ID: opts.env["RUNPOD_POD_ID"],
+      };
+      return new LiveOpencodeAdapter({ env });
+    }
   }
 }

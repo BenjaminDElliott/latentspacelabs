@@ -10,10 +10,15 @@ A small TypeScript/Node entrypoint that:
 4. Selects a runtime adapter based on `--mode`:
    - `mock` (default) — deterministic, offline, free.
    - `plan` — runs guardrails but does NOT contact the adapter.
-   - `live` — refuses unless `CONTROL_LOOP_PROVIDER`,
-     `CONTROL_LOOP_RUNTIME_ID`, and `CONTROL_LOOP_LIVE_ENABLED=1` are set.
-     The live adapter itself is a placeholder until follow-up work wires
-     opencode behind the seam.
+   - `live` — invokes the local `opencode` CLI against a configured
+     RunPod-hosted vLLM runtime (LAT-121). Requires
+     `CONTROL_LOOP_LIVE_ENABLED=1`, `CONTROL_LOOP_PROVIDER`,
+     `CONTROL_LOOP_WORKDIR`, `RUNPOD_VLLM_API_KEY`, and `RUNPOD_POD_ID`.
+     Optional: `CONTROL_LOOP_OPENCODE_BIN` (default `opencode`),
+     `CONTROL_LOOP_OPENCODE_MODEL`, `CONTROL_LOOP_TIMEOUT_MS`
+     (default 300000). Any missing or invalid value, or a non-running
+     pod, refuses with `missing_runtime_config` before opencode is
+     invoked.
 5. Dispatches one bounded run.
 6. Returns a structured `RunSummary` (JSON or Markdown) with evidence:
    ticket, branch/PR plan, provider/runtime id, cost class, checks, refusal
@@ -41,6 +46,41 @@ Exit codes:
 - `2` — `refused`
 - `3` — `failed` or `checks_failed`
 - `64` — bad arguments
+
+## Live mode (LAT-121)
+
+The live adapter spawns the local `opencode` CLI inside a per-run
+sandbox directory, passes the ticket pack on disk (never on argv),
+forwards `RUNPOD_VLLM_API_KEY` / `RUNPOD_POD_ID` to the child via env,
+and runs the pack's required checks once opencode exits cleanly.
+
+Before running, the adapter calls `GET https://rest.runpod.io/v1/pods/$RUNPOD_POD_ID`
+to confirm the pod's `desiredStatus === "RUNNING"`. If the API call
+fails or the pod is stopped, the adapter refuses without invoking
+opencode.
+
+The adapter never opens a PR, never auto-merges, never deploys, and
+never returns the token, pod id, or RunPod URL in any field of the
+`RunSummary`. Stdout/stderr from opencode and from each check are
+redacted before being written to the log file or surfaced as
+refusal/check `detail`.
+
+Local smoke test (env names only — fill values from your local
+`.env`, never commit them):
+
+```sh
+export CONTROL_LOOP_LIVE_ENABLED=1
+export CONTROL_LOOP_PROVIDER=opencode-runpod
+export CONTROL_LOOP_WORKDIR=/path/to/sandbox/checkout
+export CONTROL_LOOP_OPENCODE_BIN=opencode    # or absolute path
+export CONTROL_LOOP_OPENCODE_MODEL=qwen3-coder-30b
+export CONTROL_LOOP_TIMEOUT_MS=600000
+export RUNPOD_VLLM_API_KEY=...               # never commit
+export RUNPOD_POD_ID=...                     # never commit
+
+npm run --workspace=@latentspacelabs/control-loop run-loop -- \
+  path/to/ticket-pack.md --mode live --format json
+```
 
 ## Library
 

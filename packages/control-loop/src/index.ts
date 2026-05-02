@@ -26,6 +26,17 @@ export {
   LiveOpencodeAdapter,
   selectAdapter,
 } from "./adapters.js";
-export type { MockAdapterOptions, LiveAdapterEnv, SelectAdapterOptions } from "./adapters.js";
+export type {
+  MockAdapterOptions,
+  LiveAdapterEnv,
+  LiveOpencodeAdapterOptions,
+  RunPodFetcher,
+  RunPodFetchOptions,
+  RunPodMetadata,
+  ProcessRunner,
+  ProcessSpawnOptions,
+  ProcessResult,
+  SelectAdapterOptions,
+} from "./adapters.js";
 export { formatRunSummaryJson, formatRunSummaryMarkdown } from "./format.js";
 export { runAllGuardrails } from "./guardrails.js";
