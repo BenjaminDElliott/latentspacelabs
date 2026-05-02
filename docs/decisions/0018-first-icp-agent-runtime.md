@@ -12,11 +12,13 @@ related_linear:
   - LAT-61
   - LAT-62
 supersedes:
-superseded_by:
+superseded_by: ADR-0019 (for the *primary* implementation runtime of bounded implementation tickets only; ADR-0018 is retained as the fallback implementation runtime and continues to govern non-implementation agent-runtime decisions until separately revisited)
 revisit_trigger: Revisit when (a) the pilot onboards a second operator and GitHub Actions minute budgets, concurrency, or per-operator secret scoping no longer match usage; (b) an ICP run needs a runtime surface GitHub Actions cannot provide (long-running sessions beyond the job timeout, persistent state across runs, a custom sandbox image the action does not expose, or a network egress posture the runner cannot offer); (c) spend on GitHub-hosted runners plus Anthropic API calls through the action exceeds the ADR-0009 cost bands for a routine slice; (d) a trigger shape the action does not support (non-GitHub event, external scheduler, cross-repo dispatch) becomes load-bearing; (e) a security incident — committed credential, workflow-edit scope creep, fork-PR abuse, or a bot/user trigger path that bypassed review — forces a tighter posture than Actions permissions can express; or (f) Anthropic changes the action's authentication contract (new token shape, removal of `ANTHROPIC_API_KEY` / `CLAUDE_CODE_OAUTH_TOKEN`, or a licensing change) such that the runtime assumption here no longer holds.
 ---
 
 # ADR-0018: First ICP agent runtime
+
+> **Amendment (2026-05-02, LAT-102 / ADR-0019):** For the *primary* implementation runtime of bounded implementation tickets, this ADR is amended by ADR-0019, which selects opencode + a local Qwen endpoint on a self-hosted GitHub Actions runner. This ADR is **retained as the fallback** implementation runtime (used when the local runtime is unavailable, when a ticket exceeds the local model's effective window, or when a ticket needs frontier-model judgement) and continues to govern any future runtime decision for non-implementation agent runs. Trigger model, secret model, evidence model, and security model below remain the contract for the fallback path.
 
 ## Context
 
