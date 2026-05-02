@@ -26,7 +26,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
+    "pretypecheck": "npm run build --workspace=@latentspacelabs/opencode-harness",
     "typecheck": "tsc --noEmit",
+    "prebuild": "npm run build --workspace=@latentspacelabs/opencode-harness",
     "test": "tsx --test src/*.test.ts",
     "run-loop": "tsx src/cli.ts"
   },
