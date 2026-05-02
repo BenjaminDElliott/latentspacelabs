@@ -16,8 +16,9 @@
  *      adapter throws `MissingConfigError` and the loop refuses. Mock
  *      mode is never substituted for a misconfigured live mode.
  *
- *   3. **No auto-merge / no PR.** This adapter spawns opencode with the
- *      ticket pack inside a sandbox working directory and runs the
+ *   3. **No auto-merge / no PR.** This adapter writes the pack into a
+ *      per-run temp directory, spawns `opencode run` with `-f` pointing at
+ *      that file and `cwd` set to `CONTROL_LOOP_WORKDIR`, then runs the
  *      pack's required checks. It returns structured evidence. It never
  *      pushes, opens, or merges anything.
  *
@@ -43,8 +44,8 @@ import { MissingConfigError } from "./types.js";
  * Env names this adapter understands. Listed here so they appear in one
  * place; values are read at construction time and never returned to the
  * caller. Secret-bearing names live alongside non-secret names so an
- * operator can audit them, but only `RUNPOD_VLLM_API_KEY` is treated as
- * sensitive — that is the only value the redactor must scrub.
+ * operator can audit them. The redactor scrubs the RunPod account REST
+ * key, optional vLLM inference key, and pod id.
  */
 export interface LiveAdapterEnv {
   /** Operator must set this to "1" to opt in. */
@@ -60,8 +61,16 @@ export interface LiveAdapterEnv {
   /** Optional wall-clock cap, in milliseconds. Default: 300000 (5 min). */
   CONTROL_LOOP_TIMEOUT_MS?: string | undefined;
   /**
-   * RunPod REST bearer token. SECRET — never logged, never serialized,
-   * never returned in evidence. Presence is reported, value is not.
+   * RunPod **account** API key (console → API keys) for `GET
+   * https://rest.runpod.io/v1/pods/...` only. Not your vLLM/OpenAI inference
+   * key — that belongs in `RUNPOD_VLLM_API_KEY` (or your provider’s env).
+   * SECRET — never logged or returned in evidence.
+   */
+  RUNPOD_API_KEY?: string | undefined;
+  /**
+   * Optional inference credential for opencode (e.g. vLLM bearer on the pod
+   * proxy). Forwarded to the child process only; **never** sent to RunPod’s
+   * management REST API.
    */
   RUNPOD_VLLM_API_KEY?: string | undefined;
   /** RunPod pod identifier. Used to fetch runtime metadata. */
@@ -281,7 +290,8 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
 
   /** Set in `prepare()` after env is validated. */
   private resolved: {
-    apiKey: string;
+    /** RunPod console API key — management REST only; never passed to opencode. */
+    runpodApiKey: string;
     podId: string;
     workdir: string;
     bin: string;
@@ -311,8 +321,8 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
     if (!env.CONTROL_LOOP_WORKDIR || env.CONTROL_LOOP_WORKDIR.length === 0) {
       missing.push("CONTROL_LOOP_WORKDIR");
     }
-    if (!env.RUNPOD_VLLM_API_KEY || env.RUNPOD_VLLM_API_KEY.length === 0) {
-      missing.push("RUNPOD_VLLM_API_KEY");
+    if (!env.RUNPOD_API_KEY || env.RUNPOD_API_KEY.length === 0) {
+      missing.push("RUNPOD_API_KEY");
     }
     if (!env.RUNPOD_POD_ID || env.RUNPOD_POD_ID.length === 0) {
       missing.push("RUNPOD_POD_ID");
@@ -326,7 +336,7 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       );
     }
 
-    const apiKey = env.RUNPOD_VLLM_API_KEY as string;
+    const runpodApiKey = env.RUNPOD_API_KEY as string;
     const podId = env.RUNPOD_POD_ID as string;
     const workdir = env.CONTROL_LOOP_WORKDIR as string;
     const bin = env.CONTROL_LOOP_OPENCODE_BIN && env.CONTROL_LOOP_OPENCODE_BIN.length > 0
@@ -344,11 +354,11 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
     // do not retry: the operator should fix the pod and re-run.
     let metadata: RunPodMetadata;
     try {
-      metadata = await this.runpod({ podId, apiKey });
+      metadata = await this.runpod({ podId, apiKey: runpodApiKey });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new MissingConfigError(
-        `RunPod metadata lookup failed: ${redactSecrets(message, [apiKey, podId])}. ` +
+        `RunPod metadata lookup failed: ${redactSecrets(message, [runpodApiKey, podId])}. ` +
           "Refusing to invoke opencode against an unreachable pod.",
         ["RUNPOD_POD_ID"],
       );
@@ -361,7 +371,7 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       );
     }
 
-    this.resolved = { apiKey, podId, workdir, bin, model, provider, timeoutMs };
+    this.resolved = { runpodApiKey, podId, workdir, bin, model, provider, timeoutMs };
     this.metadata = metadata;
   }
 
@@ -372,47 +382,50 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
         ["adapter_lifecycle"],
       );
     }
-    const { apiKey, podId, workdir, bin, model, provider, timeoutMs } = this.resolved;
-    const secrets = [apiKey, podId];
+    const { runpodApiKey, podId, workdir, bin, model, provider, timeoutMs } = this.resolved;
+    const secrets = [runpodApiKey, podId];
+    const vllmKey = this.env.RUNPOD_VLLM_API_KEY;
+    if (vllmKey !== undefined && vllmKey.length >= 4) {
+      secrets.push(vllmKey);
+    }
 
     const sandbox = await this.makeSandbox();
     const sandboxPath = sandbox.path;
     let logsPath = `local-file://${sandboxPath}/run.log`;
 
     try {
-      // Build opencode args. Keep this list short and explicit; do not
-      // pass the pack's raw text on the command line (where it would be
-      // visible in process listings) — opencode reads it from a file.
+      // Build opencode args for opencode CLI 1.x: `run` takes message
+      // positionals; the pack is attached via `-f` (absolute path). Do not
+      // pass raw pack text on argv. Cwd is the operator workdir so the
+      // agent resolves paths relative to the sandbox checkout.
       const packDest = join(sandboxPath, "ticket-pack.md");
-      // Write the pack into the sandbox so the spawned process can read
-      // it from the working directory.
       const { writeFile } = await import("node:fs/promises");
       await writeFile(packDest, req.packRaw, "utf8");
 
+      // Message must come before `-f`: `--file` is an array flag; anything
+      // after `-f <path>` is parsed as another file path, not the prompt.
       const args: string[] = [
         "run",
-        "--pack",
-        packDest,
-        "--workdir",
-        workdir,
+        "--print-logs",
+        "Implement the attached ticket pack exactly. Refuse if anything is unclear or out of scope.",
       ];
       if (model !== undefined) {
         args.push("--model", model);
       }
+      args.push("-f", packDest);
 
-      // Forward the RunPod credential to the spawned process via env so
-      // it never appears on argv (where ps could see it). We pass only
-      // what opencode needs.
-      const childEnv: NodeJS.ProcessEnv = {
-        ...process.env,
-        RUNPOD_VLLM_API_KEY: apiKey,
-        RUNPOD_POD_ID: podId,
-      };
+      // Child inherits the operator shell; overlay pod id and optional
+      // vLLM inference key. Never inject RUNPOD_API_KEY (RunPod console key)
+      // into the child — opencode only needs inference credentials + pod id.
+      const childEnv: NodeJS.ProcessEnv = { ...process.env, RUNPOD_POD_ID: podId };
+      if (vllmKey !== undefined && vllmKey.length > 0) {
+        childEnv.RUNPOD_VLLM_API_KEY = vllmKey;
+      }
 
       const result = await this.runProcess({
         bin,
         args,
-        cwd: sandboxPath,
+        cwd: workdir,
         env: childEnv,
         timeoutMs,
       });

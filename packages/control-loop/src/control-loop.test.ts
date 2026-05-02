@@ -215,7 +215,7 @@ describe("runControlLoop — refusal modes", () => {
     assert.equal(summary.evidence.state, "refused");
     assert.ok(
       summary.evidence.refusals.some(
-        (r) => /RUNPOD_VLLM_API_KEY/.test(r.message) && /RUNPOD_POD_ID/.test(r.message),
+        (r) => /RUNPOD_API_KEY/.test(r.message) && /RUNPOD_POD_ID/.test(r.message),
       ),
       "live adapter should list missing RunPod env vars and never fall back to mock",
     );
@@ -307,8 +307,8 @@ describe("LiveOpencodeAdapter.prepare", () => {
             "CONTROL_LOOP_LIVE_ENABLED=1",
             "CONTROL_LOOP_PROVIDER",
             "CONTROL_LOOP_WORKDIR",
+            "RUNPOD_API_KEY",
             "RUNPOD_POD_ID",
-            "RUNPOD_VLLM_API_KEY",
           ].sort(),
         );
         return true;
