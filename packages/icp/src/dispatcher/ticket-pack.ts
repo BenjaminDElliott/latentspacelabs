@@ -98,8 +98,17 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
   lines.push("");
   lines.push("## Expected checks");
   lines.push("");
+  // Executable shell checks only. Policy guardrails (e.g. forbidden-path
+  // restrictions) are declared in `Constraints` and surfaced by the
+  // LAT-105 harness as `kind: "policy"` items in the check plan; they
+  // are NOT executed as shell. See LAT-135 for the contract split.
   lines.push("- [ ] `npm run check` passes.");
-  lines.push("- [ ] No edits under forbidden paths.");
+  lines.push("");
+  lines.push("## Policy guardrails");
+  lines.push("");
+  lines.push(
+    "- [ ] No edits under forbidden paths. _(policy — verified against the diff, not executed as shell.)_",
+  );
   lines.push("");
   lines.push("## Branch / PR rules");
   lines.push("");

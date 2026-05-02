@@ -223,3 +223,161 @@ Touch a file.
     });
   });
 });
+
+/**
+ * Regression coverage for LAT-135.
+ *
+ * The LAT-127 dispatch passed eligibility but failed because the loop
+ * tried to execute the bullet `No edits under forbidden paths.` as a
+ * shell command. The check plan must classify English policy bullets
+ * as `policy` (never executed) and shell commands as `shell`, so the
+ * loop only ever sends shell strings to `/bin/sh -c`.
+ */
+describe("buildCheckPlan — LAT-135 shell vs policy classification", () => {
+  const PACK_HEADER = `# Pack
+
+## Header
+
+- **Linear ID:** LAT-127
+- **Pack version:** 1
+- **Planner run / source:** LAT-135 regression
+- **Cost band:** low
+- **Risk level:** low
+- **Readiness status:** ready
+
+## Goal
+
+Reproduce the LAT-127 failure shape so we never execute English as shell again.
+
+## Acceptance criteria
+
+- [ ] thing happens.
+
+## Constraints
+
+- **Files in scope (allowlist):**
+  - packages/x/src/index.ts
+- **Files / paths forbidden:** .github/workflows/**, docs/decisions/**, docs/prds/**
+- **Dependency policy:** no new deps.
+
+## Branch / PR rules
+
+- **Branch:** \`lat-127-regression\`
+- **PR title prefix:** \`LAT-127:\`
+- **PR base:** \`main\`
+`;
+
+  it("classifies the LAT-127 forbidden-path bullet as policy, not shell", async () => {
+    const pack = `# Pack
+
+## Header
+
+- **Linear ID:** LAT-127
+- **Pack version:** 1
+- **Planner run / source:** LAT-135 regression
+- **Cost band:** low
+- **Risk level:** low
+- **Readiness status:** ready
+
+## Goal
+
+Reproduce the LAT-127 failure shape.
+
+## Acceptance criteria
+
+- [ ] thing happens.
+
+## Constraints
+
+- **Files in scope (allowlist):**
+  - packages/x/src/index.ts
+- **Files / paths forbidden:** .github/workflows/**
+- **Dependency policy:** no new deps.
+
+## Expected checks
+
+- [ ] \`npm run check\` passes.
+- [ ] No edits under forbidden paths.
+
+## Branch / PR rules
+
+- **Branch:** \`lat-127-regression\`
+- **PR title prefix:** \`LAT-127:\`
+- **PR base:** \`main\`
+`;
+    await inTmp("lat-127-shape.md", pack, async (path) => {
+      const result = await dryRun(path, { now: FROZEN_NOW });
+      assert.equal(result.summary.status, "ready");
+
+      const shellChecks = result.summary.checkPlan.filter((c) => c.kind === "shell");
+      const policyChecks = result.summary.checkPlan.filter((c) => c.kind === "policy");
+
+      // Exactly one shell check — the repo gate. Not the policy bullet.
+      assert.equal(shellChecks.length, 1);
+      assert.equal(shellChecks[0]?.command, "npm run check");
+
+      // The forbidden-path bullet became a typed policy item.
+      assert.ok(policyChecks.length >= 1, "policy item must be present");
+      assert.ok(
+        policyChecks.every((c) => c.policyId === "forbidden_paths"),
+        "policy items should carry policyId=forbidden_paths",
+      );
+
+      // Critically: no shell check should match the LAT-127 failure
+      // shape. If a future change re-introduces the bug, this assertion
+      // fails before any /bin/sh ever sees the bullet.
+      for (const c of result.summary.checkPlan) {
+        if (c.kind === "shell") {
+          assert.doesNotMatch(
+            c.command,
+            /forbidden|no edits/i,
+            `shell check command must not contain English policy text: ${c.command}`,
+          );
+          // First token must be a recognised binary, never `No`.
+          const head = c.command.trim().split(/\s+/, 1)[0] ?? "";
+          assert.notEqual(head, "No", "first token must never be the word `No`");
+        }
+      }
+    });
+  });
+
+  it("auto-injects a forbidden-path policy when the pack omits it but declares forbidden files", async () => {
+    const pack = PACK_HEADER + `\n## Expected checks\n\n- [ ] \`npm run check\` passes.\n`;
+    await inTmp("auto-forbidden.md", pack, async (path) => {
+      const result = await dryRun(path, { now: FROZEN_NOW });
+      assert.equal(result.summary.status, "ready");
+      const policyItems = result.summary.checkPlan.filter((c) => c.kind === "policy");
+      assert.ok(
+        policyItems.some((c) => c.policyId === "forbidden_paths"),
+        "pack with filesForbidden should always produce a forbidden-path policy item",
+      );
+    });
+  });
+
+  it("classifies a free-form English bullet as manual, not shell", async () => {
+    const pack = PACK_HEADER + `\n## Expected checks\n\n- [ ] \`npm run check\` passes.\n- [ ] No new files outside the allowlist exist after the run.\n`;
+    await inTmp("manual-bullet.md", pack, async (path) => {
+      const result = await dryRun(path, { now: FROZEN_NOW });
+      const manualItems = result.summary.checkPlan.filter((c) => c.kind === "manual");
+      assert.equal(manualItems.length, 1);
+      assert.match(manualItems[0]?.command ?? "", /No new files/);
+      // None of the shell items should match the manual bullet.
+      const shellCommands = result.summary.checkPlan
+        .filter((c) => c.kind === "shell")
+        .map((c) => c.command);
+      assert.deepEqual(shellCommands, ["npm run check"]);
+    });
+  });
+
+  it("preserves shell commands that are wrapped in backticks (e.g. `npm test`)", async () => {
+    const pack = PACK_HEADER + `\n## Expected checks\n\n- [ ] \`npm run check\` passes.\n- [ ] \`npm test\` is green.\n`;
+    await inTmp("two-shell.md", pack, async (path) => {
+      const result = await dryRun(path, { now: FROZEN_NOW });
+      const shells = result.summary.checkPlan
+        .filter((c) => c.kind === "shell")
+        .map((c) => c.command)
+        .sort();
+      assert.deepEqual(shells, ["npm run check", "npm test"]);
+    });
+  });
+});

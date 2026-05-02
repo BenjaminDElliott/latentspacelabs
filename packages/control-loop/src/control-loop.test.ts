@@ -46,9 +46,24 @@ describe("runControlLoop — happy path with mock adapter", () => {
     assert.equal(summary.evidence.branch?.prBase, "main");
     assert.equal(summary.evidence.branch?.prUrl, null, "MVP loop never opens PRs");
     assert.ok(summary.evidence.checks.length > 0, "should report at least one check");
+    // Shell checks must pass; policy/manual checks land as `manual` (the
+    // MVP loop has no signal to verify them and never executes them).
     for (const c of summary.evidence.checks) {
-      assert.equal(c.outcome, "passed");
+      if (c.kind === "shell" || c.kind === undefined) {
+        assert.equal(c.outcome, "passed");
+      } else {
+        assert.equal(c.outcome, "manual");
+      }
     }
+    // The ready-pack fixture declares forbidden paths AND lists policy
+    // bullets in `Expected checks`. Evidence must surface a forbidden-path
+    // policy item so reviewers can confirm the diff against it.
+    assert.ok(
+      summary.evidence.checks.some(
+        (c) => c.kind === "policy" && /forbidden/i.test(c.name),
+      ),
+      "evidence must include a forbidden-path policy item with manual outcome",
+    );
     assert.equal(summary.evidence.refusals.length, 0);
     assert.match(summary.evidence.nextHumanAction, /Human reviewer/);
     assert.equal(summary.preflight.status, "ready");
@@ -234,8 +249,14 @@ describe("runControlLoop — failed checks and adapter errors", () => {
     });
     assert.equal(summary.evidence.state, "checks_failed");
     assert.ok(summary.evidence.checks.length > 0);
+    // Shell checks fail (forced by the mock); policy/manual items remain
+    // `manual` regardless of adapter outcome — they're never executed.
     for (const c of summary.evidence.checks) {
-      assert.equal(c.outcome, "failed");
+      if (c.kind === "shell" || c.kind === undefined) {
+        assert.equal(c.outcome, "failed");
+      } else {
+        assert.equal(c.outcome, "manual");
+      }
     }
     assert.equal(summary.evidence.provider?.adapter, "mock");
     assert.match(summary.evidence.nextHumanAction, /failed checks/);
@@ -291,6 +312,158 @@ describe("runControlLoop — failed checks and adapter errors", () => {
     });
     assert.equal(summary.evidence.state, "refused");
     assert.ok(summary.evidence.refusals.some((r) => r.code === "missing_runtime_config"));
+  });
+});
+
+describe("runControlLoop — LAT-135 regression: never exec English as shell", () => {
+  /**
+   * The ready-pack fixture carries the LAT-127 failure shape: an
+   * `Expected checks` section with a real shell command (`npm run
+   * check`) AND English policy bullets ("No edits under forbidden
+   * paths.", "No new files outside the allowlist exist..."). The
+   * pre-LAT-135 loop sent every bullet to the adapter as a shell
+   * command, which got `/bin/sh: No: command not found` from a real
+   * RunPod dispatch. This test pins the contract: the adapter's
+   * `requiredChecks` only ever contains shell strings.
+   */
+  it("only forwards `kind: shell` items to the adapter as requiredChecks", async () => {
+    const captured: { commands: string[] } = { commands: [] };
+    const adapter: RuntimeAdapter = {
+      id: "capture",
+      async prepare() {},
+      async run(req) {
+        captured.commands = req.requiredChecks.map((c) => c.command);
+        return {
+          state: "ready_for_review",
+          provider: { adapter: "capture", runtimeId: "capture-1", costClass: "low" },
+          branch: { branch: req.branch, prTitlePrefix: req.prTitlePrefix, prBase: req.prBase, prUrl: null },
+          checks: req.requiredChecks.map((c) => ({
+            name: c.name,
+            command: c.command,
+            outcome: "passed" as const,
+            durationMs: 1,
+          })),
+          logs: { type: "memory" as const, path: "mem://capture" },
+        };
+      },
+    };
+    const summary = await runControlLoop({
+      packPath: READY_PACK,
+      mode: "mock",
+      adapter,
+      now: FROZEN_NOW,
+      env: {},
+    });
+
+    // The exact LAT-127 failure shape: `No edits under forbidden paths.`
+    // must NOT appear as a command the adapter is asked to execute.
+    for (const cmd of captured.commands) {
+      assert.doesNotMatch(cmd, /forbidden/i, `requiredChecks must not contain policy text: ${cmd}`);
+      assert.doesNotMatch(cmd, /No edits/i, `requiredChecks must not contain policy text: ${cmd}`);
+      const head = cmd.trim().split(/\s+/, 1)[0] ?? "";
+      assert.notEqual(
+        head,
+        "No",
+        `requiredChecks first token must never be the literal word 'No' — that's the LAT-127 failure shape`,
+      );
+    }
+    // And the shell repo gate must still be there.
+    assert.ok(
+      captured.commands.includes("npm run check"),
+      "the repo gate `npm run check` must still be forwarded as a shell command",
+    );
+
+    // Evidence must surface the policy guardrail with `manual` outcome
+    // so reviewers can see that forbidden-path protection is still in
+    // effect — recorded, not silently dropped.
+    assert.ok(
+      summary.evidence.checks.some(
+        (c) => c.kind === "policy" && c.outcome === "manual" && /forbidden/i.test(c.name),
+      ),
+      "forbidden-path policy item must appear in evidence with outcome=manual",
+    );
+  });
+
+  /**
+   * Direct shape regression: a pack that lists the literal LAT-127
+   * bullet must not produce a state that fails because `/bin/sh`
+   * executed English. We verify the loop reaches `ready_for_review`
+   * with a stub adapter that asserts no English is in its argv.
+   */
+  it("LAT-127-style pack reaches ready_for_review without /bin/sh: No: command not found", async () => {
+    const lat127Shape = `# opencode Ticket Pack: LAT-127 shape
+## Header
+- **Linear ID:** LAT-127
+- **Pack version:** 1
+- **Planner run / source:** LAT-135 regression
+- **Cost band:** low
+- **Risk level:** low
+- **Readiness status:** ready
+
+## Goal
+Reproduce the LAT-127 failure shape.
+
+## Acceptance criteria
+- [ ] something happens.
+
+## Constraints
+- **Files in scope (allowlist):**
+  - packages/x/src/index.ts
+- **Files / paths forbidden:** .github/workflows/**, docs/decisions/**, docs/prds/**
+- **Dependency policy:** no new deps.
+
+## Expected checks
+- [ ] \`npm run check\` passes.
+- [ ] No edits under forbidden paths.
+
+## Branch / PR rules
+- **Branch:** \`lat-127-shape\`
+- **PR title prefix:** \`LAT-127:\`
+- **PR base:** \`main\`
+`;
+    const adapter: RuntimeAdapter = {
+      id: "shell-guard",
+      async prepare() {},
+      async run(req) {
+        // If the loop ever forwarded the LAT-127 English bullet as a
+        // shell command, this throw simulates `/bin/sh: No: command
+        // not found` and the test fails loudly.
+        for (const c of req.requiredChecks) {
+          const head = c.command.trim().split(/\s+/, 1)[0] ?? "";
+          if (head === "No" || /forbidden|no edits/i.test(c.command)) {
+            throw new Error(`/bin/sh: ${head}: command not found`);
+          }
+        }
+        return {
+          state: "ready_for_review",
+          provider: { adapter: "shell-guard", runtimeId: "shell-guard-1", costClass: "low" },
+          branch: { branch: req.branch, prTitlePrefix: req.prTitlePrefix, prBase: req.prBase, prUrl: null },
+          checks: req.requiredChecks.map((c) => ({
+            name: c.name,
+            command: c.command,
+            outcome: "passed" as const,
+            durationMs: 1,
+          })),
+          logs: { type: "memory" as const, path: "mem://shell-guard" },
+        };
+      },
+    };
+    await inTmp("lat-127.pack.md", lat127Shape, async (path) => {
+      const summary = await runControlLoop({
+        packPath: path,
+        mode: "mock",
+        adapter,
+        now: FROZEN_NOW,
+        env: {},
+      });
+      assert.equal(summary.evidence.state, "ready_for_review");
+      assert.ok(
+        summary.evidence.checks.some(
+          (c) => c.kind === "policy" && c.outcome === "manual",
+        ),
+        "policy guardrail must be visible in evidence even when adapter succeeds",
+      );
+    });
   });
 });
 

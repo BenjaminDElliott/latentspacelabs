@@ -70,10 +70,48 @@ export type HarnessStatus =
   | "too_large"
   | "harness_error";
 
+/**
+ * How a check plan item is enforced.
+ *
+ * `shell`  — an executable shell command (e.g. `npm run check`). The
+ *            runtime adapter executes this via `/bin/sh -c` and reports
+ *            pass/fail from the exit code.
+ * `policy` — a structural guardrail the runtime can verify without
+ *            spawning a shell (e.g. forbidden-path restrictions). The
+ *            adapter records pass/fail/manual in evidence; it never
+ *            tries to execute the bullet text as shell.
+ * `manual` — an English assertion that needs human review (e.g. a
+ *            free-form acceptance bullet that slipped into the checks
+ *            section). Recorded as `manual` in evidence; never executed.
+ *
+ * The split was introduced for LAT-135 after a live LAT-127 dispatch
+ * passed eligibility but failed when the loop tried to run the bullet
+ * `No edits under forbidden paths.` as a shell command and got
+ * `/bin/sh: No: command not found`.
+ */
+export type CheckKind = "shell" | "policy" | "manual";
+
+/**
+ * Stable identifier for a structural policy validation. Keeps the
+ * adapter from having to pattern-match free text. The only policy we
+ * recognise today is the forbidden-path guardrail; new kinds extend
+ * this union.
+ */
+export type PolicyId = "forbidden_paths";
+
 export interface CheckPlanItem {
   name: string;
+  /**
+   * For `shell` items, this is the literal shell command. For `policy`
+   * and `manual` items it is the bullet text as it appeared in the
+   * pack, preserved for evidence/debugging only — never executed.
+   */
   command: string;
   source: "ticket-pack" | "repo-gate";
+  /** What the runtime is allowed to do with this item. Defaults to `shell`. */
+  kind: CheckKind;
+  /** Set on `policy` items; identifies the structural rule. */
+  policyId?: PolicyId;
 }
 
 export interface BranchPlan {

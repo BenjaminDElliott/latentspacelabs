@@ -46,7 +46,19 @@ export type RunState =
 
 export type RunMode = "mock" | "plan" | "live";
 
-export type CheckOutcome = "passed" | "failed" | "skipped";
+export type CheckOutcome = "passed" | "failed" | "skipped" | "manual";
+
+/**
+ * What the runtime is allowed to do with this check. Mirrors
+ * `CheckPlanItem.kind` from the LAT-105 harness so the loop can
+ * preserve the distinction in evidence:
+ *
+ * - `shell`  — executed by the adapter via `/bin/sh -c`.
+ * - `policy` — structurally validated by the adapter or recorded as
+ *              `manual` if the adapter has no signal to verify it.
+ * - `manual` — surfaced in evidence for human review; never executed.
+ */
+export type CheckKind = "shell" | "policy" | "manual";
 
 export interface CheckResult {
   name: string;
@@ -54,6 +66,8 @@ export interface CheckResult {
   outcome: CheckOutcome;
   durationMs: number;
   detail?: string;
+  /** Defaults to `shell` for legacy adapters that don't set it. */
+  kind?: CheckKind;
 }
 
 export interface RefusalEvidence {

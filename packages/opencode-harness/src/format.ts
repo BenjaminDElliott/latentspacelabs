@@ -82,7 +82,9 @@ export function formatSummaryMarkdown(summary: DryRunSummary): string {
     lines.push("## Check plan");
     lines.push("");
     for (const check of summary.checkPlan) {
-      lines.push(`- ${check.name} — \`${check.command}\` (${check.source})`);
+      const kindTag = check.kind === "shell" ? "" : `, ${check.kind}`;
+      const rendered = check.kind === "shell" ? `\`${check.command}\`` : check.command;
+      lines.push(`- ${check.name} — ${rendered} (${check.source}${kindTag})`);
     }
     lines.push("");
   }
