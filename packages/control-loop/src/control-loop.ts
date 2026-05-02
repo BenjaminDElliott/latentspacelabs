@@ -252,7 +252,16 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   }
 
   // Step 5: dispatch.
-  const requiredChecks = preflight.checkPlan.map((c) => ({ name: c.name, command: c.command }));
+  //
+  // The adapter only ever runs `kind === "shell"` items as shell. Policy
+  // and manual items are surfaced separately (see Step 6) — never piped
+  // into `/bin/sh -c`. This is the LAT-135 fix: previously the loop sent
+  // every `Expected checks` bullet to the adapter, which then tried to
+  // exec English like `No edits under forbidden paths.` and failed with
+  // `/bin/sh: No: command not found`.
+  const shellChecks = preflight.checkPlan.filter((c) => c.kind === "shell");
+  const nonShellChecks = preflight.checkPlan.filter((c) => c.kind !== "shell");
+  const requiredChecks = shellChecks.map((c) => ({ name: c.name, command: c.command }));
   const request = buildAdapterRequest(pack, requiredChecks);
 
   let result;
@@ -306,7 +315,29 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   }
 
   // Step 6: translate adapter result.
-  const checks: CheckResult[] = result.checks;
+  //
+  // Adapter shell results land first; then we append evidence for every
+  // policy / manual item from the check plan so the operator sees a
+  // single combined list. Policy items default to `manual` outcome — the
+  // MVP loop has no way to inspect the diff to confirm forbidden-path
+  // compliance, so we record the rule and ask the human to verify. This
+  // preserves forbidden-path protection (the rule is visible and the
+  // pack still declares `filesForbidden`) without weakening it.
+  const adapterChecks: CheckResult[] = result.checks.map((c) =>
+    c.kind === undefined ? { ...c, kind: "shell" as const } : c,
+  );
+  const policyEvidence: CheckResult[] = nonShellChecks.map((c) => ({
+    name: c.name,
+    command: c.command,
+    outcome: "manual" as const,
+    durationMs: 0,
+    kind: c.kind === "policy" ? "policy" : "manual",
+    detail:
+      c.kind === "policy" && c.policyId === "forbidden_paths"
+        ? "Reviewer must confirm the diff touches no path matched by the pack's `filesForbidden` list."
+        : "Reviewer must confirm this assertion against the resulting branch.",
+  }));
+  const checks: CheckResult[] = [...adapterChecks, ...policyEvidence];
   const finishedAt = now().toISOString();
   const evidence: RunEvidence = {
     ticket: pack.header.linearId,

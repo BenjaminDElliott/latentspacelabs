@@ -71,31 +71,129 @@ function buildBranchPlan(pack: TicketPack): BranchPlan {
   };
 }
 
+/**
+ * Recognise an `Expected checks` bullet that names a forbidden-path
+ * guardrail (e.g. "No edits under forbidden paths.", "Do not modify
+ * `.github/workflows/**`."). These are policy validations, not shell
+ * commands; LAT-135 separates them so the runtime stops trying to
+ * execute the bullet text as shell.
+ */
+function isForbiddenPathBullet(cleaned: string): boolean {
+  const lower = cleaned.toLowerCase();
+  return (
+    lower.includes("forbidden path") ||
+    lower.includes("forbidden paths") ||
+    (lower.includes("no edits") && (lower.includes("forbidden") || lower.includes("path")))
+  );
+}
+
+/**
+ * Extract the literal shell command from a bullet, if the bullet looks
+ * like a shell instruction. We accept either the LAT-104 canonical form
+ * `` `<cmd>` passes. `` (a code-spanned command followed by a verb) or
+ * a plain backticked command that begins with one of a small allowlist
+ * of binaries (`npm`, `npx`, `node`, `pnpm`, `yarn`, `bun`, `tsc`,
+ * `tsx`, `vitest`, `jest`). Anything else is treated as policy/manual
+ * to stay safely on the side of "do not exec random English".
+ */
+function extractShellCommand(value: string): string | null {
+  // Prefer the LAT-104 canonical form: a single backtick-wrapped command,
+  // optionally followed by an English verb (e.g. "passes", "is green").
+  const codeSpanMatch = /`([^`]+)`/.exec(value);
+  if (codeSpanMatch && codeSpanMatch[1] !== undefined) {
+    const cmd = codeSpanMatch[1].trim();
+    if (looksLikeShellCommand(cmd)) return cmd;
+  }
+  // Fallback: a bare command line with no code span. Only accept it if
+  // the WHOLE bullet looks like a shell command — never accept a bullet
+  // that begins with a known binary but trails into English (e.g.
+  // "npm test is green." would otherwise pass `looksLikeShellCommand`).
+  if (looksLikeShellCommand(value) && !/[.!?]\s|\s(?:passes|fails|is|should)\b/i.test(value)) {
+    return value;
+  }
+  return null;
+}
+
+const SHELL_COMMAND_HEADS = [
+  "npm",
+  "npx",
+  "node",
+  "pnpm",
+  "yarn",
+  "bun",
+  "tsc",
+  "tsx",
+  "vitest",
+  "jest",
+  "make",
+  "bash",
+  "sh",
+];
+
+function looksLikeShellCommand(value: string): boolean {
+  const head = value.trim().split(/\s+/, 1)[0];
+  if (head === undefined || head.length === 0) return false;
+  return SHELL_COMMAND_HEADS.includes(head);
+}
+
 function buildCheckPlan(pack: TicketPack): CheckPlanItem[] {
   const out: CheckPlanItem[] = [];
   let sawRepoGate = false;
+  let sawForbiddenPathPolicy = false;
   for (const text of pack.expectedChecks) {
-    const cleaned = text.replace(/`/g, "").trim();
-    if (cleaned.toLowerCase().includes("npm run check")) {
-      sawRepoGate = true;
+    const trimmed = text.trim();
+    if (trimmed.length === 0) continue;
+
+    if (isForbiddenPathBullet(trimmed)) {
+      sawForbiddenPathPolicy = true;
       out.push({
-        name: "Repo gate",
-        command: "npm run check",
+        name: "Forbidden-path guardrail",
+        command: trimmed.replace(/`/g, ""),
         source: "ticket-pack",
+        kind: "policy",
+        policyId: "forbidden_paths",
       });
-    } else {
-      out.push({
-        name: cleaned.length > 80 ? cleaned.slice(0, 77) + "..." : cleaned,
-        command: cleaned,
-        source: "ticket-pack",
-      });
+      continue;
     }
+
+    const shell = extractShellCommand(trimmed);
+    if (shell !== null) {
+      const isRepoGate = shell.toLowerCase().includes("npm run check");
+      if (isRepoGate) sawRepoGate = true;
+      out.push({
+        name: isRepoGate ? "Repo gate" : (shell.length > 80 ? shell.slice(0, 77) + "..." : shell),
+        command: isRepoGate ? "npm run check" : shell,
+        source: "ticket-pack",
+        kind: "shell",
+      });
+      continue;
+    }
+
+    // Bullet doesn't name a known shell command and isn't a recognised
+    // policy guardrail — preserve it for human review but never exec it.
+    const display = trimmed.replace(/`/g, "");
+    out.push({
+      name: display.length > 80 ? display.slice(0, 77) + "..." : display,
+      command: display,
+      source: "ticket-pack",
+      kind: "manual",
+    });
   }
   if (!sawRepoGate) {
     out.unshift({
       name: "Repo gate",
       command: "npm run check",
       source: "repo-gate",
+      kind: "shell",
+    });
+  }
+  if (pack.filesForbidden.length > 0 && !sawForbiddenPathPolicy) {
+    out.push({
+      name: "Forbidden-path guardrail",
+      command: "No edits under forbidden paths declared in the pack.",
+      source: "repo-gate",
+      kind: "policy",
+      policyId: "forbidden_paths",
     });
   }
   return out;
