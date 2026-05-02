@@ -1,0 +1,43 @@
+{
+  "name": "@latentspacelabs/control-loop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LAT-117 sandboxed agent control loop MVP. Dispatches a single bounded opencode agent into a configured sandbox runtime, observes execution, and collects structured evidence. Reuses the LAT-105 ticket-pack harness for pre-flight refusal. See docs/decisions/0019.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "control-loop": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "pretypecheck": "npm run build --workspace=@latentspacelabs/opencode-harness",
+    "typecheck": "tsc --noEmit",
+    "prebuild": "npm run build --workspace=@latentspacelabs/opencode-harness",
+    "test": "tsx --test src/*.test.ts",
+    "run-loop": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@latentspacelabs/opencode-harness": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
