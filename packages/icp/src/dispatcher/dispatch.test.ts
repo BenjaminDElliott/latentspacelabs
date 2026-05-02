@@ -106,7 +106,35 @@ async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
 
 const READY_JSON = JSON.stringify({
   schemaVersion: "1.0.0",
+  evidence: {
+    state: "ready_for_review",
+    ticket: "LAT-126",
+    branch: {
+      branch: "lat-126-small-focused-change",
+      prTitlePrefix: "LAT-126:",
+      prBase: "main",
+      prUrl: null,
+    },
+  },
+});
+
+const READY_JSON_NO_BRANCH = JSON.stringify({
+  schemaVersion: "1.0.0",
   evidence: { state: "ready_for_review", ticket: "LAT-126" },
+});
+
+const READY_JSON_NULL_BRANCH = JSON.stringify({
+  schemaVersion: "1.0.0",
+  evidence: { state: "ready_for_review", ticket: "LAT-126", branch: null },
+});
+
+const READY_JSON_EMPTY_BRANCH = JSON.stringify({
+  schemaVersion: "1.0.0",
+  evidence: {
+    state: "ready_for_review",
+    ticket: "LAT-126",
+    branch: { branch: "", prTitlePrefix: "LAT-126:", prBase: "main", prUrl: "   " },
+  },
 });
 
 const FAILED_JSON = JSON.stringify({
@@ -209,6 +237,9 @@ test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack", as
     assert.equal(log.states[0]!.stateId, "state-in-review");
     assert.equal(log.comments.length, 1);
     assert.match(log.comments[0]!.body, /ready_for_review/);
+    // LAT-143: comment body must name the exact review target.
+    assert.match(log.comments[0]!.body, /Review target/);
+    assert.match(log.comments[0]!.body, /lat-126-small-focused-change/);
   });
 });
 
@@ -543,5 +574,248 @@ test("runDispatcher: command construction passes pack path and mode", async () =
     assert.equal(args[3], "live");
     assert.equal(args[4], "--format");
     assert.equal(args[5], "json");
+  });
+});
+
+// LAT-143 regression coverage: a `ready_for_review` summary that has no
+// branch evidence at all (the LAT-127 ready-with-no-branch/PR shape)
+// must NOT promote the issue.
+test("runDispatcher: LAT-143 ready_for_review with NO branch evidence is downgraded to no_review_artifact and not promoted", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON_NO_BRANCH, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "no_review_artifact");
+    assert.equal(r.promoted, false);
+    assert.equal(r.commented, true);
+    assert.equal(log.states.length, 0, "must not promote when no review target exists");
+    assert.match(r.message, /no actionable review artifact/i);
+    // Comment body must explain the exact review target (or its absence).
+    const body = log.comments[0]!.body;
+    assert.match(body, /Review target/);
+    assert.match(body, /none/);
+    assert.match(body, /LAT-143/);
+  });
+});
+
+test("runDispatcher: LAT-143 ready_for_review with explicit `branch: null` is not promoted", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON_NULL_BRANCH, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "no_review_artifact");
+    assert.equal(r.promoted, false);
+    assert.equal(log.states.length, 0);
+  });
+});
+
+test("runDispatcher: LAT-143 ready_for_review with empty/whitespace branch + prUrl is not promoted", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: READY_JSON_EMPTY_BRANCH, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "no_review_artifact");
+    assert.equal(r.promoted, false);
+    assert.equal(log.states.length, 0);
+  });
+});
+
+test("runDispatcher: LAT-143 ready_for_review with PR URL only (no branch ref) promotes and reports the PR", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  const summary = JSON.stringify({
+    schemaVersion: "1.0.0",
+    evidence: {
+      state: "ready_for_review",
+      ticket: "LAT-126",
+      branch: { prUrl: "https://github.com/example/repo/pull/42" },
+    },
+  });
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "ready_for_review");
+    assert.equal(r.promoted, true);
+    assert.match(log.comments[0]!.body, /pull\/42/);
+  });
+});
+
+test("runDispatcher: LAT-143 ready_for_review with patch artifact (no branch / no PR) promotes and names the patch path", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  const summary = JSON.stringify({
+    schemaVersion: "1.0.0",
+    evidence: {
+      state: "ready_for_review",
+      ticket: "LAT-126",
+      branch: { branch: null, prUrl: null, patchPath: "/tmp/lat-126.patch" },
+    },
+  });
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "ready_for_review");
+    assert.equal(r.promoted, true);
+    assert.match(log.comments[0]!.body, /lat-126\.patch/);
+  });
+});
+
+test("runDispatcher: LAT-143 ready_for_review with explicit local diff path promotes and names it", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  const summary = JSON.stringify({
+    schemaVersion: "1.0.0",
+    evidence: {
+      state: "ready_for_review",
+      ticket: "LAT-126",
+      branch: { branch: null, prUrl: null, diffPath: "/tmp/lat-126.diff" },
+    },
+  });
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn({ stdout: summary, exitCode: 0 }, captured),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "ready_for_review");
+    assert.equal(r.promoted, true);
+    assert.match(log.comments[0]!.body, /lat-126\.diff/);
+  });
+});
+
+// Defense-in-depth: even if the JSON summary fails to parse but the
+// child exited 0 (which mapStateToOutcome treats as ready_for_review),
+// there is still no review artifact, so we must refuse to promote.
+test("runDispatcher: LAT-143 exit-0 with unparseable summary is treated as no_review_artifact, not silently promoted", async () => {
+  const issue = fakeIssue();
+  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const linear = fakeLinear({ "LAT-126": issue }, log);
+  const captured = { args: [] as ReadonlyArray<string>[] };
+  await withTempDir(async (dir) => {
+    const r = await runDispatcher({
+      config: {
+        linearApiKey: "lin_api_X",
+        dispatchIssueId: "LAT-126",
+        inReviewStateId: "state-in-review",
+        controlLoopCliPath: "/cli.js",
+        repoRoot: dir,
+        mode: "live",
+        extraSecrets: [],
+        childEnv: {},
+      },
+      deps: {
+        linear,
+        spawn: planSpawn(
+          { stdout: "this is not json at all", exitCode: 0 },
+          captured,
+        ),
+        makeTempDir: async () => dir,
+      },
+    });
+    assert.equal(r.outcome, "no_review_artifact");
+    assert.equal(r.promoted, false);
+    assert.equal(log.states.length, 0);
   });
 });

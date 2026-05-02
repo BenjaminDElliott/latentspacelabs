@@ -43,7 +43,14 @@ export type DispatchOutcome =
   | "failed"
   | "refused"
   | "planned"
-  | "config_error";
+  | "config_error"
+  /**
+   * LAT-143: control-loop reported `ready_for_review` but the run produced
+   * no actionable review artifact (no branch, no PR, no patch path, no
+   * explicit local diff path). The dispatcher refuses to promote such
+   * runs because there is nothing for a reviewer to look at.
+   */
+  | "no_review_artifact";
 
 /** Sanitised summary the dispatcher prints / persists. */
 export interface DispatchReport {
@@ -100,8 +107,36 @@ export interface ControlLoopJsonSummary {
     ticket?: string;
     mode?: string;
     refusals?: ReadonlyArray<{ code: string; message: string }>;
+    /**
+     * Branch / PR evidence. The dispatcher reads this to decide whether a
+     * `ready_for_review` run actually has something a reviewer can look
+     * at (LAT-143). Mirrors `BranchEvidence` from
+     * `@latentspacelabs/control-loop`; redeclared narrowly here so a
+     * forward-compatible schema bump there does not silently change
+     * dispatcher behaviour.
+     */
+    branch?: {
+      branch?: string | null;
+      prUrl?: string | null;
+      /** Optional path to a patch file the adapter wrote. */
+      patchPath?: string | null;
+      /** Optional explicit local diff path the adapter recorded. */
+      diffPath?: string | null;
+    } | null;
   };
 }
+
+/**
+ * LAT-143: shape of the actionable review artifact found on a
+ * `ready_for_review` run. At least one of these fields must be populated
+ * for the dispatcher to promote the issue. The kind tag tells reviewers
+ * exactly where to look.
+ */
+export type ReviewArtifact =
+  | { kind: "branch"; ref: string; prUrl: string | null }
+  | { kind: "pr"; prUrl: string }
+  | { kind: "patch"; path: string }
+  | { kind: "diff"; path: string };
 
 /**
  * Linear client surface the dispatcher uses. Implemented for real by the

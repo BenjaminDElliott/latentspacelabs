@@ -83,6 +83,7 @@ function exitCodeFor(outcome: DispatchOutcome): number {
       return 2;
     case "checks_failed":
     case "failed":
+    case "no_review_artifact":
       return 3;
   }
 }

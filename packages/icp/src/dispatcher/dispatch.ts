@@ -13,8 +13,11 @@
  * - Posts a sanitised Linear comment on every terminal outcome where
  *   the control loop ran (success, refusal, failure).
  * - Promotes the issue to `In Review` only when the control-loop JSON
- *   summary reports `state === "ready_for_review"`. All other outcomes
- *   leave the issue unpromoted, with a comment explaining why.
+ *   summary reports `state === "ready_for_review"` AND the run produced
+ *   an actionable review artifact (branch, PR, patch, or explicit local
+ *   diff path — see LAT-143). All other outcomes — including
+ *   `no_review_artifact` for ready runs with nothing to review — leave
+ *   the issue unpromoted, with a comment explaining why.
  */
 
 import { mkdtemp, writeFile, readFile, mkdir } from "node:fs/promises";
@@ -42,10 +45,12 @@ import {
   type RunArtefactOutcome,
 } from "../observability/run-artifact.js";
 import type {
+  ControlLoopJsonSummary,
   DispatchOutcome,
   DispatchReport,
   DispatcherLinearClient,
   DispatcherSpawn,
+  ReviewArtifact,
 } from "./types.js";
 
 export interface DispatcherConfig {
@@ -183,7 +188,22 @@ export async function runDispatcher(
   }
 
   const summaryState = runResult.jsonSummary?.evidence?.state ?? null;
-  const outcome = mapStateToOutcome(summaryState, runResult.exitCode);
+  const mappedOutcome = mapStateToOutcome(summaryState, runResult.exitCode);
+
+  // LAT-143: a `ready_for_review` run is only actionable when it produced
+  // something a reviewer can look at — a branch, a PR, a patch artifact,
+  // or an explicit local diff path. Without one of those, promotion to
+  // In Review would create a Linear issue that points at nothing, so we
+  // downgrade the outcome to `no_review_artifact` and refuse to promote.
+  // Regression coverage for the LAT-127 ready-with-no-branch/PR shape.
+  const reviewArtifact: ReviewArtifact | null =
+    mappedOutcome === "ready_for_review"
+      ? extractReviewArtifact(runResult.jsonSummary)
+      : null;
+  const outcome: DispatchOutcome =
+    mappedOutcome === "ready_for_review" && reviewArtifact === null
+      ? "no_review_artifact"
+      : mappedOutcome;
   const endedAt = (deps.now ?? (() => new Date()))();
 
   const artefact = buildRunArtefact({
@@ -211,6 +231,7 @@ export async function runDispatcher(
     runResult,
     outcome,
     mode: config.mode,
+    reviewArtifact,
     now: deps.now ?? (() => new Date()),
     artefact,
     artefactPath,
@@ -263,8 +284,10 @@ export async function runDispatcher(
     promoted,
     message:
       outcome === "ready_for_review"
-        ? `Promoted ${issue.identifier} to In Review.`
-        : `Run terminated as ${outcome}; issue left unpromoted.`,
+        ? `Promoted ${issue.identifier} to In Review (${describeArtifact(reviewArtifact)}).`
+        : outcome === "no_review_artifact"
+          ? `Control loop reported READY_FOR_REVIEW but produced no actionable review artifact (no branch, PR, patch, or diff path); ${issue.identifier} left unpromoted.`
+          : `Run terminated as ${outcome}; issue left unpromoted.`,
   });
 }
 
@@ -294,6 +317,11 @@ function outcomeToArtefactOutcome(o: DispatchOutcome): RunArtefactOutcome {
       return "no_eligible_issue";
     case "config_error":
       return "config_error";
+    case "no_review_artifact":
+      // LAT-143: treat non-actionable ready_for_review as a failure for
+      // observability — the producer reported success but the run has no
+      // reviewable output.
+      return "failed";
   }
 }
 
@@ -302,6 +330,7 @@ function refusalCodeForOutcome(
   runResult: { jsonSummary: { evidence: { refusals?: ReadonlyArray<{ code: string }> } } | null },
 ): string | null {
   if (outcome === "ready_for_review" || outcome === "planned") return null;
+  if (outcome === "no_review_artifact") return "no_review_artifact";
   const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
   if (refusal && typeof refusal.code === "string") return refusal.code;
   if (outcome === "refused") return "control_loop_refused";
@@ -320,6 +349,9 @@ function refusalMessageForOutcome(
   },
 ): string {
   if (outcome === "ready_for_review" || outcome === "planned") return "";
+  if (outcome === "no_review_artifact") {
+    return "control loop reported ready_for_review but produced no actionable review artifact (no branch, PR, patch, or diff path)";
+  }
   const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
   if (refusal && typeof refusal.message === "string") return refusal.message;
   return `control-loop exit ${runResult.exitCode}`;
@@ -468,17 +500,65 @@ function mapStateToOutcome(
   return "failed";
 }
 
+/**
+ * LAT-143: pick the most reviewer-actionable artifact available, in
+ * priority order. A non-empty PR URL is the strongest signal; otherwise
+ * a branch ref is enough; otherwise an explicit patch / diff path. If
+ * all are empty / null / whitespace the run has no review target.
+ */
+export function extractReviewArtifact(
+  summary: ControlLoopJsonSummary | null,
+): ReviewArtifact | null {
+  const branch = summary?.evidence?.branch ?? null;
+  if (branch === null || typeof branch !== "object") return null;
+  const prUrl = nonEmpty(branch.prUrl);
+  const branchRef = nonEmpty(branch.branch);
+  const patchPath = nonEmpty(branch.patchPath);
+  const diffPath = nonEmpty(branch.diffPath);
+  if (prUrl !== null && branchRef !== null) {
+    return { kind: "branch", ref: branchRef, prUrl };
+  }
+  if (prUrl !== null) return { kind: "pr", prUrl };
+  if (branchRef !== null) return { kind: "branch", ref: branchRef, prUrl: null };
+  if (patchPath !== null) return { kind: "patch", path: patchPath };
+  if (diffPath !== null) return { kind: "diff", path: diffPath };
+  return null;
+}
+
+function nonEmpty(v: string | null | undefined): string | null {
+  if (typeof v !== "string") return null;
+  const trimmed = v.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function describeArtifact(a: ReviewArtifact | null): string {
+  if (a === null) return "none (no branch, PR, patch, or diff path)";
+  switch (a.kind) {
+    case "branch":
+      return a.prUrl !== null
+        ? `branch \`${a.ref}\` (PR ${a.prUrl})`
+        : `branch \`${a.ref}\` (no PR)`;
+    case "pr":
+      return `PR ${a.prUrl}`;
+    case "patch":
+      return `patch artifact at \`${a.path}\``;
+    case "diff":
+      return `local diff path \`${a.path}\``;
+  }
+}
+
 function buildCommentBody(input: {
   issueIdentifier: string;
   packPath: string;
   runResult: { exitCode: number; stdout: string; stderr: string };
   outcome: DispatchOutcome;
   mode: string;
+  reviewArtifact: ReviewArtifact | null;
   now: () => Date;
   artefact: RunArtefact;
   artefactPath: string;
 }): string {
-  const { issueIdentifier, packPath, runResult, outcome, mode } = input;
+  const { issueIdentifier, packPath, runResult, outcome, mode, reviewArtifact } = input;
   const ts = input.now().toISOString();
   const lines: string[] = [];
   lines.push(`### LAT-129 dispatcher run`);
@@ -488,11 +568,21 @@ function buildCommentBody(input: {
   lines.push(`- **Mode:** ${mode}`);
   lines.push(`- **Control-loop exit code:** ${runResult.exitCode}`);
   lines.push(`- **Pack:** \`${packPath}\` (local; not checked in)`);
+  lines.push(`- **Review target:** ${describeArtifact(reviewArtifact)}`);
   lines.push(`- **Timestamp:** ${ts}`);
   lines.push(
     `- **Artefact (LAT-140):** ${formatArtefactCompactRef({ artefact: input.artefact, artefactPath: input.artefactPath })}`,
   );
   lines.push("");
+  if (outcome === "no_review_artifact") {
+    lines.push(
+      "> LAT-143: control loop reported `ready_for_review` but produced no" +
+        " branch, PR, patch artifact, or explicit local diff path. The" +
+        " dispatcher refused to promote this issue because there is" +
+        " nothing for a reviewer to look at.",
+    );
+    lines.push("");
+  }
   lines.push("#### Control-loop stdout (sanitised)");
   lines.push("");
   lines.push("```");
