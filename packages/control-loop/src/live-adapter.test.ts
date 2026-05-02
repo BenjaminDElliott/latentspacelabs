@@ -17,7 +17,7 @@ import {
 import { MissingConfigError } from "./types.js";
 import type { AdapterRequest } from "./types.js";
 
-const FAKE_TOKEN = "rp_TEST_TOKEN_NOT_REAL_abcdef0123";
+const FAKE_TOKEN = "example-rp-test-token-not-real-abcdef0123";
 const FAKE_POD = "pod_TEST_NOT_REAL_xyz";
 
 function makeReq(overrides: Partial<AdapterRequest> = {}): AdapterRequest {
