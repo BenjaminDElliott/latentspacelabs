@@ -312,3 +312,60 @@ export {
   type Recommendation,
   type AutonomyLevel,
 } from "./contract/coding-agent-contract.js";
+
+/* LAT-162 provider-neutral adapter interface (ADR-0022).
+ * Unified adapter interface contract for all agent providers. */
+export {
+  createRunError,
+  formatStatus,
+  formatResultSummary,
+  isRunError,
+  isOperationState,
+  isTerminalState,
+  isRunStatus,
+  isProviderType,
+  isRetryableKind,
+  DEFAULT_EVIDENCE_REQUIREMENTS,
+} from "./adapters/provider-adapter-interface.js";
+export type {
+  ProviderType,
+  RunRequest,
+  EvidenceRequirements,
+  RunResult,
+  RunStatus,
+  RunMode,
+  RunTiming,
+  RunEvidence,
+  RunError,
+  RunErrorCode,
+  OperationHandle,
+  OperationState,
+  OperationStatus,
+  ProviderAdapter,
+  /* Evidence sub-types */
+  AcceptanceCriterionResult,
+  BuildResult,
+  TestOutcome,
+  TestResults,
+  TestCaseResult,
+  LintStatus,
+  LintResults,
+  LintViolation,
+  CoverageMetrics,
+  CoverageFileSummary,
+  Recommendation,
+  /* Autonomy & cost */
+  AutonomyLevel,
+  CostBand,
+} from "./adapters/provider-adapter-interface.js";
+
+/* Legacy error types (LAT-173, re-exported for backwards compat).
+ * New code should prefer the LAT-162 types from provider-adapter-interface. */
+export {
+  AdapterErrorType,
+  RetryPolicy,
+  CancelRequest,
+  toRunErrorCode,
+  type RunErrorCode,
+  type RunError,
+} from "./errors/index.js";
