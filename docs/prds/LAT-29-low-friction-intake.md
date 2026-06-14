@@ -128,7 +128,7 @@ Every intake item has **exactly one primary destination** drawn from:
 - **Archive** — duplicate, stale, rejected, superseded, or non-actionable. A first-class, often-correct outcome.
 - **Personal task** — routes to Ben's personal destination (TBD). Never in Linear without explicit confirmation.
 
-Mixed inputs are split before routing. No "routes to two destinations" — if two destinations are needed, there are two intake items.
+Mixed inputs are split before routing. No "routes to two destinations" — if two destinations are needed, there are two intake items. Split rules, repair/introspection handling, and escalation to PRD/ADR/spike/refinement are defined in [`intake-multi-intent-rules.md`](../process/intake-multi-intent-rules.md).
 
 ### 6.6 Intake-event contract to ICP (must)
 
