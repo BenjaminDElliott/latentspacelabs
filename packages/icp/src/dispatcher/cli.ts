@@ -19,17 +19,13 @@
  *   64 bad CLI arguments
  */
 
-import { fileURLToPath } from "node:url";
+import { fileURLToPath } from 'node:url';
 
-import {
-  defaultControlLoopCliPath,
-  defaultRepoRoot,
-  runDispatcherFromEnv,
-} from "./dispatch.js";
-import type { DispatchOutcome } from "./types.js";
+import { defaultControlLoopCliPath, defaultRepoRoot, runDispatcherFromEnv } from './dispatch.js';
+import type { DispatchOutcome } from './types.js';
 
 interface CliArgs {
-  mode: "mock" | "plan" | "live" | null;
+  mode: 'mock' | 'plan' | 'live' | null;
   help: boolean;
   dryRun: boolean;
 }
@@ -37,15 +33,15 @@ interface CliArgs {
 function parseArgs(argv: ReadonlyArray<string>): CliArgs | null {
   const out: CliArgs = { mode: null, help: false, dryRun: false };
   for (let i = 0; i < argv.length; i += 1) {
-    const a = argv[i] ?? "";
-    if (a === "--help" || a === "-h") {
+    const a = argv[i] ?? '';
+    if (a === '--help' || a === '-h') {
       out.help = true;
-    } else if (a === "--mode") {
+    } else if (a === '--mode') {
       const v = argv[i + 1];
-      if (v !== "mock" && v !== "plan" && v !== "live") return null;
+      if (v !== 'mock' && v !== 'plan' && v !== 'live') return null;
       out.mode = v;
       i += 1;
-    } else if (a === "--dry-run") {
+    } else if (a === '--dry-run') {
       out.dryRun = true;
     } else {
       return null;
@@ -56,35 +52,35 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs | null {
 
 function helpText(): string {
   return [
-    "icp-dispatch-next — LAT-129 polling dispatcher MVP",
-    "",
-    "Usage: icp-dispatch-next [--mode mock|plan|live] [--dry-run]",
-    "",
-    "Selects one eligible Linear ticket (LAT_DISPATCH_ISSUE override required",
-    "for MVP), generates a bounded ticket pack, invokes the control-loop CLI",
-    "once, posts sanitised evidence back to Linear, and promotes to In Review",
-    "only on READY_FOR_REVIEW.",
-    "",
-    "Required env: LINEAR_API_KEY, LAT_DISPATCH_ISSUE.",
-    "Optional env: LAT_DISPATCH_MODE (default mock), LAT_LINEAR_IN_REVIEW_STATE_ID.",
-    "",
-    "The dispatcher never opens PRs, never auto-merges, and never deploys.",
-  ].join("\n");
+    'icp-dispatch-next — LAT-129 polling dispatcher MVP',
+    '',
+    'Usage: icp-dispatch-next [--mode mock|plan|live] [--dry-run]',
+    '',
+    'Selects one eligible Linear ticket (LAT_DISPATCH_ISSUE override required',
+    'for MVP), generates a bounded ticket pack, invokes the control-loop CLI',
+    'once, posts sanitised evidence back to Linear, and promotes to In Review',
+    'only on READY_FOR_REVIEW.',
+    '',
+    'Required env: LINEAR_API_KEY, LAT_DISPATCH_ISSUE.',
+    'Optional env: LAT_DISPATCH_MODE (default mock), LAT_LINEAR_IN_REVIEW_STATE_ID.',
+    '',
+    'The dispatcher never opens PRs, never auto-merges, and never deploys.',
+  ].join('\n');
 }
 
 function exitCodeFor(outcome: DispatchOutcome): number {
   switch (outcome) {
-    case "ready_for_review":
+    case 'ready_for_review':
       return 0;
-    case "no_eligible_issue":
-    case "refused":
-    case "planned":
-    case "config_error":
-    case "duplicate_in_flight":
+    case 'no_eligible_issue':
+    case 'refused':
+    case 'planned':
+    case 'config_error':
+    case 'duplicate_in_flight':
       return 2;
-    case "checks_failed":
-    case "failed":
-    case "no_review_artifact":
+    case 'checks_failed':
+    case 'failed':
+    case 'no_review_artifact':
       return 3;
   }
 }
@@ -98,11 +94,11 @@ export async function main(
 ): Promise<number> {
   const args = parseArgs(argv);
   if (!args) {
-    stderr.write(helpText() + "\n");
+    stderr.write(helpText() + '\n');
     return 64;
   }
   if (args.help) {
-    stdout.write(helpText() + "\n");
+    stdout.write(helpText() + '\n');
     return 0;
   }
 
@@ -110,20 +106,20 @@ export async function main(
   const controlLoopCliPath = defaultControlLoopCliPath(repoRoot);
 
   const envWithOverrides: Record<string, string | undefined> = { ...env };
-  if (args.mode) envWithOverrides["LAT_DISPATCH_MODE"] = args.mode;
+  if (args.mode) envWithOverrides['LAT_DISPATCH_MODE'] = args.mode;
 
   if (args.dryRun) {
     stdout.write(
       [
-        "icp-dispatch-next: --dry-run resolved to:",
+        'icp-dispatch-next: --dry-run resolved to:',
         `  repoRoot:           ${repoRoot}`,
         `  controlLoopCliPath: ${controlLoopCliPath}`,
-        `  mode:               ${envWithOverrides["LAT_DISPATCH_MODE"] ?? "mock"}`,
-        `  dispatchIssue:      ${envWithOverrides["LAT_DISPATCH_ISSUE"] ?? "(unset)"}`,
-        `  linearKeyPresent:   ${envWithOverrides["LINEAR_API_KEY"] ? "yes" : "no"}`,
-        "",
-        "No Linear or control-loop calls were made.",
-      ].join("\n") + "\n",
+        `  mode:               ${envWithOverrides['LAT_DISPATCH_MODE'] ?? 'mock'}`,
+        `  dispatchIssue:      ${envWithOverrides['LAT_DISPATCH_ISSUE'] ?? '(unset)'}`,
+        `  linearKeyPresent:   ${envWithOverrides['LINEAR_API_KEY'] ? 'yes' : 'no'}`,
+        '',
+        'No Linear or control-loop calls were made.',
+      ].join('\n') + '\n',
     );
     return 2;
   }
@@ -134,9 +130,9 @@ export async function main(
     controlLoopCliPath,
   });
 
-  stdout.write(JSON.stringify(report, null, 2) + "\n");
-  if (report.outcome === "ready_for_review") {
-    stdout.write(`OK ${report.issueIdentifier ?? ""}: ${report.message}\n`);
+  stdout.write(JSON.stringify(report, null, 2) + '\n');
+  if (report.outcome === 'ready_for_review') {
+    stdout.write(`OK ${report.issueIdentifier ?? ''}: ${report.message}\n`);
   } else {
     stderr.write(`dispatch ${report.outcome}: ${report.message}\n`);
   }
@@ -155,13 +151,9 @@ const invokedDirectly = (() => {
   }
 })();
 if (invokedDirectly) {
-  const code = await main(
-    process.argv.slice(2),
-    process.stdout,
-    process.stderr,
-    process.env,
-    { importMetaUrl: import.meta.url },
-  );
+  const code = await main(process.argv.slice(2), process.stdout, process.stderr, process.env, {
+    importMetaUrl: import.meta.url,
+  });
   if (code !== 0) process.exit(code);
 }
 /* c8 ignore stop */

@@ -1,10 +1,10 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
 
-import { main } from "./cli.js";
+import { main } from './cli.js';
 
 class StringSink {
-  buffer = "";
+  buffer = '';
   write(chunk: string): boolean {
     this.buffer += chunk;
     return true;
@@ -13,11 +13,11 @@ class StringSink {
   end(): void {}
 }
 
-test("cli: --help prints usage and exits 0", async () => {
+test('cli: --help prints usage and exits 0', async () => {
   const out = new StringSink();
   const err = new StringSink();
   const code = await main(
-    ["--help"],
+    ['--help'],
     out as unknown as NodeJS.WritableStream,
     err as unknown as NodeJS.WritableStream,
     {},
@@ -27,11 +27,11 @@ test("cli: --help prints usage and exits 0", async () => {
   assert.match(out.buffer, /icp-dispatch-next/);
 });
 
-test("cli: bad flag returns exit code 64", async () => {
+test('cli: bad flag returns exit code 64', async () => {
   const out = new StringSink();
   const err = new StringSink();
   const code = await main(
-    ["--nope"],
+    ['--nope'],
     out as unknown as NodeJS.WritableStream,
     err as unknown as NodeJS.WritableStream,
     {},
@@ -40,16 +40,16 @@ test("cli: bad flag returns exit code 64", async () => {
   assert.equal(code, 64);
 });
 
-test("cli: --dry-run with full env reports resolution and exits 2", async () => {
+test('cli: --dry-run with full env reports resolution and exits 2', async () => {
   const out = new StringSink();
   const err = new StringSink();
   const code = await main(
-    ["--dry-run", "--mode", "mock"],
+    ['--dry-run', '--mode', 'mock'],
     out as unknown as NodeJS.WritableStream,
     err as unknown as NodeJS.WritableStream,
     {
-      LINEAR_API_KEY: "lin_api_FAKE",
-      LAT_DISPATCH_ISSUE: "LAT-126",
+      LINEAR_API_KEY: 'lin_api_FAKE',
+      LAT_DISPATCH_ISSUE: 'LAT-126',
     },
     { importMetaUrl: import.meta.url },
   );
@@ -60,14 +60,14 @@ test("cli: --dry-run with full env reports resolution and exits 2", async () => 
   assert.doesNotMatch(out.buffer, /lin_api_FAKE/);
 });
 
-test("cli: missing LINEAR_API_KEY without dry-run still produces config_error exit 2", async () => {
+test('cli: missing LINEAR_API_KEY without dry-run still produces config_error exit 2', async () => {
   const out = new StringSink();
   const err = new StringSink();
   const code = await main(
     [],
     out as unknown as NodeJS.WritableStream,
     err as unknown as NodeJS.WritableStream,
-    { LAT_DISPATCH_ISSUE: "LAT-126" },
+    { LAT_DISPATCH_ISSUE: 'LAT-126' },
     { importMetaUrl: import.meta.url },
   );
   assert.equal(code, 2);

@@ -51,42 +51,39 @@ export interface RedactOptions {
   redactNonLinearUrls?: boolean;
 }
 
-const URL_KEEP_HOSTS: ReadonlyArray<string> = [
-  "linear.app",
-  "github.com",
-];
+const URL_KEEP_HOSTS: ReadonlyArray<string> = ['linear.app', 'github.com'];
 
 export function redactOutput(message: string, opts: RedactOptions = {}): string {
-  if (typeof message !== "string" || message.length === 0) return "";
+  if (typeof message !== 'string' || message.length === 0) return '';
 
   let out = message;
 
   // Literal extra secret values first; deduplicate empties.
   if (opts.extraSecrets) {
     for (const literal of opts.extraSecrets) {
-      if (typeof literal !== "string" || literal.length < 8) continue;
+      if (typeof literal !== 'string' || literal.length < 8) continue;
       const escaped = escapeRegExp(literal);
-      out = out.replace(new RegExp(escaped, "g"), "<redacted>");
+      out = out.replace(new RegExp(escaped, 'g'), '<redacted>');
     }
   }
 
   for (const pat of DEFAULT_TOKEN_PATTERNS) {
-    out = out.replace(pat, "<redacted>");
+    out = out.replace(pat, '<redacted>');
   }
 
-  out = out.replace(POD_ID_PATTERN, "<redacted-pod-id>");
+  out = out.replace(POD_ID_PATTERN, '<redacted-pod-id>');
 
   if (opts.redactNonLinearUrls !== false) {
     out = out.replace(URL_PATTERN, (match) => {
       try {
         const u = new URL(match);
-        if (URL_KEEP_HOSTS.some((h) => u.host === h || u.host.endsWith("." + h))) {
+        if (URL_KEEP_HOSTS.some((h) => u.host === h || u.host.endsWith('.' + h))) {
           return match;
         }
       } catch {
         // fall through
       }
-      return "<redacted-url>";
+      return '<redacted-url>';
     });
   }
 
@@ -94,5 +91,5 @@ export function redactOutput(message: string, opts: RedactOptions = {}): string 
 }
 
 function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

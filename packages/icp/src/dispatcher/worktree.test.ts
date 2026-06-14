@@ -1,10 +1,10 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { mkdtemp, rm, stat } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import { WorktreeAllocator, type WorktreeRunner } from "./worktree.js";
+import { WorktreeAllocator, type WorktreeRunner } from './worktree.js';
 
 interface RunnerCall {
   args: ReadonlyArray<string>;
@@ -18,14 +18,14 @@ function fakeRunner(
   let i = 0;
   return async (_cmd, args, options) => {
     log.push({ args, cwd: options.cwd });
-    const r = responses[i] ?? { exitCode: 0, stderr: "" };
+    const r = responses[i] ?? { exitCode: 0, stderr: '' };
     i += 1;
-    return { exitCode: r.exitCode, stderr: r.stderr ?? "" };
+    return { exitCode: r.exitCode, stderr: r.stderr ?? '' };
   };
 }
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(join(tmpdir(), "lat138-worktree-test-"));
+  const dir = await mkdtemp(join(tmpdir(), 'lat138-worktree-test-'));
   try {
     return await fn(dir);
   } finally {
@@ -33,17 +33,17 @@ async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
   }
 }
 
-test("WorktreeAllocator: allocate creates worktree on a unique branch", async () => {
+test('WorktreeAllocator: allocate creates worktree on a unique branch', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     const alloc = new WorktreeAllocator({
       repoRoot: root,
       runner: fakeRunner([{ exitCode: 0 }], log),
-      makeSuffix: () => "abc123",
+      makeSuffix: () => 'abc123',
     });
-    assert.equal(alloc.tryReserve("LAT-138"), true);
-    const a = await alloc.allocate("LAT-138");
-    assert.equal(a.branch, "dispatch/lat-138-abc123");
+    assert.equal(alloc.tryReserve('LAT-138'), true);
+    const a = await alloc.allocate('LAT-138');
+    assert.equal(a.branch, 'dispatch/lat-138-abc123');
     assert.match(a.worktreePath, /lat-138-abc123$/);
     assert.match(a.invocationDir, /lat-138-abc123\/\.dispatch-invocation$/);
     // Invocation dir actually exists on disk.
@@ -51,12 +51,17 @@ test("WorktreeAllocator: allocate creates worktree on a unique branch", async ()
     assert.equal(st.isDirectory(), true);
     // First git call was `worktree add -b <branch> <path> HEAD`.
     assert.equal(log.length, 1);
-    assert.deepEqual(log[0]!.args.slice(0, 4), ["worktree", "add", "-b", "dispatch/lat-138-abc123"]);
-    assert.equal(log[0]!.args[5], "HEAD");
+    assert.deepEqual(log[0]!.args.slice(0, 4), [
+      'worktree',
+      'add',
+      '-b',
+      'dispatch/lat-138-abc123',
+    ]);
+    assert.equal(log[0]!.args[5], 'HEAD');
   });
 });
 
-test("WorktreeAllocator: two simulated dispatches get distinct branches and dirs", async () => {
+test('WorktreeAllocator: two simulated dispatches get distinct branches and dirs', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     let suffix = 0;
@@ -68,10 +73,10 @@ test("WorktreeAllocator: two simulated dispatches get distinct branches and dirs
         return `s${suffix}`;
       },
     });
-    assert.equal(alloc.tryReserve("LAT-100"), true);
-    assert.equal(alloc.tryReserve("LAT-200"), true);
-    const a1 = await alloc.allocate("LAT-100");
-    const a2 = await alloc.allocate("LAT-200");
+    assert.equal(alloc.tryReserve('LAT-100'), true);
+    assert.equal(alloc.tryReserve('LAT-200'), true);
+    const a1 = await alloc.allocate('LAT-100');
+    const a2 = await alloc.allocate('LAT-200');
     assert.notEqual(a1.branch, a2.branch);
     assert.notEqual(a1.worktreePath, a2.worktreePath);
     assert.notEqual(a1.invocationDir, a2.invocationDir);
@@ -83,7 +88,7 @@ test("WorktreeAllocator: two simulated dispatches get distinct branches and dirs
   });
 });
 
-test("WorktreeAllocator: same ticket re-run gets a distinct branch", async () => {
+test('WorktreeAllocator: same ticket re-run gets a distinct branch', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     let n = 0;
@@ -95,34 +100,34 @@ test("WorktreeAllocator: same ticket re-run gets a distinct branch", async () =>
         return `run${n}`;
       },
     });
-    alloc.tryReserve("LAT-138");
-    const a1 = await alloc.allocate("LAT-138");
-    alloc.release("LAT-138");
-    alloc.tryReserve("LAT-138");
-    const a2 = await alloc.allocate("LAT-138");
+    alloc.tryReserve('LAT-138');
+    const a1 = await alloc.allocate('LAT-138');
+    alloc.release('LAT-138');
+    alloc.tryReserve('LAT-138');
+    const a2 = await alloc.allocate('LAT-138');
     assert.notEqual(a1.branch, a2.branch);
     assert.notEqual(a1.worktreePath, a2.worktreePath);
   });
 });
 
-test("WorktreeAllocator: tryReserve returns false for duplicate ticket in same process", async () => {
+test('WorktreeAllocator: tryReserve returns false for duplicate ticket in same process', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     const alloc = new WorktreeAllocator({
       repoRoot: root,
       runner: fakeRunner([{ exitCode: 0 }], log),
     });
-    assert.equal(alloc.tryReserve("LAT-138"), true);
-    assert.equal(alloc.tryReserve("LAT-138"), false);
+    assert.equal(alloc.tryReserve('LAT-138'), true);
+    assert.equal(alloc.tryReserve('LAT-138'), false);
     // Case- and prefix-tolerant: same ticket in different casing is
     // still treated as a duplicate.
-    assert.equal(alloc.tryReserve("lat-138"), false);
-    alloc.release("LAT-138");
-    assert.equal(alloc.tryReserve("LAT-138"), true);
+    assert.equal(alloc.tryReserve('lat-138'), false);
+    alloc.release('LAT-138');
+    assert.equal(alloc.tryReserve('LAT-138'), true);
   });
 });
 
-test("WorktreeAllocator: cleanup invokes git worktree remove and branch delete", async () => {
+test('WorktreeAllocator: cleanup invokes git worktree remove and branch delete', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     const alloc = new WorktreeAllocator({
@@ -135,18 +140,18 @@ test("WorktreeAllocator: cleanup invokes git worktree remove and branch delete",
         ],
         log,
       ),
-      makeSuffix: () => "abc",
+      makeSuffix: () => 'abc',
     });
-    alloc.tryReserve("LAT-138");
-    const a = await alloc.allocate("LAT-138");
+    alloc.tryReserve('LAT-138');
+    const a = await alloc.allocate('LAT-138');
     const status = await alloc.cleanup(a);
     assert.equal(status.removed, true);
-    assert.deepEqual(log[1]!.args.slice(0, 3), ["worktree", "remove", "--force"]);
-    assert.deepEqual(log[2]!.args, ["branch", "-D", a.branch]);
+    assert.deepEqual(log[1]!.args.slice(0, 3), ['worktree', 'remove', '--force']);
+    assert.deepEqual(log[2]!.args, ['branch', '-D', a.branch]);
   });
 });
 
-test("WorktreeAllocator: cleanup falls back to fs rm when git remove fails", async () => {
+test('WorktreeAllocator: cleanup falls back to fs rm when git remove fails', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     const alloc = new WorktreeAllocator({
@@ -154,15 +159,15 @@ test("WorktreeAllocator: cleanup falls back to fs rm when git remove fails", asy
       runner: fakeRunner(
         [
           { exitCode: 0 }, // add
-          { exitCode: 1, stderr: "fatal: not a worktree" }, // remove fails
+          { exitCode: 1, stderr: 'fatal: not a worktree' }, // remove fails
           { exitCode: 0 }, // branch -D succeeds
         ],
         log,
       ),
-      makeSuffix: () => "abc",
+      makeSuffix: () => 'abc',
     });
-    alloc.tryReserve("LAT-138");
-    const a = await alloc.allocate("LAT-138");
+    alloc.tryReserve('LAT-138');
+    const a = await alloc.allocate('LAT-138');
     const status = await alloc.cleanup(a);
     // git worktree remove failed; allocator falls back to rm -rf,
     // succeeds, and reports removed=true after branch delete.
@@ -171,7 +176,7 @@ test("WorktreeAllocator: cleanup falls back to fs rm when git remove fails", asy
   });
 });
 
-test("WorktreeAllocator: allocate surfaces git error without leaking stderr noise", async () => {
+test('WorktreeAllocator: allocate surfaces git error without leaking stderr noise', async () => {
   await withTempDir(async (root) => {
     const log: RunnerCall[] = [];
     const alloc = new WorktreeAllocator({
@@ -180,17 +185,16 @@ test("WorktreeAllocator: allocate surfaces git error without leaking stderr nois
         [
           {
             exitCode: 128,
-            stderr:
-              "fatal: '/some/path' already exists\nhint: ...\nhint: ...",
+            stderr: "fatal: '/some/path' already exists\nhint: ...\nhint: ...",
           },
         ],
         log,
       ),
-      makeSuffix: () => "x",
+      makeSuffix: () => 'x',
     });
-    alloc.tryReserve("LAT-138");
+    alloc.tryReserve('LAT-138');
     await assert.rejects(
-      () => alloc.allocate("LAT-138"),
+      () => alloc.allocate('LAT-138'),
       /git worktree add failed.*already exists/,
     );
   });

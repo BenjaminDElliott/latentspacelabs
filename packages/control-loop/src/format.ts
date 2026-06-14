@@ -6,15 +6,15 @@
  * pastes into a ticket comment for a human reviewer.
  */
 
-import type { RunState, RunSummary } from "./types.js";
+import type { RunState, RunSummary } from './types.js';
 
 const STATE_LABELS: Record<RunState, string> = {
-  planned: "PLANNED (no dispatch)",
-  running: "RUNNING",
-  refused: "REFUSED",
-  failed: "FAILED",
-  checks_failed: "CHECKS_FAILED",
-  ready_for_review: "READY_FOR_REVIEW",
+  planned: 'PLANNED (no dispatch)',
+  running: 'RUNNING',
+  refused: 'REFUSED',
+  failed: 'FAILED',
+  checks_failed: 'CHECKS_FAILED',
+  ready_for_review: 'READY_FOR_REVIEW',
 };
 
 export function formatRunSummaryJson(summary: RunSummary): string {
@@ -25,7 +25,7 @@ export function formatRunSummaryMarkdown(summary: RunSummary): string {
   const ev = summary.evidence;
   const lines: string[] = [];
   lines.push(`# control-loop run — ${ev.ticket}`);
-  lines.push("");
+  lines.push('');
   lines.push(`- **State:** ${STATE_LABELS[ev.state]}`);
   lines.push(`- **Mode:** ${ev.mode}`);
   lines.push(`- **Pack:** \`${ev.packPath}\``);
@@ -40,55 +40,57 @@ export function formatRunSummaryMarkdown(summary: RunSummary): string {
   } else {
     lines.push(`- **Provider:** (none — no adapter contacted)`);
   }
-  lines.push("");
+  lines.push('');
 
   if (ev.branch !== null) {
-    lines.push("## Branch / PR plan");
-    lines.push("");
+    lines.push('## Branch / PR plan');
+    lines.push('');
     lines.push(`- Branch: \`${ev.branch.branch}\``);
     lines.push(`- PR base: \`${ev.branch.prBase}\``);
     lines.push(`- PR title prefix: \`${ev.branch.prTitlePrefix}\``);
-    lines.push(`- PR URL: ${ev.branch.prUrl ?? "(not opened — control loop never opens PRs in MVP)"}`);
-    lines.push("");
+    lines.push(
+      `- PR URL: ${ev.branch.prUrl ?? '(not opened — control loop never opens PRs in MVP)'}`,
+    );
+    lines.push('');
   }
 
   if (ev.checks.length > 0) {
-    lines.push("## Checks");
-    lines.push("");
+    lines.push('## Checks');
+    lines.push('');
     for (const c of ev.checks) {
-      const detail = c.detail !== undefined ? ` — ${c.detail}` : "";
+      const detail = c.detail !== undefined ? ` — ${c.detail}` : '';
       lines.push(`- ${c.outcome.toUpperCase()} \`${c.command}\` (${c.durationMs}ms)${detail}`);
     }
-    lines.push("");
+    lines.push('');
   }
 
   if (ev.refusals.length > 0) {
-    lines.push("## Refusals");
-    lines.push("");
+    lines.push('## Refusals');
+    lines.push('');
     for (const r of ev.refusals) {
       lines.push(`- **${r.code}** — ${r.message}`);
     }
-    lines.push("");
+    lines.push('');
   }
 
   if (ev.logs !== null) {
     lines.push(`## Logs`);
-    lines.push("");
+    lines.push('');
     lines.push(`- Type: \`${ev.logs.type}\``);
     lines.push(`- Path: \`${ev.logs.path}\``);
-    lines.push("");
+    lines.push('');
   }
 
-  lines.push("## Next human action");
-  lines.push("");
+  lines.push('## Next human action');
+  lines.push('');
   lines.push(ev.nextHumanAction);
-  lines.push("");
+  lines.push('');
 
-  lines.push("---");
-  lines.push("");
+  lines.push('---');
+  lines.push('');
   lines.push(
-    "_Produced by `@latentspacelabs/control-loop` (LAT-117). " +
-      "MVP loop never opens PRs, never auto-merges, and never deploys._",
+    '_Produced by `@latentspacelabs/control-loop` (LAT-117). ' +
+      'MVP loop never opens PRs, never auto-merges, and never deploys._',
   );
-  return lines.join("\n");
+  return lines.join('\n');
 }

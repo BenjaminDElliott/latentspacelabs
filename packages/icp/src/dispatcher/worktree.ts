@@ -27,9 +27,9 @@
  * the host filesystem's git state.
  */
 
-import { mkdir, rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { spawn } from "node:child_process";
+import { mkdir, rm } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
 
 /**
  * Stable, non-secret-bearing identifier for a single dispatch
@@ -60,7 +60,7 @@ export interface WorktreeAllocation {
  * output and only reacts to success/failure.
  */
 export type WorktreeRunner = (
-  command: "git",
+  command: 'git',
   args: ReadonlyArray<string>,
   options: { cwd?: string },
 ) => Promise<{ exitCode: number; stderr: string }>;
@@ -78,7 +78,7 @@ export interface WorktreeAllocatorOptions {
   worktreesSubdir?: string;
 }
 
-const DEFAULT_WORKTREES_SUBDIR = ".dispatch-worktrees";
+const DEFAULT_WORKTREES_SUBDIR = '.dispatch-worktrees';
 
 export class WorktreeAllocator {
   private readonly repoRoot: string;
@@ -97,13 +97,10 @@ export class WorktreeAllocator {
 
   constructor(opts: WorktreeAllocatorOptions) {
     this.repoRoot = resolve(opts.repoRoot);
-    this.baseRef = opts.baseRef ?? "HEAD";
+    this.baseRef = opts.baseRef ?? 'HEAD';
     this.runner = opts.runner ?? defaultRunner;
     this.makeSuffix = opts.makeSuffix ?? defaultSuffix;
-    this.worktreesRoot = join(
-      this.repoRoot,
-      opts.worktreesSubdir ?? DEFAULT_WORKTREES_SUBDIR,
-    );
+    this.worktreesRoot = join(this.repoRoot, opts.worktreesSubdir ?? DEFAULT_WORKTREES_SUBDIR);
   }
 
   /**
@@ -136,14 +133,14 @@ export class WorktreeAllocator {
     const invocationId: InvocationId = { ticketSlug: slug, suffix };
     const dirName = `${slug}-${suffix}`;
     const worktreePath = join(this.worktreesRoot, dirName);
-    const invocationDir = join(worktreePath, ".dispatch-invocation");
+    const invocationDir = join(worktreePath, '.dispatch-invocation');
     const branch = `dispatch/${slug}-${suffix}`;
 
     await mkdir(this.worktreesRoot, { recursive: true });
 
     const addRes = await this.runner(
-      "git",
-      ["worktree", "add", "-b", branch, worktreePath, this.baseRef],
+      'git',
+      ['worktree', 'add', '-b', branch, worktreePath, this.baseRef],
       { cwd: this.repoRoot },
     );
     if (addRes.exitCode !== 0) {
@@ -165,8 +162,8 @@ export class WorktreeAllocator {
    */
   async cleanup(allocation: WorktreeAllocation): Promise<{ removed: boolean; reason?: string }> {
     const removeRes = await this.runner(
-      "git",
-      ["worktree", "remove", "--force", allocation.worktreePath],
+      'git',
+      ['worktree', 'remove', '--force', allocation.worktreePath],
       { cwd: this.repoRoot },
     );
     if (removeRes.exitCode !== 0) {
@@ -174,11 +171,9 @@ export class WorktreeAllocator {
       // when git is unhappy (e.g. submodule weirdness).
       await rm(allocation.worktreePath, { recursive: true, force: true });
     }
-    const branchRes = await this.runner(
-      "git",
-      ["branch", "-D", allocation.branch],
-      { cwd: this.repoRoot },
-    );
+    const branchRes = await this.runner('git', ['branch', '-D', allocation.branch], {
+      cwd: this.repoRoot,
+    });
     if (branchRes.exitCode !== 0) {
       return {
         removed: removeRes.exitCode === 0,
@@ -193,7 +188,7 @@ function ticketSlugFrom(identifier: string): string {
   // Linear identifiers look like LAT-138. Lowercase, strip anything
   // that isn't [a-z0-9-] so the slug is safe in directory and branch
   // names regardless of where the identifier came from.
-  return identifier.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  return identifier.toLowerCase().replace(/[^a-z0-9-]/g, '');
 }
 
 function defaultSuffix(): string {
@@ -203,36 +198,36 @@ function defaultSuffix(): string {
 }
 
 function defaultRunner(
-  _command: "git",
+  _command: 'git',
   args: ReadonlyArray<string>,
   options: { cwd?: string },
 ): Promise<{ exitCode: number; stderr: string }> {
   return new Promise((resolvePromise) => {
-    const child = spawn("git", [...args], {
+    const child = spawn('git', [...args], {
       cwd: options.cwd,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
-    let stderr = "";
-    child.stderr.on("data", (chunk: Buffer | string) => {
-      stderr += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer | string) => {
+      stderr += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
     });
-    child.stdout.on("data", () => {
+    child.stdout.on('data', () => {
       // discard; dispatcher never echoes raw git stdout
     });
-    child.on("error", () => {
+    child.on('error', () => {
       resolvePromise({ exitCode: 1, stderr });
     });
-    child.on("close", (code) => {
-      resolvePromise({ exitCode: typeof code === "number" ? code : 1, stderr });
+    child.on('close', (code) => {
+      resolvePromise({ exitCode: typeof code === 'number' ? code : 1, stderr });
     });
   });
 }
 
 function shortGitError(stderr: string): string {
   const trimmed = stderr.trim();
-  if (trimmed.length === 0) return "(no stderr)";
+  if (trimmed.length === 0) return '(no stderr)';
   // Keep the first line only; git already writes a useful one-liner
   // for the common failure modes (branch exists, path exists, etc.).
-  const firstLine = trimmed.split(/\r?\n/, 1)[0] ?? "";
-  return firstLine.length > 200 ? firstLine.slice(0, 200) + "…" : firstLine;
+  const firstLine = trimmed.split(/\r?\n/, 1)[0] ?? '';
+  return firstLine.length > 200 ? firstLine.slice(0, 200) + '…' : firstLine;
 }

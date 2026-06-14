@@ -90,11 +90,11 @@ npm run --workspace=@latentspacelabs/control-loop run-loop -- \
 ## Library
 
 ```ts
-import { runControlLoop } from "@latentspacelabs/control-loop";
+import { runControlLoop } from '@latentspacelabs/control-loop';
 
 const summary = await runControlLoop({
-  packPath: "path/to/ticket-pack.md",
-  mode: "mock",
+  packPath: 'path/to/ticket-pack.md',
+  mode: 'mock',
 });
 console.log(summary.evidence.state);
 ```

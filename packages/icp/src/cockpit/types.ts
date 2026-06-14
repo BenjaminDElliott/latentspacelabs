@@ -11,7 +11,7 @@
  * edits Linear, GitHub, or the `runs/` tree. PRD §6.3 is authoritative for
  * source-of-record routing; every view below cites its source in a comment.
  */
-import type { RunReport } from "../runtime/contract.js";
+import type { RunReport } from '../runtime/contract.js';
 
 /**
  * Per-PRD §6.6.3 the cockpit projects ADR-0006 envelope fields only; it does
@@ -27,7 +27,7 @@ import type { RunReport } from "../runtime/contract.js";
  */
 export interface CockpitRunRecord extends RunReport {
   /** ADR-0006 optional top-level field; surfaced in Cost and Risk Flags. */
-  risk_level?: "low" | "medium" | "high" | "critical" | null;
+  risk_level?: 'low' | 'medium' | 'high' | 'critical' | null;
   /** ADR-0006 open sub-object; cockpit reads `model` only. */
   agent_metadata?: {
     model?: string | null;
@@ -41,10 +41,10 @@ export interface CockpitRunRecord extends RunReport {
  * a PRD revision, not an implementation PR. A synchronous-page event always
  * cites the `run_id` or Linear issue that triggered it (PRD §6.4 last para).
  */
-export type NotificationTier = "synchronous_page" | "ambient_queue" | "silent";
+export type NotificationTier = 'synchronous_page' | 'ambient_queue' | 'silent';
 
 export interface NotificationEvent {
-  tier: "synchronous_page" | "ambient_queue";
+  tier: 'synchronous_page' | 'ambient_queue';
   reason: string;
   run_id: string;
   linear_issue_id: string;
@@ -53,13 +53,13 @@ export interface NotificationEvent {
 }
 
 export type ViewName =
-  | "active_runs"
-  | "blocked_work"
-  | "recent_completions"
-  | "failed_runs"
-  | "cost_and_risk_flags"
-  | "pr_review_queue"
-  | "learning_candidates";
+  | 'active_runs'
+  | 'blocked_work'
+  | 'recent_completions'
+  | 'failed_runs'
+  | 'cost_and_risk_flags'
+  | 'pr_review_queue'
+  | 'learning_candidates';
 
 /* ------------------------------------------------------------------ */
 /* View row shapes (PRD §6.2). Each row's column set is a fixed subset */
@@ -69,10 +69,10 @@ export type ViewName =
 /** Source: runs/*.json. PRD §6.2.1. */
 export interface ActiveRunRow {
   run_id: string;
-  agent_type: RunReport["agent_type"];
+  agent_type: RunReport['agent_type'];
   linear_issue_id: string;
-  autonomy_level: RunReport["autonomy_level"];
-  cost_band: RunReport["cost"]["band"];
+  autonomy_level: RunReport['autonomy_level'];
+  cost_band: RunReport['cost']['band'];
   started_at: string;
   /** Reader-populated when §6.4 stale-run suspicion applies. */
   stale: boolean;
@@ -81,9 +81,9 @@ export interface ActiveRunRow {
 /** Source: runs/*.json + Linear issue state. PRD §6.2.2. */
 export interface BlockedWorkRow {
   run_id: string;
-  agent_type: RunReport["agent_type"];
+  agent_type: RunReport['agent_type'];
   linear_issue_id: string;
-  status: Exclude<RunReport["status"], "succeeded" | "started">;
+  status: Exclude<RunReport['status'], 'succeeded' | 'started'>;
   reason: string;
   next_action: string;
   /** Linear issue status if the caller supplied a Linear snapshot. */
@@ -93,9 +93,9 @@ export interface BlockedWorkRow {
 /** Source: runs/*.json + GitHub PR state. PRD §6.2.3. */
 export interface RecentCompletionRow {
   run_id: string;
-  agent_type: RunReport["agent_type"];
+  agent_type: RunReport['agent_type'];
   linear_issue_id: string;
-  status: RunReport["status"];
+  status: RunReport['status'];
   summary: string;
   pr_url: string | null;
   ended_at: string;
@@ -104,7 +104,7 @@ export interface RecentCompletionRow {
 /** Source: runs/*.json. PRD §6.2.4. Recurrence count is over the same group. */
 export interface FailedRunsGroup {
   key: string;
-  kind: "by_agent_type" | "by_linear_issue";
+  kind: 'by_agent_type' | 'by_linear_issue';
   count: number;
   most_recent_error: string;
   run_ids: ReadonlyArray<string>;
@@ -114,10 +114,10 @@ export interface FailedRunsGroup {
 /** Source: runs/*.json. PRD §6.2.5. */
 export interface CostRiskRow {
   run_id: string;
-  agent_type: RunReport["agent_type"];
+  agent_type: RunReport['agent_type'];
   linear_issue_id: string;
-  cost_band: RunReport["cost"]["band"];
-  risk_level: CockpitRunRecord["risk_level"] | "unknown";
+  cost_band: RunReport['cost']['band'];
+  risk_level: CockpitRunRecord['risk_level'] | 'unknown';
   reason: string;
   spent_usd: number | null;
   model: string | null;
@@ -139,8 +139,8 @@ export interface PRReviewQueueRow {
   author: string | null;
   /** Null when ADR-0007 review reports are not supplied. */
   qa_findings_by_severity: Readonly<Record<string, number>> | null;
-  risk_level: CockpitRunRecord["risk_level"] | "unknown";
-  cost_band: RunReport["cost"]["band"];
+  risk_level: CockpitRunRecord['risk_level'] | 'unknown';
+  cost_band: RunReport['cost']['band'];
   run_id: string | null;
 }
 
@@ -149,10 +149,7 @@ export interface PRReviewQueueRow {
  * PRD §6.2.7. Clusters recur across ≥2 runs.
  */
 export interface LearningCandidate {
-  kind:
-    | "repeated_error_class"
-    | "consecutive_failed_agent"
-    | "recurring_pr_finding";
+  kind: 'repeated_error_class' | 'consecutive_failed_agent' | 'recurring_pr_finding';
   cluster_key: string;
   count: number;
   /** ISO-8601 span; `start` is earliest, `end` is latest. */
@@ -210,7 +207,7 @@ export interface GitHubPRState {
   url: string;
   title: string;
   author: string | null;
-  state: "open" | "closed" | "merged";
+  state: 'open' | 'closed' | 'merged';
   /** Optional: LAT key parsed from the title. */
   lat_key?: string | null;
 }

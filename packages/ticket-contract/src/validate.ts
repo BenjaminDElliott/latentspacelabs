@@ -13,40 +13,29 @@
 // --- Types ---
 
 /** Valid lane identifiers. */
-export type LaneId =
-  | "docs/adr/prd"
-  | "implementation"
-  | "harness/meta"
-  | "research/spike";
+export type LaneId = 'docs/adr/prd' | 'implementation' | 'harness/meta' | 'research/spike';
 
 /** Valid agent types. */
-export type AgentType =
-  | "coding"
-  | "qa"
-  | "review"
-  | "research"
-  | "sre"
-  | "pm"
-  | "observability";
+export type AgentType = 'coding' | 'qa' | 'review' | 'research' | 'sre' | 'pm' | 'observability';
 
 /** Risk level for the ticket. */
-export type RiskLevel = "low" | "medium" | "high";
+export type RiskLevel = 'low' | 'medium' | 'high';
 
 /** Refusal reason codes. Stable strings for tests. */
 export type RefusalCode =
-  | "missing_field"
-  | "vague_spike_no_ac"
-  | "secret_rotation_hard_stop"
-  | "deploy_release_in_implementation"
-  | "auto_merge_scope"
-  | "primary_adr_decision"
-  | "description_too_short"
-  | "no_acceptance_criteria_heading"
-  | "empty_out_of_scope"
-  | "invalid_lane"
-  | "invalid_agent_type"
-  | "invalid_risk_level"
-  | "missing_budget_cap_numeric";
+  | 'missing_field'
+  | 'vague_spike_no_ac'
+  | 'secret_rotation_hard_stop'
+  | 'deploy_release_in_implementation'
+  | 'auto_merge_scope'
+  | 'primary_adr_decision'
+  | 'description_too_short'
+  | 'no_acceptance_criteria_heading'
+  | 'empty_out_of_scope'
+  | 'invalid_lane'
+  | 'invalid_agent_type'
+  | 'invalid_risk_level'
+  | 'missing_budget_cap_numeric';
 
 /** A single refusal finding. */
 export interface Refusal {
@@ -98,24 +87,24 @@ export function validateAgentReadyContract(
 
   // Check 1: Required fields exist and are non-blank
   const requiredFields = [
-    { key: "Linear ID", pattern: /^Linear ID:\s*(LAT-\d+)\s*$/im },
-    { key: "Title", pattern: /^Title:\s*(.+)$/m },
-    { key: "Agent type", pattern: /^Agent type:\s*(\S+)/m },
-    { key: "Lane", pattern: /^Lane:\s*(\S+(?:\/\S+)?)$/m },
-    { key: "Risk level", pattern: /^Risk level:\s*(\S+)/m },
-    { key: "Budget cap", pattern: /^Budget cap:\s*(.+)$/m },
-    { key: "Approval required", pattern: /^Approval required:\s*(yes|no)/im },
-    { key: "Goal", pattern: /^(?:## Goal|Goal)\s*(.+)$/m },
-    { key: "Sequencing", pattern: /^## Sequencing/m },
-    { key: "In scope", pattern: /^(?:### In scope|In scope)\s*[-]/m },
-    { key: "Out of scope", pattern: /^(?:### Out of scope|Out of scope)\s*[-]/m },
-    { key: "Acceptance criteria", pattern: /^(?:## Acceptance Criteria|Acceptance Criteria)\s*$/m },
-    { key: "Tests", pattern: /^(?:## Tests|Tests)\s*$/m },
-    { key: "Required evidence", pattern: /^(?:## Required Evidence|Required Evidence)\s*$/m },
-    { key: "Quality gate", pattern: /^(?:## Quality Gate|Quality Gate)\s*$/m },
-    { key: "Rollback", pattern: /^(?:## Rollback|Rollback)\s*$/m },
-    { key: "Definition of Done", pattern: /^(?:## Definition of Done|Definition of Done)\s*$/m },
-    { key: "Links", pattern: /^(?:## Links|Links)\s*$/m },
+    { key: 'Linear ID', pattern: /^Linear ID:\s*(LAT-\d+)\s*$/im },
+    { key: 'Title', pattern: /^Title:\s*(.+)$/m },
+    { key: 'Agent type', pattern: /^Agent type:\s*(\S+)/m },
+    { key: 'Lane', pattern: /^Lane:\s*(\S+(?:\/\S+)?)$/m },
+    { key: 'Risk level', pattern: /^Risk level:\s*(\S+)/m },
+    { key: 'Budget cap', pattern: /^Budget cap:\s*(.+)$/m },
+    { key: 'Approval required', pattern: /^Approval required:\s*(yes|no)/im },
+    { key: 'Goal', pattern: /^(?:## Goal|Goal)\s*(.+)$/m },
+    { key: 'Sequencing', pattern: /^## Sequencing/m },
+    { key: 'In scope', pattern: /^(?:### In scope|In scope)\s*[-]/m },
+    { key: 'Out of scope', pattern: /^(?:### Out of scope|Out of scope)\s*[-]/m },
+    { key: 'Acceptance criteria', pattern: /^(?:## Acceptance Criteria|Acceptance Criteria)\s*$/m },
+    { key: 'Tests', pattern: /^(?:## Tests|Tests)\s*$/m },
+    { key: 'Required evidence', pattern: /^(?:## Required Evidence|Required Evidence)\s*$/m },
+    { key: 'Quality gate', pattern: /^(?:## Quality Gate|Quality Gate)\s*$/m },
+    { key: 'Rollback', pattern: /^(?:## Rollback|Rollback)\s*$/m },
+    { key: 'Definition of Done', pattern: /^(?:## Definition of Done|Definition of Done)\s*$/m },
+    { key: 'Links', pattern: /^(?:## Links|Links)\s*$/m },
   ];
 
   let missingFields: string[] = [];
@@ -127,8 +116,8 @@ export function validateAgentReadyContract(
 
   if (missingFields.length > 0) {
     refusals.push({
-      code: "missing_field",
-      message: `missing required field(s): ${missingFields.join(", ")}`,
+      code: 'missing_field',
+      message: `missing required field(s): ${missingFields.join(', ')}`,
       checkNumber: 1,
     });
   }
@@ -138,7 +127,7 @@ export function validateAgentReadyContract(
   const lane = laneMatch ? laneMatch[1].trim() : null;
   if (lane && !isLane(lane)) {
     refusals.push({
-      code: "invalid_lane",
+      code: 'invalid_lane',
       message: `lane "${lane}" is not one of: docs/adr/prd, implementation, harness/meta, research/spike`,
       checkNumber: 2,
     });
@@ -149,7 +138,7 @@ export function validateAgentReadyContract(
   const agentType = agentTypeMatch ? agentTypeMatch[1] : null;
   if (agentType && !isAgentType(agentType)) {
     refusals.push({
-      code: "invalid_agent_type",
+      code: 'invalid_agent_type',
       message: `agent type "${agentType}" is not one of: coding, qa, review, research, sre, pm, observability`,
       checkNumber: 3,
     });
@@ -160,7 +149,7 @@ export function validateAgentReadyContract(
   const riskLevel = riskMatch ? riskMatch[1] : null;
   if (riskLevel && !isRiskLevel(riskLevel)) {
     refusals.push({
-      code: "invalid_risk_level",
+      code: 'invalid_risk_level',
       message: `risk level "${riskLevel}" must be: low, medium, or high`,
       checkNumber: 4,
     });
@@ -171,31 +160,34 @@ export function validateAgentReadyContract(
   const budgetCap = budgetMatch ? budgetMatch[1].trim() : null;
   if (budgetCap && !isNumericBudgetCap(budgetCap)) {
     refusals.push({
-      code: "missing_budget_cap_numeric",
+      code: 'missing_budget_cap_numeric',
       message: `budget cap "${budgetCap}" is not numeric (e.g., "100k tokens", "$5", "10 min")`,
       checkNumber: 5,
     });
   }
 
   // Check 6: Acceptance criteria have checkbox prefix
-  const hasAcceptanceCriteria = /^(?:## Acceptance Criteria|Acceptance Criteria)\s*$/m.test(trimmed);
+  const hasAcceptanceCriteria = /^(?:## Acceptance Criteria|Acceptance Criteria)\s*$/m.test(
+    trimmed,
+  );
   if (hasAcceptanceCriteria) {
-    const acMatch = /^(?:## Acceptance Criteria|Acceptance Criteria)\s*\n([\s\S]*?)(?=^## |$)/m.exec(trimmed);
+    const acMatch =
+      /^(?:## Acceptance Criteria|Acceptance Criteria)\s*\n([\s\S]*?)(?=^## |$)/m.exec(trimmed);
     if (acMatch) {
       const acSection = acMatch[1];
-      const lines = acSection.split("\n");
+      const lines = acSection.split('\n');
       const nonCheckboxLines: string[] = [];
       for (const line of lines) {
         const trimmedLine = line.trim();
         if (trimmedLine.length === 0) continue;
-        if (trimmedLine.startsWith("- [ ]") || trimmedLine.startsWith("- [x]")) continue;
-        if (trimmedLine.startsWith("#") || trimmedLine.startsWith("|")) continue;
+        if (trimmedLine.startsWith('- [ ]') || trimmedLine.startsWith('- [x]')) continue;
+        if (trimmedLine.startsWith('#') || trimmedLine.startsWith('|')) continue;
         nonCheckboxLines.push(trimmedLine);
       }
       if (nonCheckboxLines.length > 0) {
         refusals.push({
-          code: "missing_field",
-          message: `acceptance criteria lines without checkbox prefix: ${nonCheckboxLines.slice(0, 3).join(", ")}...`,
+          code: 'missing_field',
+          message: `acceptance criteria lines without checkbox prefix: ${nonCheckboxLines.slice(0, 3).join(', ')}...`,
           checkNumber: 6,
         });
       }
@@ -205,21 +197,23 @@ export function validateAgentReadyContract(
   // Check 7: Description too short
   if (!skipDescriptionLengthCheck && trimmed.length < 80) {
     refusals.push({
-      code: "description_too_short",
+      code: 'description_too_short',
       message: `description is ${trimmed.length} chars (minimum 80 to bound dispatch scope)`,
       checkNumber: 7,
     });
   }
 
   // Check 8: Empty out-of-scope (section exists but has no items)
-  const outOfScopeMatch = /^(?:### Out of scope|Out of scope)\s*\n([\s\S]*?)(?=^## |$)/m.exec(trimmed);
+  const outOfScopeMatch = /^(?:### Out of scope|Out of scope)\s*\n([\s\S]*?)(?=^## |$)/m.exec(
+    trimmed,
+  );
   if (outOfScopeMatch) {
     const oosSection = outOfScopeMatch[1];
-    const items = oosSection.split("\n").filter((l) => l.trim().startsWith("- "));
+    const items = oosSection.split('\n').filter((l) => l.trim().startsWith('- '));
     if (items.length === 0) {
       refusals.push({
-        code: "empty_out_of_scope",
-        message: "out-of-scope section exists but contains no items",
+        code: 'empty_out_of_scope',
+        message: 'out-of-scope section exists but contains no items',
         checkNumber: 8,
       });
     }
@@ -228,12 +222,18 @@ export function validateAgentReadyContract(
   // Check 9: Vague spike without AC
   if (!skipVagueSpikeCheck) {
     const titleMatch = /^Title:\s*(.+)$/m.exec(trimmed);
-    const title = titleMatch ? titleMatch[1] : "";
-    const vaguePatterns = [/^investigate\b/i, /^explore\b/i, /^think about\b/i, /^discuss\b/i, /^plan\b/i];
+    const title = titleMatch ? titleMatch[1] : '';
+    const vaguePatterns = [
+      /^investigate\b/i,
+      /^explore\b/i,
+      /^think about\b/i,
+      /^discuss\b/i,
+      /^plan\b/i,
+    ];
     const isVague = vaguePatterns.some((p) => p.test(title));
     if (isVague && !hasAcceptanceCriteria) {
       refusals.push({
-        code: "vague_spike_no_ac",
+        code: 'vague_spike_no_ac',
         message: `vague spike title "${title.slice(0, 60)}" has no Acceptance Criteria section`,
         checkNumber: 9,
       });
@@ -255,12 +255,12 @@ export function validateAgentReadyContract(
     /\b(?:rotate|revoke|reset|regenerate|reissue|replace|cycle)\s+(?:the\s+)?(?:secret|credential|token|api\s+keys?)/i,
   ];
   for (const pat of secretRotations) {
-    const lines = trimmed.split("\n");
+    const lines = trimmed.split('\n');
     for (const line of lines) {
       if (!pat.test(line)) continue;
       if (!safeContextPatterns.some((sp) => sp.test(line))) {
         refusals.push({
-          code: "secret_rotation_hard_stop",
+          code: 'secret_rotation_hard_stop',
           message: `secret/credential scope detected: "${line.trim().slice(0, 80)}"`,
           checkNumber: 10,
         });
@@ -270,15 +270,16 @@ export function validateAgentReadyContract(
   }
 
   // Deploy/release in implementation lane
-  if (lane === "implementation") {
+  if (lane === 'implementation') {
     const deployPatterns = [
       /\b(?:deploy(?:ing)?|release(?:ing)?|publish(?:ing)?|ship(?:ping)?|roll\s*out)/i,
     ];
     for (const pat of deployPatterns) {
       if (pat.test(allText)) {
         refusals.push({
-          code: "deploy_release_in_implementation",
-          message: "deploy/release/publish scope in implementation lane (deploy is a Stop action per ADR-0008)",
+          code: 'deploy_release_in_implementation',
+          message:
+            'deploy/release/publish scope in implementation lane (deploy is a Stop action per ADR-0008)',
           checkNumber: 10,
         });
         break;
@@ -287,14 +288,12 @@ export function validateAgentReadyContract(
   }
 
   // Auto-merge scope
-  const autoMergePatterns = [
-    /\b(?:auto[-\s]?merge|automerge|merge\s+the\s+pr\b)/i,
-  ];
+  const autoMergePatterns = [/\b(?:auto[-\s]?merge|automerge|merge\s+the\s+pr\b)/i];
   for (const pat of autoMergePatterns) {
     if (pat.test(allText)) {
       refusals.push({
-        code: "auto_merge_scope",
-        message: "ticket scope includes merging PRs or auto-merge",
+        code: 'auto_merge_scope',
+        message: 'ticket scope includes merging PRs or auto-merge',
         checkNumber: 10,
       });
       break;
@@ -313,23 +312,25 @@ export function validateAgentReadyContract(
 // --- Helper validators ---
 
 function isLane(v: string): v is LaneId {
-  return v === "docs/adr/prd" || v === "implementation" || v === "harness/meta" || v === "research/spike";
+  return (
+    v === 'docs/adr/prd' || v === 'implementation' || v === 'harness/meta' || v === 'research/spike'
+  );
 }
 
 function isAgentType(v: string): v is AgentType {
   return (
-    v === "coding" ||
-    v === "qa" ||
-    v === "review" ||
-    v === "research" ||
-    v === "sre" ||
-    v === "pm" ||
-    v === "observability"
+    v === 'coding' ||
+    v === 'qa' ||
+    v === 'review' ||
+    v === 'research' ||
+    v === 'sre' ||
+    v === 'pm' ||
+    v === 'observability'
   );
 }
 
 function isRiskLevel(v: string): v is RiskLevel {
-  return v === "low" || v === "medium" || v === "high";
+  return v === 'low' || v === 'medium' || v === 'high';
 }
 
 function isNumericBudgetCap(v: string): boolean {
@@ -344,12 +345,12 @@ export function formatResult(result: ValidationResult): string {
     if (result.lane) parts.push(`  lane: ${result.lane}`);
     if (result.agentType) parts.push(`  agent type: ${result.agentType}`);
     if (result.riskLevel) parts.push(`  risk level: ${result.riskLevel}`);
-    return parts.join("\n");
+    return parts.join('\n');
   }
 
   const lines = [`ticket-contract: REFUSED (${result.refusals.length} finding(s))`];
   for (const r of result.refusals) {
-    lines.push(`  [check ${r.checkNumber ?? "?"}] ${r.code}: ${r.message}`);
+    lines.push(`  [check ${r.checkNumber ?? '?'}] ${r.code}: ${r.message}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }

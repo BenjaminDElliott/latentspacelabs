@@ -29,6 +29,6 @@ export type {
   MapResult,
   MappedRunArtefact,
   FailedMap,
-} from "./contract.js";
+} from './contract.js';
 
-export { mapProviderOutput } from "./mapper.js";
+export { mapProviderOutput } from './mapper.js';

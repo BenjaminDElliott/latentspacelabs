@@ -16,7 +16,7 @@ than `README.md` (subdirectories are ignored):
 1. Filename matches one of:
    - `root-<slug>.md` for root PRDs
    - `LAT-NN-<slug>.md` for feature PRDs
-   Numeric `NNNN-*.md` ADR-style filenames are rejected.
+     Numeric `NNNN-*.md` ADR-style filenames are rejected.
 2. Required frontmatter keys are present: `prd_id`, `title`, `status`,
    `owner`, `date`, `related_linear`, `related_adrs`, `derived_from`,
    `supersedes`, `superseded_by`.

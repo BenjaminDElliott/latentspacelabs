@@ -5,15 +5,8 @@
  * and experience store configs.
  */
 
-import type {
-  ExperienceStoreConfig,
-  ReflectionDepth,
-  ReflectionEngineConfig,
-} from "./types.js";
-import {
-  DEFAULT_EXPERIENCE_STORE_CONFIG,
-  DEFAULT_REFLECTION_ENGINE_CONFIG,
-} from "./types.js";
+import type { ExperienceStoreConfig, ReflectionDepth, ReflectionEngineConfig } from './types.js';
+import { DEFAULT_EXPERIENCE_STORE_CONFIG, DEFAULT_REFLECTION_ENGINE_CONFIG } from './types.js';
 
 /**
  * Merge user overrides with defaults for the experience store config.
@@ -29,19 +22,13 @@ export function mergeExperienceStoreConfig(
 
   // Validate invariants
   if (config.maxExperiences < 1) {
-    throw new Error(
-      `maxExperiences must be >= 1, got ${config.maxExperiences}`,
-    );
+    throw new Error(`maxExperiences must be >= 1, got ${config.maxExperiences}`);
   }
   if (config.maxPromptLength < 128) {
-    throw new Error(
-      `maxPromptLength must be >= 128, got ${config.maxPromptLength}`,
-    );
+    throw new Error(`maxPromptLength must be >= 128, got ${config.maxPromptLength}`);
   }
   if (config.maxOutputLength < 64) {
-    throw new Error(
-      `maxOutputLength must be >= 64, got ${config.maxOutputLength}`,
-    );
+    throw new Error(`maxOutputLength must be >= 64, got ${config.maxOutputLength}`);
   }
 
   return config;
@@ -60,16 +47,14 @@ export function mergeReflectionEngineConfig(
   };
 
   // Validate invariants
-  const validDepths = ["quick", "standard", "deep"] as const;
+  const validDepths = ['quick', 'standard', 'deep'] as const;
   if (!validDepths.includes(config.defaultDepth)) {
     throw new Error(
-      `defaultDepth must be one of ${validDepths.join(", ")}, got "${config.defaultDepth}"`,
+      `defaultDepth must be one of ${validDepths.join(', ')}, got "${config.defaultDepth}"`,
     );
   }
   if (config.maxReflectionTokens < 10) {
-    throw new Error(
-      `maxReflectionTokens must be >= 10, got ${config.maxReflectionTokens}`,
-    );
+    throw new Error(`maxReflectionTokens must be >= 10, got ${config.maxReflectionTokens}`);
   }
   if (config.ruleActionThreshold < 0 || config.ruleActionThreshold > 1) {
     throw new Error(
@@ -83,8 +68,8 @@ export function mergeReflectionEngineConfig(
 /**
  * Validate a reflection depth string.
  */
-export function isValidDepth(depth: string): depth is "quick" | "standard" | "deep" {
-  return ["quick", "standard", "deep"].includes(depth);
+export function isValidDepth(depth: string): depth is 'quick' | 'standard' | 'deep' {
+  return ['quick', 'standard', 'deep'].includes(depth);
 }
 
 /**
@@ -93,11 +78,11 @@ export function isValidDepth(depth: string): depth is "quick" | "standard" | "de
  */
 export function getExpectedTokenBudget(depth: ReflectionDepth): number {
   switch (depth) {
-    case "quick":
+    case 'quick':
       return 50;
-    case "standard":
+    case 'standard':
       return 150;
-    case "deep":
+    case 'deep':
       return 500;
   }
 }
