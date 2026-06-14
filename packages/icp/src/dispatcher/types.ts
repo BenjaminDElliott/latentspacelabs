@@ -19,6 +19,26 @@ export type EligibilityOutcome =
   | { eligible: true; reason: string }
   | { eligible: false; reason: string };
 
+/**
+ * LAT-134: parsed complexity tag extracted from the issue's Linear labels.
+ * `unknown` is the default when no `complexity/*` label is present — the
+ * dispatcher must not silently dispatch to local agents when this is
+ * `unknown` unless the explicit-override gate is also active (LAT-129
+ * MVP gate).
+ */
+export type ComplexityTag = "small" | "medium" | "large" | "unknown";
+
+/**
+ * LAT-134: parsed reasoning tag extracted from the issue's Linear labels.
+ * `unknown` is the default when no `reasoning/*` label is present. The
+ * routing policy maps:
+ *  - `implementation` → local/RunPod implementation lane
+ *  - `synthesis`      → frontier reasoning or human review
+ *  - `architecture`   → frontier reasoning or human review
+ *  - `unknown`        → requires human approval; do not silently dispatch
+ */
+export type ReasoningTag = "implementation" | "synthesis" | "architecture" | "unknown";
+
 /** Linear issue fields the dispatcher reads. */
 export interface DispatchIssue {
   /** Linear identifier in human form, e.g. `LAT-126`. */
@@ -33,6 +53,16 @@ export interface DispatchIssue {
   stateId: string;
   /** Label names attached to this issue; lowercased by the client. */
   labels: ReadonlyArray<string>;
+  /**
+   * LAT-134: parsed complexity tag from Linear labels (e.g. `complexity/small`).
+   * `unknown` when no `complexity/*` label is present.
+   */
+  complexityTag: ComplexityTag;
+  /**
+   * LAT-134: parsed reasoning tag from Linear labels (e.g. `reasoning/implementation`).
+   * `unknown` when no `reasoning/*` label is present.
+   */
+  reasoningTag: ReasoningTag;
 }
 
 /** Final terminal outcome of a dispatcher invocation. */

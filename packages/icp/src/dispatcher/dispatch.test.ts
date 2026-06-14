@@ -35,7 +35,15 @@ function fakeIssue(overrides: Partial<DispatchIssue> = {}): DispatchIssue {
     stateName: "Backlog",
     stateId: "state-backlog",
     labels: [],
+    complexityTag: "unknown",
+    reasoningTag: "unknown",
+    ...(overrides.complexityTag !== undefined && overrides.reasoningTag !== undefined
+      ? { complexityTag: overrides.complexityTag, reasoningTag: overrides.reasoningTag }
+      : {}),
     ...overrides,
+    // Ensure complexityTag and reasoningTag are never undefined after spread.
+    complexityTag: overrides.complexityTag ?? "unknown",
+    reasoningTag: overrides.reasoningTag ?? "unknown",
   };
 }
 

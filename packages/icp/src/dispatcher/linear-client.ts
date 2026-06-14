@@ -9,6 +9,8 @@
  *   about).
  * - It must transition the issue's workflow state, which the existing
  *   adapter never does.
+ * - LAT-134: it extracts `complexity/*` and `reasoning/*` label prefixes
+ *   and attaches them to the `DispatchIssue` as first-class tags.
  *
  * Both clients live behind a `FetchLike` seam and never read
  * process.env themselves. The orchestration in `dispatch.ts` is the
@@ -19,7 +21,12 @@ import type {
   FetchLike,
   FetchLikeResponse,
 } from "../adapters/linear-adapter.js";
-import type { DispatcherLinearClient, DispatchIssue } from "./types.js";
+import type {
+  DispatcherLinearClient,
+  DispatchIssue,
+  ComplexityTag,
+  ReasoningTag,
+} from "./types.js";
 
 const DEFAULT_ENDPOINT = "https://api.linear.app/graphql";
 
@@ -169,7 +176,9 @@ export function createDispatcherLinearClient(
     },
 
     async setIssueState(uuid: string, stateId: string): Promise<void> {
-      const data = await gql<{ issueUpdate: { success: boolean } }>(
+      const data = await gql<{
+        issueUpdate: { success: boolean };
+      }>(
         ISSUE_UPDATE_STATE_MUTATION,
         { id: uuid, stateId },
       );
@@ -192,6 +201,38 @@ interface RawIssue {
   labels?: { nodes?: ReadonlyArray<{ name?: string | null }> | null } | null;
 }
 
+/**
+ * LAT-134: parse a complexity tag from a list of lowercase label strings.
+ *
+ * Recognises `complexity/small`, `complexity/medium`, `complexity/large`.
+ * Everything else (including an unknown value like `complexity/huge`)
+ * returns `"unknown"` rather than failing.
+ */
+export function parseComplexityTag(labels: ReadonlyArray<string>): ComplexityTag {
+  for (const label of labels) {
+    if (label === "complexity/small" || label === "complexity-small") return "small";
+    if (label === "complexity/medium" || label === "complexity-medium") return "medium";
+    if (label === "complexity/large" || label === "complexity-large") return "large";
+  }
+  return "unknown";
+}
+
+/**
+ * LAT-134: parse a reasoning tag from a list of lowercase label strings.
+ *
+ * Recognises `reasoning/implementation`, `reasoning/synthesis`,
+ * `reasoning/architecture`. Everything else (including an unknown value)
+ * returns `"unknown"` rather than failing.
+ */
+export function parseReasoningTag(labels: ReadonlyArray<string>): ReasoningTag {
+  for (const label of labels) {
+    if (label === "reasoning/implementation" || label === "reasoning-implementation") return "implementation";
+    if (label === "reasoning/synthesis" || label === "reasoning-synthesis") return "synthesis";
+    if (label === "reasoning/architecture" || label === "reasoning-architecture") return "architecture";
+  }
+  return "unknown";
+}
+
 function mapIssue(raw: RawIssue): DispatchIssue {
   const labels = (raw.labels?.nodes ?? [])
     .map((n) => (typeof n.name === "string" ? n.name.toLowerCase() : ""))
@@ -204,6 +245,8 @@ function mapIssue(raw: RawIssue): DispatchIssue {
     stateName: raw.state?.name ?? "unknown",
     stateId: raw.state?.id ?? "",
     labels,
+    complexityTag: parseComplexityTag(labels),
+    reasoningTag: parseReasoningTag(labels),
   };
 }
 
