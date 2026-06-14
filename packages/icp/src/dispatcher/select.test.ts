@@ -22,6 +22,8 @@ function issue(overrides: Partial<DispatchIssue> = {}): DispatchIssue {
     stateName: "Backlog",
     stateId: "state-backlog",
     labels: [],
+    complexityTag: "unknown",
+    reasoningTag: "unknown",
     ...overrides,
   };
 }

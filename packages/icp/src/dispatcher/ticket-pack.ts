@@ -127,8 +127,8 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
   lines.push("");
   lines.push("## Branch / PR rules");
   lines.push("");
-  lines.push(`- **Branch:** \\`${branch}\\``);
-  lines.push(`- **PR title prefix:** \\`${prTitlePrefix}\\``);
+  lines.push(`- **Branch:** ${backtick}${branch}${backtick}`);
+  lines.push(`- **PR title prefix:** ${backtick}${prTitlePrefix}${backtick}`);
   lines.push("- **PR base:** `main`");
   lines.push("- One PR. No batching. No auto-merge.");
   lines.push("");
@@ -156,6 +156,8 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
 
   return { content, filename, branch, prTitlePrefix };
 }
+
+const backtick = "`";
 
 function parseIssueNumber(identifier: string): string {
   const m = /-(\d+)$/.exec(identifier);
