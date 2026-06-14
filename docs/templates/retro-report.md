@@ -16,6 +16,10 @@
 
 If `Retro cost band` is `elevated` or `runaway_risk`, **stop and hand to Ben** per ADR-0010 stop conditions. Do not continue this retro autonomously.
 
+## Risk & open-questions register
+
+> Review the [risk register](../process/risk-register.md) — update status on all `Open`/`Watch` entries, resolve resolved items, and archive entries older than 30 days. Flag any new risks not yet captured.
+
 ## Evidence surfaces consulted
 
 > Check each row; if a surface was skipped or unavailable, say why. An unconsulted surface is a risk to the retro's conclusions.
