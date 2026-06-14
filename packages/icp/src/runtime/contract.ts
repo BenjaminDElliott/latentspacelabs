@@ -386,3 +386,316 @@ export interface RunRecorder {
 export interface WriteBackFormatter {
   format(report: RunReport): string;
 }
+
+/* ------------------------------------------------------------------ */
+/* LAT-166: Adapter runner gate types                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * LAT-166: gate verdict — whether the adapter is allowed to run,
+ * proposed to the user for review, or stopped before execution.
+ *
+ * * `approve` — the invocation is safe; proceed normally.
+ * * `propose` — the invocation has risk; the human reviewer sees it but
+ *   the run is allowed to proceed (the caller may choose to block).
+ * * `stop` — the invocation violates an isolation rule; skip execution.
+ */
+export type GateVerdict = "approve" | "propose" | "stop";
+
+/**
+ * LAT-166: the action an adapter performs during an invocation.
+ * Used by the pre-run gate to classify risk and enforce per-agent-type
+ * isolation rules (LAT-164).
+ */
+export type AdapterAction =
+  | "read_issue"
+  | "post_comment"
+  | "create_pr"
+  | "merge_pr"
+  | "delete_branch"
+  | "deploy"
+  | "run_shell_command"
+  | "send_notification"
+  | "update_ticket"
+  | "create_issue"
+  | "create_comment"
+  | "generic";
+
+/**
+ * LAT-166: the target scope of an action. Used by the post-run gate
+ * to validate that side-effects stayed within allowed boundaries.
+ */
+export type ActionScope =
+  | "same_repo"
+  | "fork_repo"
+  | "any_repo"
+  | "linear"
+  | "external_api"
+  | "filesystem"
+  | "network"
+  | "shell";
+
+/**
+ * LAT-166: a single isolation rule that the pre-run gate checks.
+ */
+export interface IsolationRule {
+  /** The agent type this rule applies to. `null` = applies to all. */
+  agent_type: AgentType | null;
+  /** The action this rule constrains. */
+  action: AdapterAction;
+  /** The scope constraint (e.g. coding agents can only write to same_repo). */
+  allowed_scopes: ReadonlyArray<ActionScope>;
+  /** Human-readable description of the rule. */
+  description: string;
+}
+
+/**
+ * LAT-166: forbidden actions per agent type — actions that are never
+ * allowed regardless of scope.
+ */
+export type ForbiddenActions = Readonly<
+  Record<AgentType, ReadonlyArray<AdapterAction>>
+>;
+
+/**
+ * LAT-166: pre-run gate input — the invocation context the gate evaluates.
+ */
+export interface PreRunGateInput {
+  agent_type: AgentType;
+  action: AdapterAction;
+  /** The target scope (repo, linear, etc.). */
+  scope: ActionScope;
+  /** Arbitrary context the gate may use for richer decisions. */
+  context: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * LAT-166: pre-run gate result — verdict plus a human-readable explanation.
+ */
+export interface PreRunGateResult {
+  verdict: GateVerdict;
+  reasons: ReadonlyArray<string>;
+  /**
+   * When `verdict === "stop"`, the gate may suggest a safer alternative.
+   * Null when no suggestion is available.
+   */
+  suggestion: string | null;
+}
+
+/**
+ * LAT-166: post-run gate input — the adapter run result the gate validates.
+ */
+export interface PostRunGateInput {
+  agent_type: AgentType;
+  /** The action the adapter actually performed. */
+  action: AdapterAction;
+  /** The scope the adapter wrote to. */
+  scope: ActionScope;
+  /**
+   * Arbitrary result metadata the post-run gate inspects for forbidden
+   * side-effects (e.g. PR created against a protected branch).
+   */
+  result: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * LAT-166: post-run gate result — verdict plus a human-readable explanation.
+ */
+export interface PostRunGateResult {
+  verdict: GateVerdict;
+  reasons: ReadonlyArray<string>;
+  /** When the gate caught a forbidden action, the actual value that violated the rule. */
+  violated_value: unknown;
+}
+
+/**
+ * LAT-166: policy evaluation context — the three pieces the gate evaluator
+ * reads to produce approve/propose/stop.
+ */
+export interface PolicyEvaluationContext {
+  agent_type: AgentType;
+  action: AdapterAction;
+  /** Scope the action targets. */
+  scope: ActionScope;
+  /** Caller-supplied context (budget, environment, branch target, etc.). */
+  context: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * LAT-166: policy evaluator interface — reads agent type, action, context
+ * → approve/propose/stop verdict.
+ */
+export interface PolicyGateEvaluator {
+  /**
+   * Evaluate a single invocation context. Returns the verdict and
+   * human-readable reasons.
+   */
+  evaluate(ctx: PolicyEvaluationContext): {
+    verdict: GateVerdict;
+    reasons: ReadonlyArray<string>;
+  };
+}
+
+/**
+ * LAT-166: pre-run gate — validates an invocation against isolation rules
+ * BEFORE the adapter executes.
+ */
+export interface PreRunGate {
+  /**
+   * Validate the invocation. Returns a verdict: approve (proceed),
+   * propose (flag for human review), or stop (skip execution).
+   */
+  validate(input: PreRunGateInput): PreRunGateResult;
+}
+
+/**
+ * LAT-166: post-run gate — validates the adapter result AFTER execution
+ * to catch forbidden actions before commit.
+ */
+export interface PostRunGate {
+  /**
+   * Validate the result. Returns a verdict: approve (commit), propose
+   * (flag), or stop (revert / abort).
+   */
+  validate(input: PostRunGateInput): PostRunGateResult;
+}
+
+/**
+ * LAT-166: the combined gate that runs pre-run → adapter → post-run.
+ * The `run` method orchestrates the full gate lifecycle.
+ */
+export interface AdapterRunnerGate {
+  preRun: PreRunGate;
+  postRun: PostRunGate;
+  /**
+   * Run the full gate pipeline: pre-run validation, then call
+   * `execute`, then post-run validation. Returns the gate verdict
+   * and the adapter result.
+   */
+  run<AdapterResult extends Record<string, unknown>>(
+    invocation: PreRunGateInput,
+    execute: (invocation: PreRunGateInput) => Promise<AdapterResult>,
+  ): Promise<AdapterGateOutcome<AdapterResult>>;
+}
+
+/**
+ * LAT-166: outcome of running the adapter runner gate.
+ */
+export interface AdapterGateOutcome<AdapterResult extends Record<string, unknown>> {
+  /** Overall verdict from pre-run or post-run. `stop` wins over `propose`. */
+  verdict: GateVerdict;
+  /** Full reasons from both pre-run and post-run. */
+  reasons: ReadonlyArray<string>;
+  /** The adapter result — present even on `stop` when pre-run produced it. */
+  result: AdapterResult;
+  /** Pre-run result for audit trail. */
+  preRunResult: PreRunGateResult;
+  /** Post-run result for audit trail (null if pre-run stopped). */
+  postRunResult: PostRunGateResult | null;
+  /**
+   * Whether the run was bypassed (e.g. low-risk action that skips the gate).
+   * When true, the gate result is documented with evidence that the bypass
+   * was intentional.
+   */
+  bypassed: boolean;
+  /**
+   * Evidence explaining why the gate was bypassed. Set when `bypassed === true`.
+   */
+  bypassEvidence: string | null;
+}
+
+/**
+ * LAT-166: the default isolation rules per agent type (LAT-164).
+ * These are the rules the default gate evaluator uses.
+ */
+export function getDefaultIsolationRules(): ReadonlyArray<IsolationRule> {
+  return [
+    {
+      agent_type: "coding",
+      action: "delete_branch",
+      allowed_scopes: ["same_repo"],
+      description: "Coding agents cannot delete branches in other repos.",
+    },
+    {
+      agent_type: "coding",
+      action: "merge_pr",
+      allowed_scopes: ["same_repo"],
+      description: "Coding agents cannot merge PRs in other repos.",
+    },
+    {
+      agent_type: "coding",
+      action: "deploy",
+      allowed_scopes: ["same_repo", "linear"],
+      description: "Coding agents can only deploy within their own repo.",
+    },
+    {
+      agent_type: "sre",
+      action: "run_shell_command",
+      allowed_scopes: ["shell", "filesystem"],
+      description: "SRE agents run shell commands in their sandbox.",
+    },
+    {
+      agent_type: "sre",
+      action: "deploy",
+      allowed_scopes: ["same_repo", "any_repo", "external_api"],
+      description: "SRE agents can deploy to any repo or external API.",
+    },
+    {
+      agent_type: "sre",
+      action: "send_notification",
+      allowed_scopes: ["network", "linear"],
+      description: "SRE agents can send notifications via network or Linear.",
+    },
+    {
+      agent_type: "qa",
+      action: "read_issue",
+      allowed_scopes: ["any_repo", "linear", "network"],
+      description: "QA agents can read any issue or repository.",
+    },
+    {
+      agent_type: "review",
+      action: "read_issue",
+      allowed_scopes: ["any_repo", "linear"],
+      description: "Review agents can read any issue or repository.",
+    },
+    {
+      agent_type: null,
+      action: "create_issue",
+      allowed_scopes: ["linear"],
+      description: "All agents can only create Linear issues.",
+    },
+    {
+      agent_type: null,
+      action: "send_notification",
+      allowed_scopes: ["network", "linear"],
+      description: "All agents can only send notifications via network or Linear.",
+    },
+    {
+      agent_type: "coding",
+      action: "create_pr",
+      allowed_scopes: ["same_repo"],
+      description: "Coding agents can only create PRs in their own repo.",
+    },
+    {
+      agent_type: "coding",
+      action: "update_ticket",
+      allowed_scopes: ["linear"],
+      description: "Coding agents can only update Linear tickets.",
+    },
+  ];
+}
+
+/**
+ * LAT-166: the default forbidden actions per agent type.
+ */
+export function getDefaultForbiddenActions(): ForbiddenActions {
+  return {
+    coding: ["delete_branch", "merge_pr", "send_notification"],
+    qa: ["deploy", "run_shell_command", "create_issue"],
+    review: ["deploy", "run_shell_command", "create_pr"],
+    sre: ["delete_branch"],
+    pm: ["create_pr", "deploy", "run_shell_command", "delete_branch"],
+    research: ["deploy", "merge_pr", "delete_branch"],
+    observability: ["create_pr", "merge_pr", "delete_branch", "deploy"],
+  };
+}
