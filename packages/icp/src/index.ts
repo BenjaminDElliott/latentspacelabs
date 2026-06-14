@@ -156,6 +156,68 @@ export type {
   EligibilityOutcome,
 } from "./dispatcher/types.js";
 
+/* LAT-163: Per-agent-type input/output contracts.
+ * Defines the exact inputs and outputs for coding, QA, PR-review,
+ * and SRE/deploy agents so adapters know what to expect and produce. */
+export {
+  AGENT_CONTRACT_SCHEMA_VERSION,
+  CODING_AGENT_SCHEMA_VERSION,
+  QA_AGENT_SCHEMA_VERSION,
+  PR_REVIEW_AGENT_SCHEMA_VERSION,
+  SRE_AGENT_SCHEMA_VERSION,
+  getEvidenceContract,
+  validateCodingAgentInput,
+  validateQAAgentInput,
+  validatePRReviewAgentInput,
+  validateSREAgentInput,
+  checkEvidence,
+  buildDefaultOutput,
+  type AgentEvidence,
+  type AgentEvidenceContract,
+  type AgentInput,
+  type AgentOutput,
+  type AcceptanceCriterionResult,
+  type ReviewFinding,
+  type ApprovalStatus,
+  type ChangeSummary,
+  type HealthCheck,
+  type RollbackConfig,
+  type DeployStatus,
+  type HealthCheckResult,
+  type RollbackResult,
+  type DeploymentCost,
+  type ValidationError,
+  type ValidationResult,
+} from "./contract/agent-contracts.js";
+export type {
+  CodingAgentInput,
+  CodingAgentOutput,
+  BuildStatus,
+  TestOutcome,
+  TestResults,
+  TestCaseResult,
+  LintStatus,
+  LintResults,
+  LintViolation,
+  CoverageMetrics,
+  CoverageFileSummary,
+} from "./contract/agent-contracts.js";
+export type {
+  QAAgentInput,
+  QAAgentOutput,
+  QAAcceptanceCriterionResult,
+  RegressionResult,
+  SeverityClassification,
+} from "./contract/agent-contracts.js";
+export type {
+  PRReviewAgentInput,
+  PRReviewAgentOutput,
+} from "./contract/agent-contracts.js";
+export type {
+  SREAgentInput,
+  SREAgentOutput,
+} from "./contract/agent-contracts.js";
+
 /* LAT-140 structured run artefact (sanitised observability record).
  * Pure module: produces the JSON / compact comment-ready summary; the
  * caller decides where to persist it. Never uploads or externalises. */
