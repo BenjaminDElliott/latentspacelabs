@@ -21,6 +21,16 @@ import type {
 } from "../adapters/linear-adapter.js";
 import type { DispatcherLinearClient, DispatchIssue } from "./types.js";
 
+/** Parameters for creating a run-record sub-issue. */
+export interface RunRecordIssue {
+  /** Title of the run-record sub-issue. */
+  title: string;
+  /** Markdown description carrying the full run evidence. */
+  description: string;
+  /** Parent issue identifier (e.g. "LAT-126"). */
+  parentId: string;
+}
+
 const DEFAULT_ENDPOINT = "https://api.linear.app/graphql";
 
 export interface DispatcherLinearClientOptions {
@@ -180,6 +190,43 @@ export function createDispatcherLinearClient(
         );
       }
     },
+
+    async createRunRecord(issue: RunRecordIssue): Promise<{ id: string; url: string }> {
+      // Resolve parent identifier → UUID first.
+      const parentData = await gql<{ issue: RawIssue | null }>(
+        READ_ISSUE_ID_ONLY_QUERY,
+        { id: issue.parentId },
+      );
+      if (!parentData.issue) {
+        throw new DispatcherLinearError(
+          "issue_not_found",
+          `Parent issue ${issue.parentId} not found; cannot create run-record sub-issue.`,
+        );
+      }
+
+      const data = await gql<{
+        issueCreate: { success: boolean; issue: { id: string; identifier: string; url: string | null } | null };
+      }>(CREATE_RUN_RECORD_MUTATION, {
+        teamId: parentData.issue.id, // inherit team from parent
+        parentId: parentData.issue.id,
+        title: issue.title,
+        description: issue.description,
+        stateId: null, // will use team default
+      });
+
+      if (!data.issueCreate?.success || !data.issueCreate.issue) {
+        throw new DispatcherLinearError(
+          "api_error",
+          `Linear refused issueCreate for run-record of ${issue.parentId}.`,
+        );
+      }
+
+      const created = data.issueCreate.issue;
+      return {
+        id: created.id,
+        url: created.url ?? `https://linear.app/issue/${created.identifier}`,
+      };
+    },
   };
 }
 
@@ -243,6 +290,49 @@ const ISSUE_UPDATE_STATE_MUTATION = /* GraphQL */ `
   mutation DispatcherSetState($id: String!, $stateId: String!) {
     issueUpdate(id: $id, input: { stateId: $stateId }) {
       success
+    }
+  }
+`;
+
+/**
+ * Lightweight query just to resolve an identifier → UUID for the parent
+ * issue when creating a run-record sub-issue.
+ */
+const READ_ISSUE_ID_ONLY_QUERY = /* GraphQL */ `
+  query DispatcherReadIssueId($id: String!) {
+    issue(id: $id) {
+      id
+      identifier
+    }
+  }
+`;
+
+/**
+ * Create a run-record sub-issue under the parent. Uses the parent's team
+ * so the sub-issue lands in the same workspace view. The description
+ * carries the full structured evidence.
+ */
+const CREATE_RUN_RECORD_MUTATION = /* GraphQL */ `
+  mutation DispatcherCreateRunRecord(
+    $title: String!
+    $description: String!
+    $teamId: String!
+    $parentId: String!
+  ) {
+    issueCreate(
+      input: {
+        title: $title
+        description: $description
+        teamId: $teamId
+        parentId: $parentId
+      }
+    ) {
+      success
+      issue {
+        id
+        identifier
+        url
+      }
     }
   }
 `;
