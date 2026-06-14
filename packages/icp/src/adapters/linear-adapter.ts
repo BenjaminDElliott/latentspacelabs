@@ -18,10 +18,7 @@
  * - The adapter never logs or serialises the API key; event callbacks receive
  *   identity-only metadata.
  */
-import type {
-  LinearAdapter,
-  LinearIssueSnapshot,
-} from "../runtime/contract.js";
+import type { LinearAdapter, LinearIssueSnapshot } from '../runtime/contract.js';
 
 /* ------------------------------------------------------------------ */
 /* Stub adapter                                                        */
@@ -34,9 +31,7 @@ export interface StubLinearAdapterOptions {
   commentSink?: (c: { issueId: string; body: string; url: string }) => void;
 }
 
-export function createStubLinearAdapter(
-  opts: StubLinearAdapterOptions,
-): LinearAdapter {
+export function createStubLinearAdapter(opts: StubLinearAdapterOptions): LinearAdapter {
   let counter = 0;
   return {
     async readIssue(id: string): Promise<LinearIssueSnapshot> {
@@ -64,24 +59,20 @@ export function createStubLinearAdapter(
  * or any response header value.
  */
 export type LinearAdapterErrorKind =
-  | "missing_credentials"
-  | "issue_not_found"
-  | "malformed_ticket"
-  | "api_error"
-  | "rate_limited"
-  | "unauthorized"
-  | "network_error";
+  | 'missing_credentials'
+  | 'issue_not_found'
+  | 'malformed_ticket'
+  | 'api_error'
+  | 'rate_limited'
+  | 'unauthorized'
+  | 'network_error';
 
 export class LinearAdapterError extends Error {
   readonly kind: LinearAdapterErrorKind;
   readonly status: number | null;
-  constructor(
-    kind: LinearAdapterErrorKind,
-    message: string,
-    status: number | null = null,
-  ) {
+  constructor(kind: LinearAdapterErrorKind, message: string, status: number | null = null) {
     super(message);
-    this.name = "LinearAdapterError";
+    this.name = 'LinearAdapterError';
     this.kind = kind;
     this.status = status;
   }
@@ -127,24 +118,24 @@ export interface LinearAdapterOptions {
 }
 
 export type LinearAdapterEvent =
-  | { type: "read_issue_started"; issueId: string }
-  | { type: "read_issue_ok"; issueId: string; resolvedIdentifier: string }
+  | { type: 'read_issue_started'; issueId: string }
+  | { type: 'read_issue_ok'; issueId: string; resolvedIdentifier: string }
   | {
-      type: "read_issue_failed";
+      type: 'read_issue_failed';
       issueId: string;
       kind: LinearAdapterErrorKind;
       status: number | null;
     }
-  | { type: "post_comment_started"; issueId: string }
-  | { type: "post_comment_ok"; issueId: string; commentId: string }
+  | { type: 'post_comment_started'; issueId: string }
+  | { type: 'post_comment_ok'; issueId: string; commentId: string }
   | {
-      type: "post_comment_failed";
+      type: 'post_comment_failed';
       issueId: string;
       kind: LinearAdapterErrorKind;
       status: number | null;
     };
 
-const DEFAULT_ENDPOINT = "https://api.linear.app/graphql";
+const DEFAULT_ENDPOINT = 'https://api.linear.app/graphql';
 
 /**
  * Minimal env loader. The production ICP should swap this for the typed
@@ -158,11 +149,11 @@ const DEFAULT_ENDPOINT = "https://api.linear.app/graphql";
 export function loadLinearCredentialFromEnv(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): string {
-  const v = env["LINEAR_API_KEY"];
-  if (typeof v !== "string" || v.length === 0) {
+  const v = env['LINEAR_API_KEY'];
+  if (typeof v !== 'string' || v.length === 0) {
     throw new LinearAdapterError(
-      "missing_credentials",
-      "LINEAR_API_KEY is not set. Populate your local `.env` from `.env.example` (ADR-0017 Rule 1) before dispatching against the live Linear API.",
+      'missing_credentials',
+      'LINEAR_API_KEY is not set. Populate your local `.env` from `.env.example` (ADR-0017 Rule 1) before dispatching against the live Linear API.',
     );
   }
   return v;
@@ -174,20 +165,19 @@ export function loadLinearCredentialFromEnv(
  * re-exposed through the public surface.
  */
 export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
-  if (typeof opts.apiKey !== "string" || opts.apiKey.length === 0) {
+  if (typeof opts.apiKey !== 'string' || opts.apiKey.length === 0) {
     throw new LinearAdapterError(
-      "missing_credentials",
-      "Linear adapter was constructed without an API key. Load it through the typed ICP config module (ADR-0017 Rule 1); do not read process.env from a skill.",
+      'missing_credentials',
+      'Linear adapter was constructed without an API key. Load it through the typed ICP config module (ADR-0017 Rule 1); do not read process.env from a skill.',
     );
   }
   const apiKey = opts.apiKey;
   const endpoint = opts.endpoint ?? DEFAULT_ENDPOINT;
-  const doFetch: FetchLike =
-    opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
-  if (typeof doFetch !== "function") {
+  const doFetch: FetchLike = opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
+  if (typeof doFetch !== 'function') {
     throw new LinearAdapterError(
-      "network_error",
-      "No fetch implementation available. Run under Node 20+ or inject `fetch` via LinearAdapterOptions.",
+      'network_error',
+      'No fetch implementation available. Run under Node 20+ or inject `fetch` via LinearAdapterOptions.',
     );
   }
   const emit = (e: LinearAdapterEvent) => {
@@ -199,7 +189,7 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
   };
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     Authorization: apiKey,
   };
 
@@ -207,69 +197,89 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
     query: string,
     variables: Record<string, unknown>,
     issueIdForEvent: string,
-    opKind: "read" | "write",
+    opKind: 'read' | 'write',
   ): Promise<T> {
     let res: FetchLikeResponse;
     try {
       res = await doFetch(endpoint, {
-        method: "POST",
+        method: 'POST',
         headers,
         body: JSON.stringify({ query, variables }),
       });
     } catch (err) {
       const e = new LinearAdapterError(
-        "network_error",
+        'network_error',
         `Linear API request failed before reaching the server: ${stripSecret(
           sanitiseErrorMessage(err),
           apiKey,
         )}`,
       );
       emit(
-        opKind === "read"
-          ? { type: "read_issue_failed", issueId: issueIdForEvent, kind: e.kind, status: null }
-          : { type: "post_comment_failed", issueId: issueIdForEvent, kind: e.kind, status: null },
+        opKind === 'read'
+          ? { type: 'read_issue_failed', issueId: issueIdForEvent, kind: e.kind, status: null }
+          : { type: 'post_comment_failed', issueId: issueIdForEvent, kind: e.kind, status: null },
       );
       throw e;
     }
 
     if (res.status === 401 || res.status === 403) {
       const e = new LinearAdapterError(
-        "unauthorized",
+        'unauthorized',
         `Linear API rejected the credential (HTTP ${res.status}). Rotate LINEAR_API_KEY per ADR-0017 Rule 5 and confirm the LAT team scope.`,
         res.status,
       );
       emit(
-        opKind === "read"
-          ? { type: "read_issue_failed", issueId: issueIdForEvent, kind: e.kind, status: res.status }
-          : { type: "post_comment_failed", issueId: issueIdForEvent, kind: e.kind, status: res.status },
+        opKind === 'read'
+          ? {
+              type: 'read_issue_failed',
+              issueId: issueIdForEvent,
+              kind: e.kind,
+              status: res.status,
+            }
+          : {
+              type: 'post_comment_failed',
+              issueId: issueIdForEvent,
+              kind: e.kind,
+              status: res.status,
+            },
       );
       throw e;
     }
 
     if (res.status === 429) {
       const e = new LinearAdapterError(
-        "rate_limited",
-        "Linear API rate-limited this client (HTTP 429). Retry later; dispatch is surfaced as needs_human until the window clears.",
+        'rate_limited',
+        'Linear API rate-limited this client (HTTP 429). Retry later; dispatch is surfaced as needs_human until the window clears.',
         429,
       );
       emit(
-        opKind === "read"
-          ? { type: "read_issue_failed", issueId: issueIdForEvent, kind: e.kind, status: 429 }
-          : { type: "post_comment_failed", issueId: issueIdForEvent, kind: e.kind, status: 429 },
+        opKind === 'read'
+          ? { type: 'read_issue_failed', issueId: issueIdForEvent, kind: e.kind, status: 429 }
+          : { type: 'post_comment_failed', issueId: issueIdForEvent, kind: e.kind, status: 429 },
       );
       throw e;
     }
 
     if (!res.ok) {
       const e = new LinearAdapterError(
-        "api_error",
+        'api_error',
         `Linear API returned HTTP ${res.status}.`,
         res.status,
       );
       emit(
-        opKind === "read"
-          ? { type: "read_issue_failed", issueId: issueIdForEvent, kind: e.kind, status: res.status }
-          : { type: "post_comment_failed", issueId: issueIdForEvent, kind: e.kind, status: res.status },
+        opKind === 'read'
+          ? {
+              type: 'read_issue_failed',
+              issueId: issueIdForEvent,
+              kind: e.kind,
+              status: res.status,
+            }
+          : {
+              type: 'post_comment_failed',
+              issueId: issueIdForEvent,
+              kind: e.kind,
+              status: res.status,
+            },
       );
       throw e;
     }
@@ -279,11 +289,8 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
       body = await res.json();
     } catch (err) {
       throw new LinearAdapterError(
-        "api_error",
-        `Linear API returned unparseable JSON: ${stripSecret(
-          sanitiseErrorMessage(err),
-          apiKey,
-        )}`,
+        'api_error',
+        `Linear API returned unparseable JSON: ${stripSecret(sanitiseErrorMessage(err), apiKey)}`,
       );
     }
 
@@ -293,20 +300,12 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
     };
     if (bodyObj.errors && bodyObj.errors.length > 0) {
       const messages = bodyObj.errors
-        .map((e) =>
-          typeof e.message === "string" ? e.message : "unknown GraphQL error",
-        )
+        .map((e) => (typeof e.message === 'string' ? e.message : 'unknown GraphQL error'))
         .map((m) => stripSecret(m, apiKey));
-      throw new LinearAdapterError(
-        "api_error",
-        `Linear GraphQL errors: ${messages.join("; ")}`,
-      );
+      throw new LinearAdapterError('api_error', `Linear GraphQL errors: ${messages.join('; ')}`);
     }
     if (!bodyObj.data) {
-      throw new LinearAdapterError(
-        "api_error",
-        "Linear GraphQL response had no data field.",
-      );
+      throw new LinearAdapterError('api_error', 'Linear GraphQL response had no data field.');
     }
     return bodyObj.data;
   }
@@ -316,27 +315,27 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
       const normalised = id.trim();
       if (!normalised) {
         throw new LinearAdapterError(
-          "malformed_ticket",
-          "readIssue called with an empty identifier.",
+          'malformed_ticket',
+          'readIssue called with an empty identifier.',
         );
       }
-      emit({ type: "read_issue_started", issueId: normalised });
+      emit({ type: 'read_issue_started', issueId: normalised });
 
       const data = await graphql<{ issue: LinearRawIssue | null }>(
         READ_ISSUE_QUERY,
         { id: normalised },
         normalised,
-        "read",
+        'read',
       );
 
       const raw = data.issue;
       if (!raw) {
         const e = new LinearAdapterError(
-          "issue_not_found",
+          'issue_not_found',
           `Linear has no issue matching ${normalised}. Verify the identifier (LAT-NN) and that the LAT team key is active.`,
         );
         emit({
-          type: "read_issue_failed",
+          type: 'read_issue_failed',
           issueId: normalised,
           kind: e.kind,
           status: null,
@@ -346,7 +345,7 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
 
       const snapshot = buildSnapshotFromRaw(raw);
       emit({
-        type: "read_issue_ok",
+        type: 'read_issue_ok',
         issueId: normalised,
         resolvedIdentifier: snapshot.id,
       });
@@ -357,17 +356,17 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
       const normalised = issueId.trim();
       if (!normalised) {
         throw new LinearAdapterError(
-          "malformed_ticket",
-          "postComment called with an empty identifier.",
+          'malformed_ticket',
+          'postComment called with an empty identifier.',
         );
       }
-      if (typeof body !== "string" || body.length === 0) {
+      if (typeof body !== 'string' || body.length === 0) {
         throw new LinearAdapterError(
-          "malformed_ticket",
-          "postComment called with an empty body; the ADR-0003 write-back must be non-empty.",
+          'malformed_ticket',
+          'postComment called with an empty body; the ADR-0003 write-back must be non-empty.',
         );
       }
-      emit({ type: "post_comment_started", issueId: normalised });
+      emit({ type: 'post_comment_started', issueId: normalised });
 
       // Resolve identifier → UUID first. Linear's commentCreate requires the
       // issue UUID, not the identifier.
@@ -375,15 +374,15 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
         READ_ISSUE_ID_ONLY_QUERY,
         { id: normalised },
         normalised,
-        "read",
+        'read',
       );
       if (!lookup.issue) {
         const e = new LinearAdapterError(
-          "issue_not_found",
+          'issue_not_found',
           `Linear has no issue matching ${normalised}; cannot post the write-back.`,
         );
         emit({
-          type: "post_comment_failed",
+          type: 'post_comment_failed',
           issueId: normalised,
           kind: e.kind,
           status: null,
@@ -396,21 +395,16 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
           success: boolean;
           comment: { id: string; url: string | null } | null;
         };
-      }>(
-        POST_COMMENT_MUTATION,
-        { issueId: lookup.issue.id, body },
-        normalised,
-        "write",
-      );
+      }>(POST_COMMENT_MUTATION, { issueId: lookup.issue.id, body }, normalised, 'write');
 
       const comment = created.commentCreate?.comment;
       if (!created.commentCreate?.success || !comment) {
         const e = new LinearAdapterError(
-          "api_error",
+          'api_error',
           `Linear refused commentCreate for ${normalised}; no comment was persisted.`,
         );
         emit({
-          type: "post_comment_failed",
+          type: 'post_comment_failed',
           issueId: normalised,
           kind: e.kind,
           status: null,
@@ -419,7 +413,7 @@ export function createLinearAdapter(opts: LinearAdapterOptions): LinearAdapter {
       }
 
       emit({
-        type: "post_comment_ok",
+        type: 'post_comment_ok',
         issueId: normalised,
         commentId: comment.id,
       });
@@ -522,7 +516,7 @@ interface LinearRawIssue {
 }
 
 export function buildSnapshotFromRaw(raw: LinearRawIssue): LinearIssueSnapshot {
-  const description = typeof raw.description === "string" ? raw.description : "";
+  const description = typeof raw.description === 'string' ? raw.description : '';
   const parsed = parseDispatchFields(description);
 
   // Blocker statuses are surfaced opportunistically from the parent issue
@@ -532,13 +526,13 @@ export function buildSnapshotFromRaw(raw: LinearRawIssue): LinearIssueSnapshot {
   // evaluator treats that as blocked.
   const blockerStatuses: Record<string, string> = {};
   if (raw.parent?.identifier) {
-    const parentStatus = raw.parent.state?.name ?? "unknown";
+    const parentStatus = raw.parent.state?.name ?? 'unknown';
     blockerStatuses[raw.parent.identifier] = parentStatus;
   }
 
   return {
     id: raw.identifier,
-    status: raw.state?.name ?? "unknown",
+    status: raw.state?.name ?? 'unknown',
     sequencing: {
       hard_blockers: parsed.hard_blockers,
       recommended_predecessors: parsed.recommended_predecessors,
@@ -553,7 +547,7 @@ export function buildSnapshotFromRaw(raw: LinearRawIssue): LinearIssueSnapshot {
 interface ParsedDispatchFields {
   hard_blockers: ReadonlyArray<string>;
   recommended_predecessors: ReadonlyArray<string>;
-  dispatch_status: "ready" | "caution" | "blocked" | "unknown";
+  dispatch_status: 'ready' | 'caution' | 'blocked' | 'unknown';
   dispatch_note: string;
   budget_cap_usd: number | null;
 }
@@ -571,38 +565,35 @@ interface ParsedDispatchFields {
 export function parseDispatchFields(description: string): ParsedDispatchFields {
   const lines = description.split(/\r?\n/);
   let inSequencing = false;
-  let sequencingText = "";
+  let sequencingText = '';
 
   for (const line of lines) {
     const headingMatch = /^#{1,6}\s+(.+)$/.exec(line.trim());
     if (headingMatch) {
-      const title = (headingMatch[1] ?? "").trim().toLowerCase();
-      inSequencing = title === "sequencing";
+      const title = (headingMatch[1] ?? '').trim().toLowerCase();
+      inSequencing = title === 'sequencing';
       continue;
     }
     if (inSequencing) {
-      sequencingText += line + "\n";
+      sequencingText += line + '\n';
     }
   }
 
-  const seqHardBlockers = extractIdList(sequencingText, "hard blockers");
-  const seqRecommended = extractIdList(
-    sequencingText,
-    "recommended predecessors",
-  );
-  const dispatchStatusRaw = extractLine(sequencingText, "dispatch status") ?? "";
-  const dispatchNote = (extractLine(sequencingText, "dispatch note") ?? "").trim();
+  const seqHardBlockers = extractIdList(sequencingText, 'hard blockers');
+  const seqRecommended = extractIdList(sequencingText, 'recommended predecessors');
+  const dispatchStatusRaw = extractLine(sequencingText, 'dispatch status') ?? '';
+  const dispatchNote = (extractLine(sequencingText, 'dispatch note') ?? '').trim();
 
-  let dispatchStatus: ParsedDispatchFields["dispatch_status"];
+  let dispatchStatus: ParsedDispatchFields['dispatch_status'];
   const ds = dispatchStatusRaw.trim().toLowerCase();
-  if (ds === "ready" || ds === "caution" || ds === "blocked") {
+  if (ds === 'ready' || ds === 'caution' || ds === 'blocked') {
     dispatchStatus = ds;
   } else if (sequencingText.trim().length === 0) {
-    dispatchStatus = "unknown";
+    dispatchStatus = 'unknown';
   } else if (ds.length === 0) {
-    dispatchStatus = seqHardBlockers.length > 0 ? "blocked" : "ready";
+    dispatchStatus = seqHardBlockers.length > 0 ? 'blocked' : 'ready';
   } else {
-    dispatchStatus = "unknown";
+    dispatchStatus = 'unknown';
   }
 
   const budgetCap = extractBudgetCap(description);
@@ -618,10 +609,7 @@ export function parseDispatchFields(description: string): ParsedDispatchFields {
 
 const ID_PATTERN = /\b[A-Z]{2,6}-\d+\b/g;
 
-function extractIdList(
-  block: string,
-  fieldName: string,
-): ReadonlyArray<string> {
+function extractIdList(block: string, fieldName: string): ReadonlyArray<string> {
   const line = extractLine(block, fieldName);
   if (!line) return [];
   const ids = line.match(ID_PATTERN) ?? [];
@@ -639,17 +627,16 @@ function extractIdList(
 function extractLine(block: string, fieldName: string): string | null {
   const pattern = new RegExp(
     `(?:^|\\n)[\\s\\-\\*]*${escapeRegExp(fieldName)}\\s*[:\\-]\\s*(.+?)(?=\\n|$)`,
-    "i",
+    'i',
   );
   const match = pattern.exec(block);
   if (!match) return null;
-  return (match[1] ?? "").trim();
+  return (match[1] ?? '').trim();
 }
 
 function extractBudgetCap(description: string): number | null {
   // Accepts: "Budget cap: $500", "Budget: 200 USD", "Budget cap (USD): 150.5"
-  const pattern =
-    /budget(?:\s*cap)?(?:\s*\(usd\))?\s*[:\-]\s*\$?\s*([0-9]+(?:\.[0-9]+)?)/i;
+  const pattern = /budget(?:\s*cap)?(?:\s*\(usd\))?\s*[:\-]\s*\$?\s*([0-9]+(?:\.[0-9]+)?)/i;
   const match = pattern.exec(description);
   if (!match) return null;
   const n = Number(match[1]);
@@ -658,7 +645,7 @@ function extractBudgetCap(description: string): number | null {
 }
 
 function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /* ------------------------------------------------------------------ */
@@ -667,13 +654,13 @@ function escapeRegExp(s: string): string {
 
 function sanitiseErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
-  if (typeof err === "string") return err;
-  return "unknown error";
+  if (typeof err === 'string') return err;
+  return 'unknown error';
 }
 
 function stripSecret(message: string, apiKey: string): string {
   if (!apiKey) return message;
-  let out = message.split(apiKey).join("<redacted>");
-  out = out.replace(/lin_api_[A-Za-z0-9_\-]+/g, "<redacted>");
+  let out = message.split(apiKey).join('<redacted>');
+  out = out.replace(/lin_api_[A-Za-z0-9_\-]+/g, '<redacted>');
   return out;
 }

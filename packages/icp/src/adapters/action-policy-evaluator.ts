@@ -12,14 +12,14 @@
  * Each decision carries a machine-readable `reason` and, when the verdict is
  * `propose`, the human approver's identity (the `approver` field).
  */
-import type { AgentType, AutonomyLevel } from "../runtime/contract.js";
+import type { AgentType, AutonomyLevel } from '../runtime/contract.js';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 
 /** Verdict: how the ICP should act on this decision. */
-export type PolicyDecision = "approve" | "propose" | "stop";
+export type PolicyDecision = 'approve' | 'propose' | 'stop';
 
 /** Result of evaluating an action against the policy matrix. */
 export interface ActionPolicyResult {
@@ -77,10 +77,10 @@ interface ActionPolicyRule {
 /* ------------------------------------------------------------------ */
 
 const AUTONOMY_LEVEL_RANK: Record<string, number> = {
-  "L1-read-only": 1,
-  "L2-propose": 2,
-  "L3-with-approval": 3,
-  "L4-autonomous": 4,
+  'L1-read-only': 1,
+  'L2-propose': 2,
+  'L3-with-approval': 3,
+  'L4-autonomous': 4,
 };
 
 function autonomyRank(level: string | undefined): number {
@@ -98,302 +98,314 @@ function autonomyRank(level: string | undefined): number {
  */
 const ACTION_RULES: Record<string, ActionPolicyRule> = {
   // --- Linear ---
-  "linear:create_issue": {
-    category: "approve",
+  'linear:create_issue': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Create Linear issue (P-Direct, L2)",
+    notes: 'approval-gates.md § Linear — Create Linear issue (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:update_description": {
-    category: "approve",
+  'linear:update_description': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Update Linear issue description (P-Direct, L2)",
+    notes: 'approval-gates.md § Linear — Update Linear issue description (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:add_comment": {
-    category: "approve",
+  'linear:add_comment': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Add Linear comment / agent write-back (P-Direct, L2)",
+    notes: 'approval-gates.md § Linear — Add Linear comment / agent write-back (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:create_project": {
-    category: "propose",
-    approver: "Ben",
-    notes: "approval-gates.md § Linear — Create Linear project (P-Propose, L2 → human)",
+  'linear:create_project': {
+    category: 'propose',
+    approver: 'Ben',
+    notes: 'approval-gates.md § Linear — Create Linear project (P-Propose, L2 → human)',
     minAutonomyLevel: 2,
   },
-  "linear:read_sequencing": {
-    category: "approve",
+  'linear:read_sequencing': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Read Sequencing block for humans / triage (P-Direct, L1)",
+    notes: 'approval-gates.md § Linear — Read Sequencing block for humans / triage (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
-  "linear:read_sequencing_dispatch": {
-    category: "approve",
+  'linear:read_sequencing_dispatch': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Read Sequencing block for dispatch decision (ICP-Routed, L3)",
+    notes:
+      'approval-gates.md § Linear — Read Sequencing block for dispatch decision (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "linear:create_relation": {
-    category: "approve",
+  'linear:create_relation': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Create native Linear issue relation (ICP-Routed, L2)",
+    notes: 'approval-gates.md § Linear — Create native Linear issue relation (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:read_relations": {
-    category: "approve",
+  'linear:read_relations': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Read native Linear issue relations for dispatch (ICP-Routed, L3)",
+    notes:
+      'approval-gates.md § Linear — Read native Linear issue relations for dispatch (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "linear:delete_relation": {
-    category: "approve",
+  'linear:delete_relation': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Delete native Linear issue relation (ICP-Routed, L2)",
+    notes: 'approval-gates.md § Linear — Delete native Linear issue relation (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:add_labels": {
-    category: "approve",
+  'linear:add_labels': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Add / remove labels (state classification only) (P-Direct, L2)",
+    notes:
+      'approval-gates.md § Linear — Add / remove labels (state classification only) (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "linear:select_next_issue": {
-    category: "approve",
+  'linear:select_next_issue': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Linear — Select next dispatchable LAT issue (ICP-Routed, L3)",
+    notes: 'approval-gates.md § Linear — Select next dispatchable LAT issue (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "linear:reassign": {
-    category: "propose",
-    approver: "Ben",
-    notes: "approval-gates.md § Linear — Reassign or change owner (P-Propose, L2 → human)",
+  'linear:reassign': {
+    category: 'propose',
+    approver: 'Ben',
+    notes: 'approval-gates.md § Linear — Reassign or change owner (P-Propose, L2 → human)',
     minAutonomyLevel: 2,
   },
-  "linear:delete_issue": {
-    category: "stop",
+  'linear:delete_issue': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Linear — Delete a Linear issue (Stop, always human)",
+    notes: 'approval-gates.md § Linear — Delete a Linear issue (Stop, always human)',
     minAutonomyLevel: null,
   },
 
   // --- GitHub / code / PRs ---
-  "github:clone": {
-    category: "approve",
+  'github:clone': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Clone a repo, read code (P-Direct, L0)",
+    notes: 'approval-gates.md § GitHub — Clone a repo, read code (P-Direct, L0)',
     minAutonomyLevel: 0,
   },
-  "github:draft_pr": {
-    category: "approve",
+  'github:draft_pr': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Draft a PR body or diff (no push) (P-Direct, L1)",
+    notes: 'approval-gates.md § GitHub — Draft a PR body or diff (no push) (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
-  "github:open_pr": {
-    category: "approve",
+  'github:open_pr': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Open a PR (ICP-Routed, L2)",
+    notes: 'approval-gates.md § GitHub — Open a PR (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "github:add_pr_comments": {
-    category: "approve",
+  'github:add_pr_comments': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Add PR comments (P-Direct, L2)",
+    notes: 'approval-gates.md § GitHub — Add PR comments (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "github:request_review": {
-    category: "approve",
+  'github:request_review': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Request review (ICP-Routed, L2)",
+    notes: 'approval-gates.md § GitHub — Request review (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "github:approve_pr": {
-    category: "stop",
+  'github:approve_pr': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § GitHub — Approve a PR (Stop, agents never authorised)",
+    notes: 'approval-gates.md § GitHub — Approve a PR (Stop, agents never authorised)',
     minAutonomyLevel: null,
   },
-  "github:merge_pr": {
-    category: "stop",
+  'github:merge_pr': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § GitHub — Merge a PR (Stop, human only during pilot)",
+    notes: 'approval-gates.md § GitHub — Merge a PR (Stop, human only during pilot)',
     minAutonomyLevel: null,
   },
-  "github:force_push": {
-    category: "stop",
+  'github:force_push': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § GitHub — Force-push / rewrite shared history (Stop)",
+    notes: 'approval-gates.md § GitHub — Force-push / rewrite shared history (Stop)',
     minAutonomyLevel: null,
   },
-  "github:delete_branch": {
-    category: "stop",
+  'github:delete_branch': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § GitHub — Delete a branch with unmerged work (Stop)",
+    notes: 'approval-gates.md § GitHub — Delete a branch with unmerged work (Stop)',
     minAutonomyLevel: null,
   },
-  "github:deploy": {
-    category: "stop",
+  'github:deploy': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § GitHub — Deploy (Stop, human only during pilot)",
+    notes: 'approval-gates.md § GitHub — Deploy (Stop, human only during pilot)',
     minAutonomyLevel: null,
   },
 
   // --- Agent runs ---
-  "agent:start_coding": {
-    category: "approve",
+  'agent:start_coding': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Start coding agent (ICP-Routed, L3)",
+    notes: 'approval-gates.md § Agent runs — Start coding agent (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "agent:start_qa": {
-    category: "approve",
+  'agent:start_qa': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Start QA / review agent (ICP-Routed, L3)",
+    notes: 'approval-gates.md § Agent runs — Start QA / review agent (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "agent:start_review": {
-    category: "approve",
+  'agent:start_review': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Start QA / review agent (ICP-Routed, L3)",
+    notes: 'approval-gates.md § Agent runs — Start QA / review agent (ICP-Routed, L3)',
     minAutonomyLevel: 3,
   },
-  "agent:run_evaluation": {
-    category: "approve",
+  'agent:run_evaluation': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Run self-contained evaluation (P-Direct, L1)",
+    notes: 'approval-gates.md § Agent runs — Run self-contained evaluation (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
-  "agent:record_report": {
-    category: "approve",
+  'agent:record_report': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Record an agent run report (ICP-Routed, L2)",
+    notes: 'approval-gates.md § Agent runs — Record an agent run report (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "agent:write_telemetry": {
-    category: "approve",
+  'agent:write_telemetry': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Write high-fidelity telemetry (ICP-Routed, L2)",
+    notes: 'approval-gates.md § Agent runs — Write high-fidelity telemetry (ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "agent:resume_halted": {
-    category: "stop",
+  'agent:resume_halted': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Resume / re-dispatch halted ticket (Stop, requires unblock comment)",
+    notes:
+      'approval-gates.md § Agent runs — Resume / re-dispatch halted ticket (Stop, requires unblock comment)',
     minAutonomyLevel: null,
   },
 
   // --- Docs / ADRs / templates ---
-  "docs:draft_adr": {
-    category: "approve",
+  'docs:draft_adr': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Docs — Draft an ADR, PRD, process doc, or template change (P-Direct, L1)",
+    notes:
+      'approval-gates.md § Docs — Draft an ADR, PRD, process doc, or template change (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
-  "docs:open_pr": {
-    category: "propose",
-    approver: "Ben",
-    notes: "approval-gates.md § Docs — Open a PR updating docs / ADRs / templates (P-Propose → ICP-Routed, L2)",
+  'docs:open_pr': {
+    category: 'propose',
+    approver: 'Ben',
+    notes:
+      'approval-gates.md § Docs — Open a PR updating docs / ADRs / templates (P-Propose → ICP-Routed, L2)',
     minAutonomyLevel: 2,
   },
-  "docs:merge_pr": {
-    category: "stop",
+  'docs:merge_pr': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Docs — Merge a docs / ADR / template PR (Stop, human only)",
+    notes: 'approval-gates.md § Docs — Merge a docs / ADR / template PR (Stop, human only)',
     minAutonomyLevel: null,
   },
-  "docs:change_gates": {
-    category: "stop",
+  'docs:change_gates': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Docs — Change approval gates or autonomy rules (Stop, requires ADR)",
+    notes:
+      'approval-gates.md § Docs — Change approval gates or autonomy rules (Stop, requires ADR)',
     minAutonomyLevel: null,
   },
-  "docs:raise_autonomy": {
-    category: "stop",
+  'docs:raise_autonomy': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Docs — Raise autonomy level beyond pilot default (Stop)",
+    notes: 'approval-gates.md § Docs — Raise autonomy level beyond pilot default (Stop)',
     minAutonomyLevel: null,
   },
 
   // --- Communication ---
-  "comm:respond_thread": {
-    category: "approve",
+  'comm:respond_thread': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Communication — Respond inside the Perplexity thread (P-Direct, L0)",
+    notes:
+      'approval-gates.md § Communication — Respond inside the Perplexity thread (P-Direct, L0)',
     minAutonomyLevel: 0,
   },
-  "comm:post_slack": {
-    category: "stop",
+  'comm:post_slack': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Communication — Post to Slack, email, or any external channel (Stop)",
+    notes:
+      'approval-gates.md § Communication — Post to Slack, email, or any external channel (Stop)',
     minAutonomyLevel: null,
   },
-  "comm:open_external_issue": {
-    category: "stop",
+  'comm:open_external_issue': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Communication — Open an issue on an external GitHub repo (Stop)",
+    notes: 'approval-gates.md § Communication — Open an issue on an external GitHub repo (Stop)',
     minAutonomyLevel: null,
   },
-  "comm:publish_public": {
-    category: "stop",
+  'comm:publish_public': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Communication — Publish to a public surface (Stop, always human)",
+    notes: 'approval-gates.md § Communication — Publish to a public surface (Stop, always human)',
     minAutonomyLevel: null,
   },
 
   // --- Cost and environment ---
-  "cost:read_quotas": {
-    category: "approve",
+  'cost:read_quotas': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Cost — Read connector status / quotas (P-Direct, L0)",
+    notes: 'approval-gates.md § Cost — Read connector status / quotas (P-Direct, L0)',
     minAutonomyLevel: 0,
   },
-  "cost:spend_normal": {
-    category: "approve",
+  'cost:spend_normal': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Cost — Spend inside budget cap, normal band (P-Direct, L2)",
+    notes: 'approval-gates.md § Cost — Spend inside budget cap, normal band (P-Direct, L2)',
     minAutonomyLevel: 2,
   },
-  "cost:spend_elevated": {
-    category: "approve",
+  'cost:spend_elevated': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Cost — Spend entering elevated band (P-Direct, L2, flag and continue)",
+    notes:
+      'approval-gates.md § Cost — Spend entering elevated band (P-Direct, L2, flag and continue)',
     minAutonomyLevel: 2,
   },
-  "cost:spend_runaway": {
-    category: "stop",
+  'cost:spend_runaway': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Cost — Any action crossing Budget cap (Stop, runaway-cost interrupt)",
+    notes:
+      'approval-gates.md § Cost — Any action crossing Budget cap (Stop, runaway-cost interrupt)',
     minAutonomyLevel: null,
   },
-  "cost:dispatch_no_budget": {
-    category: "stop",
+  'cost:dispatch_no_budget': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Cost — Dispatch a ticket without a numeric Budget cap (Stop)",
+    notes: 'approval-gates.md § Cost — Dispatch a ticket without a numeric Budget cap (Stop)',
     minAutonomyLevel: null,
   },
-  "cost:provision_infra": {
-    category: "stop",
+  'cost:provision_infra': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Cost — Provision new infrastructure / services (Stop, human only)",
+    notes: 'approval-gates.md § Cost — Provision new infrastructure / services (Stop, human only)',
     minAutonomyLevel: null,
   },
-  "cost:change_secrets": {
-    category: "stop",
+  'cost:change_secrets': {
+    category: 'stop',
     approver: null,
-    notes: "approval-gates.md § Cost — Change secrets, tokens, connector permissions (Stop, human only)",
+    notes:
+      'approval-gates.md § Cost — Change secrets, tokens, connector permissions (Stop, human only)',
     minAutonomyLevel: null,
   },
-  "file:write": {
-    category: "approve",
+  'file:write': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § GitHub — Draft a PR body or diff (no push) (P-Direct, L1)",
+    notes: 'approval-gates.md § GitHub — Draft a PR body or diff (no push) (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
-  "shell:run": {
-    category: "approve",
+  'shell:run': {
+    category: 'approve',
     approver: null,
-    notes: "approval-gates.md § Agent runs — Run a self-contained evaluation (P-Direct, L1)",
+    notes: 'approval-gates.md § Agent runs — Run a self-contained evaluation (P-Direct, L1)',
     minAutonomyLevel: 1,
   },
 };
@@ -437,9 +449,9 @@ export function evaluate(
   // Unknown action → propose with Ben as approver (safety-first).
   if (!rule) {
     return {
-      verdict: "propose",
+      verdict: 'propose',
       reason: `Action "${action}" is not in the policy matrix; defaulting to propose.`,
-      approver: "Ben",
+      approver: 'Ben',
     };
   }
 
@@ -448,9 +460,9 @@ export function evaluate(
     const agentRank = autonomyRank(autonomyLevel);
     if (agentRank < rule.minAutonomyLevel) {
       return {
-        verdict: "propose",
-        reason: `Agent autonomy level (${autonomyLevel ?? "none"}, rank ${agentRank}) is below the minimum required (${rule.minAutonomyLevel}) for "${action}". ${rule.notes}`,
-        approver: rule.approver ?? "Ben",
+        verdict: 'propose',
+        reason: `Agent autonomy level (${autonomyLevel ?? 'none'}, rank ${agentRank}) is below the minimum required (${rule.minAutonomyLevel}) for "${action}". ${rule.notes}`,
+        approver: rule.approver ?? 'Ben',
       };
     }
   }

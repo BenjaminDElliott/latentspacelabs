@@ -18,18 +18,14 @@
  * to the envelope lands (per ADR-0006's extensibility rule: additions are
  * non-breaking; renames/removals require an ADR).
  */
-export const RUN_REPORT_SCHEMA_VERSION = "1.0.0";
+export const RUN_REPORT_SCHEMA_VERSION = '1.0.0';
 
 /**
  * Autonomy notation per ADR-0008 (L0–L5). The pilot runtime operates between
  * L1 and L4; L0 is Perplexity-only "observe/draft" and L5 is the out-of-scope
  * autonomous-merge-and-deploy level.
  */
-export type AutonomyLevel =
-  | "L1-read-only"
-  | "L2-propose"
-  | "L3-with-approval"
-  | "L4-autonomous";
+export type AutonomyLevel = 'L1-read-only' | 'L2-propose' | 'L3-with-approval' | 'L4-autonomous';
 
 /**
  * SkillStatus is the **runner-facing** outcome of a single skill invocation.
@@ -39,15 +35,15 @@ export type AutonomyLevel =
  * Use `toRunStatus` to project onto the ADR-0006 run-report status enum.
  */
 export type SkillStatus =
-  | "ready"
-  | "succeeded"
-  | "caution"
-  | "failed"
-  | "blocked"
-  | "stopped"
-  | "needs_human";
+  | 'ready'
+  | 'succeeded'
+  | 'caution'
+  | 'failed'
+  | 'blocked'
+  | 'stopped'
+  | 'needs_human';
 
-export type PolicyVerdict = "ready" | "caution" | "blocked" | "stop";
+export type PolicyVerdict = 'ready' | 'caution' | 'blocked' | 'stop';
 
 /**
  * ADR-0006 canonical agent types. Keep in sync with
@@ -55,14 +51,7 @@ export type PolicyVerdict = "ready" | "caution" | "blocked" | "stop";
  * agent_type — retros are a process (ADR-0010), not a runnable agent. A retro
  * run is recorded under `pm` or `research` depending on who authored it.
  */
-export type AgentType =
-  | "coding"
-  | "qa"
-  | "review"
-  | "sre"
-  | "pm"
-  | "research"
-  | "observability";
+export type AgentType = 'coding' | 'qa' | 'review' | 'sre' | 'pm' | 'research' | 'observability';
 
 /**
  * ADR-0006 run-report status enum (the narrow lifecycle-facing enum written
@@ -71,12 +60,7 @@ export type AgentType =
  * boundary, so pre-execution verdicts like `ready`/`caution`/`blocked` are
  * projected onto `needs_human` or `failed` via `toRunStatus`.
  */
-export type RunReportStatus =
-  | "started"
-  | "succeeded"
-  | "failed"
-  | "cancelled"
-  | "needs_human";
+export type RunReportStatus = 'started' | 'succeeded' | 'failed' | 'cancelled' | 'needs_human';
 
 /**
  * ADR-0006 `triggered_by` surface. LAT-36 adds `hook` (Claude Code harness
@@ -85,14 +69,14 @@ export type RunReportStatus =
  * Linear/GitHub-originated surfaces. Additions are non-breaking per ADR-0006.
  */
 export type TriggeredBy =
-  | "user"
-  | "linear_status"
-  | "schedule"
-  | "webhook"
-  | "agent"
-  | "github_comment"
-  | "hook"
-  | "mcp";
+  | 'user'
+  | 'linear_status'
+  | 'schedule'
+  | 'webhook'
+  | 'agent'
+  | 'github_comment'
+  | 'hook'
+  | 'mcp';
 
 /**
  * Projects a SkillStatus onto the narrower RunReportStatus enum the run
@@ -103,19 +87,19 @@ export type TriggeredBy =
  */
 export function toRunStatus(s: SkillStatus): RunReportStatus {
   switch (s) {
-    case "succeeded":
-      return "succeeded";
-    case "failed":
-      return "failed";
-    case "needs_human":
-    case "blocked":
-    case "caution":
-    case "ready":
-      return "needs_human";
-    case "stopped":
-      return "cancelled";
+    case 'succeeded':
+      return 'succeeded';
+    case 'failed':
+      return 'failed';
+    case 'needs_human':
+    case 'blocked':
+    case 'caution':
+    case 'ready':
+      return 'needs_human';
+    case 'stopped':
+      return 'cancelled';
     default:
-      return "failed";
+      return 'failed';
   }
 }
 
@@ -172,7 +156,7 @@ export interface WriteBackComment {
 
 export interface SkillInputSpec {
   name: string;
-  type: "string" | "boolean";
+  type: 'string' | 'boolean';
   required: boolean;
 }
 
@@ -191,7 +175,7 @@ export interface EvidenceContract {
 }
 
 /** Valid cost-band values per ADR-0009. */
-export type CostBand = "normal" | "elevated" | "runaway_risk" | "unknown";
+export type CostBand = 'normal' | 'elevated' | 'runaway_risk' | 'unknown';
 
 /**
  * The runner calls `execute` with fully resolved tools. A skill file's
@@ -220,11 +204,11 @@ export interface SkillDefinition<
 }
 
 export type ToolName =
-  | "linear-adapter"
-  | "policy-evaluator"
-  | "agent-invocation-adapter"
-  | "run-recorder"
-  | "write-back-formatter";
+  | 'linear-adapter'
+  | 'policy-evaluator'
+  | 'agent-invocation-adapter'
+  | 'run-recorder'
+  | 'write-back-formatter';
 
 export interface SkillExecutionContext<
   Inputs extends Record<string, unknown> = Record<string, unknown>,
@@ -254,7 +238,7 @@ export interface LinearIssueSnapshot {
   sequencing: {
     hard_blockers: ReadonlyArray<string>;
     recommended_predecessors: ReadonlyArray<string>;
-    dispatch_status: "ready" | "caution" | "blocked" | "unknown";
+    dispatch_status: 'ready' | 'caution' | 'blocked' | 'unknown';
     dispatch_note: string;
   };
   blocker_statuses: Readonly<Record<string, string>>;
@@ -294,7 +278,7 @@ export interface PolicyEvaluator {
  * fields a provider actually needs are missing.
  */
 export interface AgentInvocationRequest {
-  agent_type: "coding";
+  agent_type: 'coding';
   linear_issue_id: string;
   autonomy_level: AutonomyLevel;
   approve: boolean;
@@ -335,7 +319,7 @@ export interface TicketInvocationContext {
 }
 
 export interface AgentInvocationResult {
-  exit_signal: "succeeded" | "failed" | "cancelled" | "needs_human";
+  exit_signal: 'succeeded' | 'failed' | 'cancelled' | 'needs_human';
   pr_url: string | null;
   pr_branch: string | null;
   commit_sha: string | null;

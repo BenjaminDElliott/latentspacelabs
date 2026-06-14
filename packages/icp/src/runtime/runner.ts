@@ -24,8 +24,8 @@ import type {
   ResolvedTools,
   SkillDefinition,
   SkillStatus,
-} from "./contract.js";
-import type { RegisteredSkill, SkillRegistry } from "./registry.js";
+} from './contract.js';
+import type { RegisteredSkill, SkillRegistry } from './registry.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySkillDefinition = SkillDefinition<any, { status: SkillStatus } & Record<string, unknown>>;
@@ -75,10 +75,10 @@ export interface RunResult {
  * Higher = more autonomous / more dangerous.
  */
 const AUTONOMY_RANK: Record<AutonomyLevel, number> = {
-  "L1-read-only": 1,
-  "L2-propose": 2,
-  "L3-with-approval": 3,
-  "L4-autonomous": 4,
+  'L1-read-only': 1,
+  'L2-propose': 2,
+  'L3-with-approval': 3,
+  'L4-autonomous': 4,
 };
 
 export class SkillRunner {
@@ -98,11 +98,11 @@ export class SkillRunner {
     const missing = this.requiredInputsMissing(def, invocation.inputs);
     if (missing.length > 0) {
       return {
-        status: "failed",
+        status: 'failed',
         skill: def.name,
         version: def.version,
         outputs: {},
-        reasons: [`missing required inputs: ${missing.join(", ")}`],
+        reasons: [`missing required inputs: ${missing.join(', ')}`],
       };
     }
 
@@ -114,14 +114,10 @@ export class SkillRunner {
       now: this.options.now ?? (() => new Date()),
     });
 
-    const evidenceError = this.enforceEvidenceContract(
-      def,
-      invocation,
-      outputs,
-    );
+    const evidenceError = this.enforceEvidenceContract(def, invocation, outputs);
     if (evidenceError) {
       return {
-        status: "failed",
+        status: 'failed',
         skill: def.name,
         version: def.version,
         outputs: outputs as Record<string, unknown>,
@@ -146,8 +142,7 @@ export class SkillRunner {
       skill: def.name,
       version: def.version,
       outputs: outputs as Record<string, unknown>,
-      reasons:
-        (outputs as { reasons?: ReadonlyArray<string> }).reasons ?? [],
+      reasons: (outputs as { reasons?: ReadonlyArray<string> }).reasons ?? [],
     };
   }
 
@@ -155,7 +150,7 @@ export class SkillRunner {
     const entry = this.options.registry.get(invocation.skill, invocation.version);
     if (!entry) {
       throw new Error(
-        `skill not found: ${invocation.skill}${invocation.version ? `@${invocation.version}` : ""}`,
+        `skill not found: ${invocation.skill}${invocation.version ? `@${invocation.version}` : ''}`,
       );
     }
     return entry;
@@ -273,7 +268,7 @@ export class SkillRunner {
     if (!exceedsCap && !def.requires_approval_flag) return null;
     if (invocation.approve) return null;
     return {
-      status: "needs_human",
+      status: 'needs_human',
       skill: def.name,
       version: def.version,
       outputs: {},
@@ -292,7 +287,7 @@ export class SkillRunner {
     for (const spec of def.inputs) {
       if (!spec.required) continue;
       const v = inputs[spec.name];
-      if (v === undefined || v === null || v === "") missing.push(spec.name);
+      if (v === undefined || v === null || v === '') missing.push(spec.name);
     }
     return missing;
   }
@@ -304,15 +299,12 @@ export class SkillRunner {
   ): string | null {
     // Evidence only required when the skill claims success on a non-dry-run.
     if (invocation.dry_run) return null;
-    if (outputs.status !== "succeeded") return null;
-    if (def.evidence.run_report && !outputs["run_id"]) {
-      return "evidence contract violated: skill claimed succeeded but produced no run_id";
+    if (outputs.status !== 'succeeded') return null;
+    if (def.evidence.run_report && !outputs['run_id']) {
+      return 'evidence contract violated: skill claimed succeeded but produced no run_id';
     }
-    if (
-      def.evidence.linear_write_back &&
-      !outputs["linear_comment_url"]
-    ) {
-      return "evidence contract violated: skill claimed succeeded but did not post a Linear write-back";
+    if (def.evidence.linear_write_back && !outputs['linear_comment_url']) {
+      return 'evidence contract violated: skill claimed succeeded but did not post a Linear write-back';
     }
     if (def.evidence.cost_band) {
       const costGap = this.checkCostBandEvidence(outputs);
@@ -340,17 +332,15 @@ export class SkillRunner {
    * contract violation and the runner refuses to let the run finish as
    * succeeded.
    */
-  private checkCostBandEvidence(
-    outputs: Record<string, unknown>,
-  ): string | null {
-    const band = outputs["cost_band"];
+  private checkCostBandEvidence(outputs: Record<string, unknown>): string | null {
+    const band = outputs['cost_band'];
     if (!isValidCostBand(band)) {
-      return "evidence contract violated: skill claimed succeeded on a side-effecting run but produced no cost_band (ADR-0009 / LAT-66)";
+      return 'evidence contract violated: skill claimed succeeded on a side-effecting run but produced no cost_band (ADR-0009 / LAT-66)';
     }
-    if (band === "unknown") {
-      const reason = outputs["cost_band_unavailable_reason"];
-      if (typeof reason !== "string" || reason.trim().length === 0) {
-        return "evidence contract violated: cost_band=\"unknown\" requires a non-empty cost_band_unavailable_reason (ADR-0009 / LAT-66)";
+    if (band === 'unknown') {
+      const reason = outputs['cost_band_unavailable_reason'];
+      if (typeof reason !== 'string' || reason.trim().length === 0) {
+        return 'evidence contract violated: cost_band="unknown" requires a non-empty cost_band_unavailable_reason (ADR-0009 / LAT-66)';
       }
     }
     return null;
@@ -358,10 +348,5 @@ export class SkillRunner {
 }
 
 function isValidCostBand(v: unknown): v is CostBand {
-  return (
-    v === "normal" ||
-    v === "elevated" ||
-    v === "runaway_risk" ||
-    v === "unknown"
-  );
+  return v === 'normal' || v === 'elevated' || v === 'runaway_risk' || v === 'unknown';
 }

@@ -27,18 +27,13 @@
  * deterministically. CI never makes a real network call.
  */
 
-import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { spawn, type ChildProcess } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-import type {
-  AdapterRequest,
-  AdapterRunResult,
-  CheckResult,
-  RuntimeAdapter,
-} from "./types.js";
-import { MissingConfigError } from "./types.js";
+import type { AdapterRequest, AdapterRunResult, CheckResult, RuntimeAdapter } from './types.js';
+import { MissingConfigError } from './types.js';
 
 /**
  * Env names this adapter understands. Listed here so they appear in one
@@ -108,10 +103,10 @@ export const defaultRunPodFetcher: RunPodFetcher = async ({ podId, apiKey, signa
   let response: Response;
   try {
     const init: RequestInit = {
-      method: "GET",
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
+        Accept: 'application/json',
       },
     };
     if (signal !== undefined) init.signal = signal;
@@ -127,9 +122,12 @@ export const defaultRunPodFetcher: RunPodFetcher = async ({ podId, apiKey, signa
     throw new Error(`RunPod metadata request returned HTTP ${response.status}`);
   }
   const body = (await response.json()) as Record<string, unknown>;
-  const desiredStatus = typeof body["desiredStatus"] === "string" ? (body["desiredStatus"] as string) : "UNKNOWN";
-  const gpuTypeId = typeof body["gpuTypeId"] === "string" ? (body["gpuTypeId"] as string) : undefined;
-  const costPerHr = typeof body["costPerHr"] === "number" ? (body["costPerHr"] as number) : undefined;
+  const desiredStatus =
+    typeof body['desiredStatus'] === 'string' ? (body['desiredStatus'] as string) : 'UNKNOWN';
+  const gpuTypeId =
+    typeof body['gpuTypeId'] === 'string' ? (body['gpuTypeId'] as string) : undefined;
+  const costPerHr =
+    typeof body['costPerHr'] === 'number' ? (body['costPerHr'] as number) : undefined;
   return { desiredStatus, gpuTypeId, costPerHr };
 };
 
@@ -161,21 +159,21 @@ export type ProcessRunner = (opts: ProcessSpawnOptions) => Promise<ProcessResult
 export const defaultProcessRunner: ProcessRunner = (opts) => {
   return new Promise<ProcessResult>((resolve) => {
     const started = Date.now();
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
     let timedOut = false;
     let child: ChildProcess;
     try {
       child = spawn(opts.bin, [...opts.args], {
         cwd: opts.cwd,
         env: opts.env,
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: ['ignore', 'pipe', 'pipe'],
       });
     } catch (err) {
       resolve({
         exitCode: null,
         signal: null,
-        stdout: "",
+        stdout: '',
         stderr: err instanceof Error ? err.message : String(err),
         timedOut: false,
         durationMs: Date.now() - started,
@@ -183,28 +181,31 @@ export const defaultProcessRunner: ProcessRunner = (opts) => {
       return;
     }
     const MAX_BYTES = 1_000_000; // 1 MiB cap per stream; opencode is verbose.
-    child.stdout?.on("data", (buf: Buffer) => {
-      if (stdout.length < MAX_BYTES) stdout += buf.toString("utf8");
+    child.stdout?.on('data', (buf: Buffer) => {
+      if (stdout.length < MAX_BYTES) stdout += buf.toString('utf8');
     });
-    child.stderr?.on("data", (buf: Buffer) => {
-      if (stderr.length < MAX_BYTES) stderr += buf.toString("utf8");
+    child.stderr?.on('data', (buf: Buffer) => {
+      if (stderr.length < MAX_BYTES) stderr += buf.toString('utf8');
     });
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGKILL");
+      child.kill('SIGKILL');
     }, opts.timeoutMs);
-    child.on("error", (err) => {
+    child.on('error', (err) => {
       clearTimeout(timer);
       resolve({
         exitCode: null,
         signal: null,
         stdout,
-        stderr: stderr + (stderr.length > 0 ? "\n" : "") + (err instanceof Error ? err.message : String(err)),
+        stderr:
+          stderr +
+          (stderr.length > 0 ? '\n' : '') +
+          (err instanceof Error ? err.message : String(err)),
         timedOut,
         durationMs: Date.now() - started,
       });
     });
-    child.on("close", (code, signal) => {
+    child.on('close', (code, signal) => {
       clearTimeout(timer);
       resolve({
         exitCode: code,
@@ -229,12 +230,12 @@ export function redactSecrets(input: string, secrets: ReadonlyArray<string>): st
   let out = input;
   for (const s of secrets) {
     if (s.length < 4) continue;
-    const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    out = out.replace(new RegExp(escaped, "g"), "[REDACTED]");
+    const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp(escaped, 'g'), '[REDACTED]');
   }
-  out = out.replace(/Authorization:\s*Bearer\s+\S+/gi, "Authorization: Bearer [REDACTED]");
-  out = out.replace(/Bearer\s+[A-Za-z0-9._\-]{8,}/g, "Bearer [REDACTED]");
-  out = out.replace(/https?:\/\/[^\s"'<>]*runpod[^\s"'<>]*/gi, "[REDACTED-URL]");
+  out = out.replace(/Authorization:\s*Bearer\s+\S+/gi, 'Authorization: Bearer [REDACTED]');
+  out = out.replace(/Bearer\s+[A-Za-z0-9._\-]{8,}/g, 'Bearer [REDACTED]');
+  out = out.replace(/https?:\/\/[^\s"'<>]*runpod[^\s"'<>]*/gi, '[REDACTED-URL]');
   return out;
 }
 
@@ -267,7 +268,7 @@ function parseTimeout(raw: string | undefined): number {
 }
 
 async function defaultMakeSandbox(): Promise<{ path: string; cleanup: () => Promise<void> }> {
-  const path = await mkdtemp(join(tmpdir(), "control-loop-live-"));
+  const path = await mkdtemp(join(tmpdir(), 'control-loop-live-'));
   return {
     path,
     cleanup: async () => {
@@ -281,7 +282,7 @@ async function defaultMakeSandbox(): Promise<{ path: string; cleanup: () => Prom
  * `run()` for the actual sequencing.
  */
 export class LiveOpencodeAdapter implements RuntimeAdapter {
-  readonly id = "opencode-live";
+  readonly id = 'opencode-live';
   private readonly env: LiveAdapterEnv;
   private readonly runpod: RunPodFetcher;
   private readonly runProcess: ProcessRunner;
@@ -314,24 +315,24 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
   async prepare(): Promise<void> {
     const missing: string[] = [];
     const env = this.env;
-    if (env.CONTROL_LOOP_LIVE_ENABLED !== "1") missing.push("CONTROL_LOOP_LIVE_ENABLED=1");
+    if (env.CONTROL_LOOP_LIVE_ENABLED !== '1') missing.push('CONTROL_LOOP_LIVE_ENABLED=1');
     if (!env.CONTROL_LOOP_PROVIDER || env.CONTROL_LOOP_PROVIDER.length === 0) {
-      missing.push("CONTROL_LOOP_PROVIDER");
+      missing.push('CONTROL_LOOP_PROVIDER');
     }
     if (!env.CONTROL_LOOP_WORKDIR || env.CONTROL_LOOP_WORKDIR.length === 0) {
-      missing.push("CONTROL_LOOP_WORKDIR");
+      missing.push('CONTROL_LOOP_WORKDIR');
     }
     if (!env.RUNPOD_API_KEY || env.RUNPOD_API_KEY.length === 0) {
-      missing.push("RUNPOD_API_KEY");
+      missing.push('RUNPOD_API_KEY');
     }
     if (!env.RUNPOD_POD_ID || env.RUNPOD_POD_ID.length === 0) {
-      missing.push("RUNPOD_POD_ID");
+      missing.push('RUNPOD_POD_ID');
     }
     if (missing.length > 0) {
       // Do NOT include any partial values; the keys themselves are safe.
       throw new MissingConfigError(
-        `live opencode adapter is missing required configuration: ${missing.join(", ")}. ` +
-          "Set every variable explicitly. The control loop refuses to run live without them.",
+        `live opencode adapter is missing required configuration: ${missing.join(', ')}. ` +
+          'Set every variable explicitly. The control loop refuses to run live without them.',
         missing,
       );
     }
@@ -339,12 +340,14 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
     const runpodApiKey = env.RUNPOD_API_KEY as string;
     const podId = env.RUNPOD_POD_ID as string;
     const workdir = env.CONTROL_LOOP_WORKDIR as string;
-    const bin = env.CONTROL_LOOP_OPENCODE_BIN && env.CONTROL_LOOP_OPENCODE_BIN.length > 0
-      ? env.CONTROL_LOOP_OPENCODE_BIN
-      : "opencode";
-    const model = env.CONTROL_LOOP_OPENCODE_MODEL && env.CONTROL_LOOP_OPENCODE_MODEL.length > 0
-      ? env.CONTROL_LOOP_OPENCODE_MODEL
-      : undefined;
+    const bin =
+      env.CONTROL_LOOP_OPENCODE_BIN && env.CONTROL_LOOP_OPENCODE_BIN.length > 0
+        ? env.CONTROL_LOOP_OPENCODE_BIN
+        : 'opencode';
+    const model =
+      env.CONTROL_LOOP_OPENCODE_MODEL && env.CONTROL_LOOP_OPENCODE_MODEL.length > 0
+        ? env.CONTROL_LOOP_OPENCODE_MODEL
+        : undefined;
     const provider = env.CONTROL_LOOP_PROVIDER as string;
     const timeoutMs = parseTimeout(env.CONTROL_LOOP_TIMEOUT_MS);
 
@@ -359,15 +362,15 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       const message = err instanceof Error ? err.message : String(err);
       throw new MissingConfigError(
         `RunPod metadata lookup failed: ${redactSecrets(message, [runpodApiKey, podId])}. ` +
-          "Refusing to invoke opencode against an unreachable pod.",
-        ["RUNPOD_POD_ID"],
+          'Refusing to invoke opencode against an unreachable pod.',
+        ['RUNPOD_POD_ID'],
       );
     }
-    if (metadata.desiredStatus !== "RUNNING") {
+    if (metadata.desiredStatus !== 'RUNNING') {
       throw new MissingConfigError(
         `RunPod pod is not RUNNING (desiredStatus=${metadata.desiredStatus}). ` +
-          "Start the pod and re-run.",
-        ["RUNPOD_POD_ID"],
+          'Start the pod and re-run.',
+        ['RUNPOD_POD_ID'],
       );
     }
 
@@ -378,8 +381,8 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
   async run(req: AdapterRequest): Promise<AdapterRunResult> {
     if (this.resolved === null) {
       throw new MissingConfigError(
-        "LiveOpencodeAdapter.run() called before prepare(). This is a control-loop bug.",
-        ["adapter_lifecycle"],
+        'LiveOpencodeAdapter.run() called before prepare(). This is a control-loop bug.',
+        ['adapter_lifecycle'],
       );
     }
     const { runpodApiKey, podId, workdir, bin, model, provider, timeoutMs } = this.resolved;
@@ -398,21 +401,21 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       // positionals; the pack is attached via `-f` (absolute path). Do not
       // pass raw pack text on argv. Cwd is the operator workdir so the
       // agent resolves paths relative to the sandbox checkout.
-      const packDest = join(sandboxPath, "ticket-pack.md");
-      const { writeFile } = await import("node:fs/promises");
-      await writeFile(packDest, req.packRaw, "utf8");
+      const packDest = join(sandboxPath, 'ticket-pack.md');
+      const { writeFile } = await import('node:fs/promises');
+      await writeFile(packDest, req.packRaw, 'utf8');
 
       // Message must come before `-f`: `--file` is an array flag; anything
       // after `-f <path>` is parsed as another file path, not the prompt.
       const args: string[] = [
-        "run",
-        "--print-logs",
-        "Implement the attached ticket pack exactly. Refuse if anything is unclear or out of scope.",
+        'run',
+        '--print-logs',
+        'Implement the attached ticket pack exactly. Refuse if anything is unclear or out of scope.',
       ];
       if (model !== undefined) {
-        args.push("--model", model);
+        args.push('--model', model);
       }
-      args.push("-f", packDest);
+      args.push('-f', packDest);
 
       // Child inherits the operator shell; overlay pod id and optional
       // vLLM inference key. Never inject RUNPOD_API_KEY (RunPod console key)
@@ -435,7 +438,7 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
 
       if (result.timedOut) {
         return {
-          state: "failed",
+          state: 'failed',
           provider: { adapter: this.id, runtimeId: provider, costClass: req.costBand },
           branch: {
             branch: req.branch,
@@ -444,13 +447,13 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
             prUrl: null,
           },
           checks: [],
-          logs: { type: "local-file", path: logsPath },
+          logs: { type: 'local-file', path: logsPath },
           refusals: [
             {
-              code: "adapter_timeout",
+              code: 'adapter_timeout',
               message:
                 `opencode exceeded the ${timeoutMs}ms wall-clock cap and was killed. ` +
-                "No checks were run. Increase CONTROL_LOOP_TIMEOUT_MS or shrink the pack.",
+                'No checks were run. Increase CONTROL_LOOP_TIMEOUT_MS or shrink the pack.',
             },
           ],
         };
@@ -458,7 +461,7 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
 
       if (result.exitCode !== 0) {
         return {
-          state: "failed",
+          state: 'failed',
           provider: { adapter: this.id, runtimeId: provider, costClass: req.costBand },
           branch: {
             branch: req.branch,
@@ -467,13 +470,13 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
             prUrl: null,
           },
           checks: [],
-          logs: { type: "local-file", path: logsPath },
+          logs: { type: 'local-file', path: logsPath },
           refusals: [
             {
-              code: "adapter_failure",
+              code: 'adapter_failure',
               message:
-                `opencode exited with code ${result.exitCode ?? "null"}` +
-                (result.signal ? ` (signal=${result.signal})` : "") +
+                `opencode exited with code ${result.exitCode ?? 'null'}` +
+                (result.signal ? ` (signal=${result.signal})` : '') +
                 `. stderr (redacted): ${truncate(stderrClean, 512)}`,
             },
           ],
@@ -487,22 +490,22 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       let anyFailed = false;
       for (const c of req.requiredChecks) {
         const checkResult = await this.runProcess({
-          bin: "/bin/sh",
-          args: ["-c", c.command],
+          bin: '/bin/sh',
+          args: ['-c', c.command],
           cwd: workdir,
           env: childEnv,
           timeoutMs,
         });
-        const outcome = checkResult.exitCode === 0 ? "passed" : "failed";
-        if (outcome === "failed") anyFailed = true;
+        const outcome = checkResult.exitCode === 0 ? 'passed' : 'failed';
+        if (outcome === 'failed') anyFailed = true;
         const cr: CheckResult = {
           name: c.name,
           command: c.command,
           outcome,
           durationMs: checkResult.durationMs,
         };
-        if (outcome === "failed") {
-          const detailRaw = checkResult.stderr || checkResult.stdout || "(no output)";
+        if (outcome === 'failed') {
+          const detailRaw = checkResult.stderr || checkResult.stdout || '(no output)';
           cr.detail = truncate(redactSecrets(detailRaw, secrets), 512);
         }
         checks.push(cr);
@@ -511,16 +514,16 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
       // Stash redacted logs alongside the sandbox so an operator can
       // inspect them. We do NOT include them in the JSON evidence —
       // logs.path is the only pointer.
-      const { writeFile: write2 } = await import("node:fs/promises");
+      const { writeFile: write2 } = await import('node:fs/promises');
       await write2(
-        join(sandboxPath, "run.log"),
+        join(sandboxPath, 'run.log'),
         `# opencode stdout (redacted)\n${stdoutClean}\n# opencode stderr (redacted)\n${stderrClean}\n`,
-        "utf8",
+        'utf8',
       );
       logsPath = `local-file://${sandboxPath}/run.log`;
 
       return {
-        state: anyFailed ? "checks_failed" : "ready_for_review",
+        state: anyFailed ? 'checks_failed' : 'ready_for_review',
         provider: { adapter: this.id, runtimeId: provider, costClass: req.costBand },
         branch: {
           branch: req.branch,
@@ -531,7 +534,7 @@ export class LiveOpencodeAdapter implements RuntimeAdapter {
           prUrl: null,
         },
         checks,
-        logs: { type: "local-file", path: logsPath },
+        logs: { type: 'local-file', path: logsPath },
       };
     } finally {
       // Sandbox cleanup is best-effort; the path is already in evidence

@@ -1,7 +1,7 @@
-import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 
-export type Severity = "error" | "warn";
+export type Severity = 'error' | 'warn';
 
 export interface SecretFinding {
   rule: string;
@@ -17,10 +17,10 @@ export interface ScanResult {
 }
 
 const ALLOWED_DOTENV_SUFFIXES = new Set<string>([
-  ".env.example",
-  ".env.sample",
-  ".env.template",
-  ".env.dist",
+  '.env.example',
+  '.env.sample',
+  '.env.template',
+  '.env.dist',
 ]);
 
 /**
@@ -30,7 +30,7 @@ const ALLOWED_DOTENV_SUFFIXES = new Set<string>([
 export function isForbiddenDotenvFile(path: string): boolean {
   const name = basename(path);
   if (ALLOWED_DOTENV_SUFFIXES.has(name)) return false;
-  if (name === ".env") return true;
+  if (name === '.env') return true;
   return /^\.env\.[A-Za-z0-9._-]+$/.test(name);
 }
 
@@ -47,54 +47,54 @@ interface LiteralPattern {
  */
 const LITERAL_PATTERNS: LiteralPattern[] = [
   {
-    rule: "aws-access-key-id",
+    rule: 'aws-access-key-id',
     regex: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/,
-    describe: "AWS access key id",
+    describe: 'AWS access key id',
   },
   {
-    rule: "perplexity-agent-proxy-token",
+    rule: 'perplexity-agent-proxy-token',
     regex: /\bagp_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/,
-    describe: "Perplexity agent-proxy bearer token (agp_<uuid>)",
+    describe: 'Perplexity agent-proxy bearer token (agp_<uuid>)',
   },
   {
-    rule: "linear-api-key",
+    rule: 'linear-api-key',
     regex: /\blin_api_[A-Za-z0-9]{20,}\b/,
-    describe: "Linear personal API key",
+    describe: 'Linear personal API key',
   },
   {
-    rule: "github-token",
+    rule: 'github-token',
     regex: /\bgh[pousr]_[A-Za-z0-9]{36,}\b/,
-    describe: "GitHub personal / OAuth / server / user / refresh token",
+    describe: 'GitHub personal / OAuth / server / user / refresh token',
   },
   {
-    rule: "slack-token",
+    rule: 'slack-token',
     regex: /\bxox[abpr]-[A-Za-z0-9-]{10,}\b/,
-    describe: "Slack token",
+    describe: 'Slack token',
   },
   {
-    rule: "openai-api-key",
+    rule: 'openai-api-key',
     regex: /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/,
-    describe: "OpenAI API key",
+    describe: 'OpenAI API key',
   },
   {
-    rule: "anthropic-api-key",
+    rule: 'anthropic-api-key',
     regex: /\bsk-ant-(?:api|admin)[0-9]{2}-[A-Za-z0-9_-]{20,}\b/,
-    describe: "Anthropic API key",
+    describe: 'Anthropic API key',
   },
   {
-    rule: "google-api-key",
+    rule: 'google-api-key',
     regex: /\bAIza[0-9A-Za-z_-]{35}\b/,
-    describe: "Google API key",
+    describe: 'Google API key',
   },
   {
-    rule: "stripe-live-secret",
+    rule: 'stripe-live-secret',
     regex: /\bsk_live_[0-9A-Za-z]{20,}\b/,
-    describe: "Stripe live secret key",
+    describe: 'Stripe live secret key',
   },
   {
-    rule: "private-key-block",
+    rule: 'private-key-block',
     regex: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----/,
-    describe: "PEM private key block",
+    describe: 'PEM private key block',
   },
 ];
 
@@ -106,27 +106,27 @@ const ASSIGNMENT_REGEX =
  * case-insensitive and done after trimming surrounding punctuation.
  */
 const PLACEHOLDER_VALUES = new Set<string>([
-  "",
-  "changeme",
-  "change-me",
-  "change_me",
-  "example",
-  "placeholder",
-  "secret",
-  "token",
-  "password",
-  "xxx",
-  "xxxx",
-  "xxxxx",
-  "todo",
-  "tbd",
-  "redacted",
-  "null",
-  "none",
-  "undefined",
-  "dummy",
-  "fake",
-  "test",
+  '',
+  'changeme',
+  'change-me',
+  'change_me',
+  'example',
+  'placeholder',
+  'secret',
+  'token',
+  'password',
+  'xxx',
+  'xxxx',
+  'xxxxx',
+  'todo',
+  'tbd',
+  'redacted',
+  'null',
+  'none',
+  'undefined',
+  'dummy',
+  'fake',
+  'test',
 ]);
 
 function isPlaceholderValue(raw: string): boolean {
@@ -170,14 +170,14 @@ export function scanText({ file, text }: ScanTextOptions): SecretFinding[] {
   const findings: SecretFinding[] = [];
   const lines = text.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i] ?? "";
+    const line = lines[i] ?? '';
     const lineNo = i + 1;
     if (ALLOW_LINE_DIRECTIVE.test(line)) continue;
     for (const pat of LITERAL_PATTERNS) {
       if (pat.regex.test(line)) {
         findings.push({
           rule: pat.rule,
-          severity: "error",
+          severity: 'error',
           file,
           line: lineNo,
           message: `looks like a literal ${pat.describe}`,
@@ -186,12 +186,12 @@ export function scanText({ file, text }: ScanTextOptions): SecretFinding[] {
     }
     const m = ASSIGNMENT_REGEX.exec(line);
     if (m) {
-      const keyName = m[1] ?? "";
-      const value = m[2] ?? m[3] ?? m[4] ?? "";
+      const keyName = m[1] ?? '';
+      const value = m[2] ?? m[3] ?? m[4] ?? '';
       if (!isPlaceholderValue(value) && hasSecretCharacteristics(value)) {
         findings.push({
-          rule: "credential-assignment",
-          severity: "error",
+          rule: 'credential-assignment',
+          severity: 'error',
           file,
           line: lineNo,
           message: `variable ${keyName} appears to hold a literal credential (>=20 chars, mixed digits/letters, no placeholder marker)`,
@@ -220,17 +220,17 @@ export interface ScanPathsOptions {
 }
 
 export async function scanPaths(options: ScanPathsOptions): Promise<ScanResult> {
-  const reader = options.readFile ?? ((p: string) => readFile(p, "utf8"));
+  const reader = options.readFile ?? ((p: string) => readFile(p, 'utf8'));
   const findings: SecretFinding[] = [];
   let filesScanned = 0;
   for (const file of options.files) {
     if (isForbiddenDotenvFile(file)) {
       findings.push({
-        rule: "dotenv-file-staged",
-        severity: "error",
+        rule: 'dotenv-file-staged',
+        severity: 'error',
         file,
         message:
-          "local .env files must not be committed; use .env.example / .env.template for shareable placeholders",
+          'local .env files must not be committed; use .env.example / .env.template for shareable placeholders',
       });
       // Do not open the file — it may be missing on disk, and we block regardless.
       continue;
@@ -248,7 +248,7 @@ export async function scanPaths(options: ScanPathsOptions): Promise<ScanResult> 
 }
 
 export function hasBlockingFindings(result: ScanResult): boolean {
-  return result.findings.some((f) => f.severity === "error");
+  return result.findings.some((f) => f.severity === 'error');
 }
 
 export function formatResult(result: ScanResult): string {
@@ -258,8 +258,8 @@ export function formatResult(result: ScanResult): string {
   const lines: string[] = [];
   lines.push(`secret-guard: ${result.findings.length} finding(s):`);
   for (const f of result.findings) {
-    const loc = f.line ? `:${f.line}` : "";
+    const loc = f.line ? `:${f.line}` : '';
     lines.push(`  [${f.severity}] ${f.rule} ${f.file}${loc}: ${f.message}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }

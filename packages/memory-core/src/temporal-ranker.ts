@@ -16,14 +16,14 @@ import { SearchResult, SmartFrame } from './types.js';
 
 /**
  * Compute a temporal relevance score (0-1) for a frame.
- * 
+ *
  * Scoring model:
  * - Very recent (0-7 days): score = 1.0 (full boost)
  * - Recent (7-30 days): score = 0.9
  * - Medium (30-90 days): score = 0.7
  * - Old (90-365 days): score = 0.4
  * - Ancient (>365 days): score = 0.1
- * 
+ *
  * Additionally, recently-read frames get a small recency bonus.
  */
 function temporalScore(frame: SmartFrame, now: Date): number {
@@ -84,7 +84,7 @@ export interface TemporalRankOptions {
 export function rankResults(
   results: SearchResult[],
   options: TemporalRankOptions = {},
-  now?: Date
+  now?: Date,
 ): SearchResult[] {
   if (results.length === 0) return results;
 
@@ -96,8 +96,7 @@ export function rankResults(
     // Apply age filter
     if (maxAgeDays > 0) {
       const ageDays =
-        (temporalNow.getTime() - new Date(r.frame.createdAt).getTime()) /
-        (1000 * 60 * 60 * 24);
+        (temporalNow.getTime() - new Date(r.frame.createdAt).getTime()) / (1000 * 60 * 60 * 24);
       if (ageDays > maxAgeDays) {
         r.score = 0;
         return r;
@@ -129,7 +128,7 @@ export function rankResults(
  */
 export function getMostRecentPerEntity(
   results: SearchResult[],
-  entities: string[]
+  entities: string[],
 ): SearchResult[] {
   const mostRecent: Record<string, SearchResult> = {};
 
@@ -141,10 +140,7 @@ export function getMostRecentPerEntity(
           mostRecent[entity] = result;
         } else {
           // Compare by createdAt (newer wins)
-          if (
-            new Date(result.frame.createdAt) >
-            new Date(existing.frame.createdAt)
-          ) {
+          if (new Date(result.frame.createdAt) > new Date(existing.frame.createdAt)) {
             mostRecent[entity] = result;
           }
         }
@@ -161,7 +157,7 @@ export function getMostRecentPerEntity(
 export function filterByTimeWindow(
   results: SearchResult[],
   since: string,
-  until?: string
+  until?: string,
 ): SearchResult[] {
   const sinceMs = new Date(since).getTime();
   const untilMs = until ? new Date(until).getTime() : Date.now();

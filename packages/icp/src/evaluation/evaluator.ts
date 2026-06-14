@@ -11,9 +11,7 @@
  * the ladder rules are violated, or the invocation adapter already returned
  * a refusal the skill could not resolve.
  */
-import type {
-  AgentInvocationResult,
-} from "../runtime/contract.js";
+import type { AgentInvocationResult } from '../runtime/contract.js';
 import type {
   EvaluationFinding,
   EvaluationReport,
@@ -21,7 +19,7 @@ import type {
   FailureCategory,
   Recommendation,
   Severity,
-} from "./contract.js";
+} from './contract.js';
 
 /** ADR-0007 severity rank; `critical` is worst. */
 const SEVERITY_RANK: Record<Severity, number> = {
@@ -32,9 +30,7 @@ const SEVERITY_RANK: Record<Severity, number> = {
   critical: 4,
 };
 
-function worstSeverity(
-  findings: ReadonlyArray<EvaluationFinding>,
-): Severity | null {
+function worstSeverity(findings: ReadonlyArray<EvaluationFinding>): Severity | null {
   let worst: Severity | null = null;
   for (const f of findings) {
     if (worst === null || SEVERITY_RANK[f.severity] > SEVERITY_RANK[worst]) {
@@ -52,9 +48,7 @@ function worstSeverity(
  * report bodies. That keeps it deterministic under test and gives retro
  * aggregation a stable category vocabulary.
  */
-export function evaluateCodingRun(
-  input: EvaluationRunInput,
-): EvaluationReport {
+export function evaluateCodingRun(input: EvaluationRunInput): EvaluationReport {
   const findings: EvaluationFinding[] = [];
   const risks: string[] = [];
 
@@ -65,7 +59,7 @@ export function evaluateCodingRun(
   const refusalCategory = extractAdapterRefusalCategory(input.agent_result);
   if (refusalCategory) {
     findings.push({
-      severity: refusalCategory === "cost_runaway_risk" ? "critical" : "high",
+      severity: refusalCategory === 'cost_runaway_risk' ? 'critical' : 'high',
       category: refusalCategory,
       message: `Invocation adapter refused: ${refusalCategory}.`,
     });
@@ -74,28 +68,28 @@ export function evaluateCodingRun(
   // 2) Exit-signal-driven findings when no structured refusal was surfaced.
   if (!refusalCategory) {
     switch (input.agent_result.exit_signal) {
-      case "failed":
+      case 'failed':
         findings.push({
-          severity: "high",
-          category: "provider_error",
-          message: "Coding agent exit_signal=failed with no structured refusal category.",
+          severity: 'high',
+          category: 'provider_error',
+          message: 'Coding agent exit_signal=failed with no structured refusal category.',
         });
         break;
-      case "needs_human":
+      case 'needs_human':
         findings.push({
-          severity: "medium",
-          category: "provider_refused",
-          message: "Coding agent exit_signal=needs_human; human decision required.",
+          severity: 'medium',
+          category: 'provider_refused',
+          message: 'Coding agent exit_signal=needs_human; human decision required.',
         });
         break;
-      case "cancelled":
+      case 'cancelled':
         findings.push({
-          severity: "low",
-          category: "provider_refused",
-          message: "Coding agent exit_signal=cancelled; no further action required.",
+          severity: 'low',
+          category: 'provider_refused',
+          message: 'Coding agent exit_signal=cancelled; no further action required.',
         });
         break;
-      case "succeeded":
+      case 'succeeded':
         // No finding; fall through to the evidence-floor checks below.
         break;
     }
@@ -103,13 +97,13 @@ export function evaluateCodingRun(
 
   // 3) Cost-band risks surface regardless of exit signal.
   const band = input.agent_result.cost_band;
-  if (band === "elevated" || band === "runaway_risk") {
+  if (band === 'elevated' || band === 'runaway_risk') {
     risks.push(`cost_band=${band}`);
-    if (band === "runaway_risk") {
+    if (band === 'runaway_risk') {
       findings.push({
-        severity: "critical",
-        category: "cost_runaway_risk",
-        message: "Cost band observed as runaway_risk; ADR-0009 requires Ben approval.",
+        severity: 'critical',
+        category: 'cost_runaway_risk',
+        message: 'Cost band observed as runaway_risk; ADR-0009 requires Ben approval.',
       });
     }
   }
@@ -118,21 +112,19 @@ export function evaluateCodingRun(
   //    ADR-0006 run report or ADR-0003 write-back is below the floor and
   //    defaults to `needs-human` regardless of what recommendation the QA
   //    / review agent claimed.
-  if (input.agent_result.exit_signal === "succeeded") {
+  if (input.agent_result.exit_signal === 'succeeded') {
     if (!input.has_run_report) {
       findings.push({
-        severity: "high",
-        category: "missing_evidence_floor",
-        message:
-          "ADR-0006 run report not produced; evidence floor (PRD LAT-26 §6.2) not met.",
+        severity: 'high',
+        category: 'missing_evidence_floor',
+        message: 'ADR-0006 run report not produced; evidence floor (PRD LAT-26 §6.2) not met.',
       });
     }
     if (!input.has_linear_write_back) {
       findings.push({
-        severity: "high",
-        category: "missing_evidence_floor",
-        message:
-          "ADR-0003 Linear write-back not posted; evidence floor (PRD LAT-26 §6.2) not met.",
+        severity: 'high',
+        category: 'missing_evidence_floor',
+        message: 'ADR-0003 Linear write-back not posted; evidence floor (PRD LAT-26 §6.2) not met.',
       });
     }
   }
@@ -150,8 +142,8 @@ export function evaluateCodingRun(
       // the `critical` severity itself, so ADR-0007's "critical → needs-human"
       // rule is enforced even when the harness-side finding is the violation
       // rather than the underlying critical.
-      severity: worstFinding === "critical" ? "critical" : "high",
-      category: "recommendation_ladder_violation",
+      severity: worstFinding === 'critical' ? 'critical' : 'high',
+      category: 'recommendation_ladder_violation',
       message: ladderViolation,
     });
   }
@@ -164,14 +156,14 @@ export function evaluateCodingRun(
   //    d) Null claim on a succeeded run → `needs-human` (evidence missing).
   const worstHarness = worstSeverity(findings);
   let finalRec: Recommendation;
-  if (worstHarness === "critical") {
-    finalRec = "needs-human";
-  } else if (worstHarness === "high") {
-    finalRec = claimed === null ? "needs-human" : "request-changes";
-  } else if (input.agent_result.exit_signal !== "succeeded") {
-    finalRec = "needs-human";
+  if (worstHarness === 'critical') {
+    finalRec = 'needs-human';
+  } else if (worstHarness === 'high') {
+    finalRec = claimed === null ? 'needs-human' : 'request-changes';
+  } else if (input.agent_result.exit_signal !== 'succeeded') {
+    finalRec = 'needs-human';
   } else if (claimed === null) {
-    finalRec = "needs-human";
+    finalRec = 'needs-human';
   } else {
     finalRec = claimed;
   }
@@ -208,41 +200,37 @@ export function evaluateCodingRun(
  * the first note on every refusal, so a simple prefix match is enough; we
  * do not parse free-text bodies.
  */
-function extractAdapterRefusalCategory(
-  result: AgentInvocationResult,
-): FailureCategory | null {
+function extractAdapterRefusalCategory(result: AgentInvocationResult): FailureCategory | null {
   const first = result.notes[0];
-  if (typeof first !== "string") return null;
+  if (typeof first !== 'string') return null;
   const match = /reason=([a-z_]+)\)/i.exec(first);
   if (!match) return null;
   const reason = match[1];
-  if (typeof reason !== "string") return null;
+  if (typeof reason !== 'string') return null;
   if (!isKnownFailureCategory(reason)) return null;
   return reason;
 }
 
 function isKnownFailureCategory(v: string): v is FailureCategory {
   return (
-    v === "none" ||
-    v === "missing_approval" ||
-    v === "unsupported_ticket_shape" ||
-    v === "missing_minimum_context" ||
-    v === "missing_repo" ||
-    v === "missing_budget_cap" ||
-    v === "cost_runaway_risk" ||
-    v === "provider_refused" ||
-    v === "provider_error" ||
-    v === "provider_timeout" ||
-    v === "provider_not_configured" ||
-    v === "missing_evidence_floor" ||
-    v === "recommendation_ladder_violation" ||
-    v === "preflight_ticket_not_agent_ready"
+    v === 'none' ||
+    v === 'missing_approval' ||
+    v === 'unsupported_ticket_shape' ||
+    v === 'missing_minimum_context' ||
+    v === 'missing_repo' ||
+    v === 'missing_budget_cap' ||
+    v === 'cost_runaway_risk' ||
+    v === 'provider_refused' ||
+    v === 'provider_error' ||
+    v === 'provider_timeout' ||
+    v === 'provider_not_configured' ||
+    v === 'missing_evidence_floor' ||
+    v === 'recommendation_ladder_violation' ||
+    v === 'preflight_ticket_not_agent_ready'
   );
 }
 
-function worstClaimedFindingSeverity(
-  severities: ReadonlyArray<Severity>,
-): Severity | null {
+function worstClaimedFindingSeverity(severities: ReadonlyArray<Severity>): Severity | null {
   let worst: Severity | null = null;
   for (const s of severities) {
     if (worst === null || SEVERITY_RANK[s] > SEVERITY_RANK[worst]) worst = s;
@@ -262,42 +250,40 @@ function detectLadderViolation(
   if (claimed === null) return null;
   if (worstFinding === null) return null;
   // Rule: any high/critical finding forbids approve variants.
-  if (worstFinding === "high" || worstFinding === "critical") {
-    if (claimed === "approve" || claimed === "approve-with-nits") {
+  if (worstFinding === 'high' || worstFinding === 'critical') {
+    if (claimed === 'approve' || claimed === 'approve-with-nits') {
       return `Findings include ${worstFinding} severity but recommendation is ${claimed}; ADR-0007 requires request-changes/block-merge/needs-human.`;
     }
   }
   // Rule: any critical finding routes to needs-human regardless.
-  if (worstFinding === "critical" && claimed !== "needs-human") {
+  if (worstFinding === 'critical' && claimed !== 'needs-human') {
     return `Critical finding present; ADR-0007 requires recommendation=needs-human (was ${claimed}).`;
   }
   return null;
 }
 
-function primaryCategory(
-  findings: ReadonlyArray<EvaluationFinding>,
-): FailureCategory {
-  if (findings.length === 0) return "none";
+function primaryCategory(findings: ReadonlyArray<EvaluationFinding>): FailureCategory {
+  if (findings.length === 0) return 'none';
   let worst: EvaluationFinding | null = null;
   for (const f of findings) {
     if (worst === null || SEVERITY_RANK[f.severity] > SEVERITY_RANK[worst.severity]) {
       worst = f;
     }
   }
-  return worst ? worst.category : "none";
+  return worst ? worst.category : 'none';
 }
 
 function nextActionFor(rec: Recommendation, cat: FailureCategory): string {
   switch (rec) {
-    case "approve":
-      return "ask Ben for merge approval";
-    case "approve-with-nits":
-      return "author fixes nits then asks Ben for merge approval";
-    case "request-changes":
+    case 'approve':
+      return 'ask Ben for merge approval';
+    case 'approve-with-nits':
+      return 'author fixes nits then asks Ben for merge approval';
+    case 'request-changes':
       return `address findings (${cat}) and resubmit`;
-    case "block-merge":
+    case 'block-merge':
       return `resolve blocking finding (${cat}) before merge`;
-    case "needs-human":
+    case 'needs-human':
       return `route to Ben: ${cat}`;
   }
 }

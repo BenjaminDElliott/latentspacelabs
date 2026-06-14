@@ -4,11 +4,11 @@ export {
   isForbiddenDotenvFile,
   hasBlockingFindings,
   formatResult,
-} from "./scan.js";
+} from './scan.js';
 export type {
   ScanResult,
   ScanPathsOptions,
   ScanTextOptions,
   SecretFinding,
   Severity,
-} from "./scan.js";
+} from './scan.js';

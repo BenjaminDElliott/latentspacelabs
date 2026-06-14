@@ -38,7 +38,7 @@ src/
 - **Tool adapter** — a shared component that is the only path to a specific external system. Lives in `src/adapters/`. Named in `required_tools`. Synonym: "vendor adapter."
 - **Harness** — the execution surface that invokes `SkillRunner.run(...)` (CLI today; Perplexity shell-call wrapper, service surface, scheduler, webhook receiver later). Never called an adapter.
 
-Example invocation path: a *harness* collects arguments and calls the runner, the runner loads a *skill* from the registry, the skill declares the *tool adapters* it needs, the runner resolves those adapters and executes the skill.
+Example invocation path: a _harness_ collects arguments and calls the runner, the runner loads a _skill_ from the registry, the skill declares the _tool adapters_ it needs, the runner resolves those adapters and executes the skill.
 
 ## Adding a skill
 
@@ -73,7 +73,7 @@ Per invocation it does exactly one thing:
 
 1. Reads `LINEAR_API_KEY` from env (never logged).
 2. Selects one issue identified by `LAT_DISPATCH_ISSUE=LAT-NN`. (Label-driven polling is a documented follow-up; the explicit override is the only safe way to opt in for now.)
-3. Runs the issue through the **dispatch eligibility classifier** (LAT-131). The classifier is deterministic and context-aware: it distinguishes *risky scope* ("rotate the production token", "deploy the build", "merge the PR", "write a new ADR", vague spike with no Acceptance Criteria) from *risk context* ("do not touch secrets", "without exposing secrets", "see existing ADR-0012"). Hard-stop blockers in either class refuse the dispatch; safe-context phrasings no longer block.
+3. Runs the issue through the **dispatch eligibility classifier** (LAT-131). The classifier is deterministic and context-aware: it distinguishes _risky scope_ ("rotate the production token", "deploy the build", "merge the PR", "write a new ADR", vague spike with no Acceptance Criteria) from _risk context_ ("do not touch secrets", "without exposing secrets", "see existing ADR-0012"). Hard-stop blockers in either class refuse the dispatch; safe-context phrasings no longer block.
 4. Generates a bounded ticket pack into a temp directory (never the repo tree).
 5. Invokes the existing control-loop CLI once with `--mode <mock|plan|live>` and `--format json`.
 6. Captures stdout/stderr, scrubs token-shaped values + non-Linear URLs + RunPod pod ids + literal env-supplied secret values, and posts the result as a Linear comment.
@@ -81,17 +81,17 @@ Per invocation it does exactly one thing:
 
 ### Required env
 
-| Variable | Purpose |
-| --- | --- |
-| `LINEAR_API_KEY` | Personal API key (`lin_api_*`). Never logged or forwarded to child processes. |
+| Variable             | Purpose                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `LINEAR_API_KEY`     | Personal API key (`lin_api_*`). Never logged or forwarded to child processes.                    |
 | `LAT_DISPATCH_ISSUE` | Explicit `LAT-NN` to dispatch. Without it the dispatcher exits cleanly with `no_eligible_issue`. |
 
 ### Optional env
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `LAT_DISPATCH_MODE` | `mock` | `mock` / `plan` / `live`. Forwarded to the control-loop CLI. |
-| `LAT_LINEAR_IN_REVIEW_STATE_ID` | LAT team In Review UUID (current value) | Override when targeting a different workspace/team. |
+| Variable                        | Default                                 | Purpose                                                      |
+| ------------------------------- | --------------------------------------- | ------------------------------------------------------------ |
+| `LAT_DISPATCH_MODE`             | `mock`                                  | `mock` / `plan` / `live`. Forwarded to the control-loop CLI. |
+| `LAT_LINEAR_IN_REVIEW_STATE_ID` | LAT team In Review UUID (current value) | Override when targeting a different workspace/team.          |
 
 `live` mode also requires the env the control loop itself documents (`CONTROL_LOOP_LIVE_ENABLED`, `CONTROL_LOOP_PROVIDER`, `CONTROL_LOOP_WORKDIR`, `RUNPOD_API_KEY`, `RUNPOD_POD_ID`, optionally `RUNPOD_VLLM_API_KEY`). The dispatcher forwards those into the child, but never `LINEAR_API_KEY`.
 
@@ -119,16 +119,21 @@ before acting. The shape:
 ```ts
 interface ClassifierOutput {
   dispatchable: boolean;
-  risk_class: "low" | "medium" | "high";
+  risk_class: 'low' | 'medium' | 'high';
   work_type:
-    | "code_change" | "docs_change" | "test_change"
-    | "research_spike" | "decision" | "ops" | "unknown";
+    | 'code_change'
+    | 'docs_change'
+    | 'test_change'
+    | 'research_spike'
+    | 'decision'
+    | 'ops'
+    | 'unknown';
   reason: string;
   required_human_approval: boolean;
   hard_blockers: { code: HardBlockerCode; message: string }[];
   pack_overrides?: {
     max_turns?: number;
-    cost_class?: "small" | "medium" | "large";
+    cost_class?: 'small' | 'medium' | 'large';
     extra_path_denies?: string[];
   };
 }
@@ -136,20 +141,20 @@ interface ClassifierOutput {
 
 Hard-stop blocker codes (stable, machine-readable):
 
-| Code | Meaning |
-| --- | --- |
-| `no_explicit_dispatch_target` | `LAT_DISPATCH_ISSUE` is not set (current MVP gate). |
-| `missing_identifier` / `missing_uuid` | Linear issue payload is malformed. |
-| `empty_title` | Title is blank or whitespace-only. |
-| `vague_planning_title` | Title starts with `investigate` / `explore` / `discuss` / `plan` / `think about`. |
-| `missing_acceptance_criteria` | Description has no Acceptance Criteria heading. |
-| `description_too_short` | Description body is too small to bound scope safely. |
-| `risky_scope_secret_rotation` | Asks the agent to rotate / revoke / reset secrets / credentials / tokens. |
-| `risky_scope_credential_handling` | Asks the agent to handle / store production credentials. |
-| `risky_scope_deploy_release` | Asks the agent to deploy / release / publish / ship. |
-| `risky_scope_auto_merge` | Asks the agent to auto-merge or merge a PR to main. |
-| `risky_scope_primary_decision` | Primary work is making a new ADR / architecture decision. |
-| `risky_scope_vague_spike` | Vague spike with no Acceptance Criteria. |
+| Code                                  | Meaning                                                                           |
+| ------------------------------------- | --------------------------------------------------------------------------------- |
+| `no_explicit_dispatch_target`         | `LAT_DISPATCH_ISSUE` is not set (current MVP gate).                               |
+| `missing_identifier` / `missing_uuid` | Linear issue payload is malformed.                                                |
+| `empty_title`                         | Title is blank or whitespace-only.                                                |
+| `vague_planning_title`                | Title starts with `investigate` / `explore` / `discuss` / `plan` / `think about`. |
+| `missing_acceptance_criteria`         | Description has no Acceptance Criteria heading.                                   |
+| `description_too_short`               | Description body is too small to bound scope safely.                              |
+| `risky_scope_secret_rotation`         | Asks the agent to rotate / revoke / reset secrets / credentials / tokens.         |
+| `risky_scope_credential_handling`     | Asks the agent to handle / store production credentials.                          |
+| `risky_scope_deploy_release`          | Asks the agent to deploy / release / publish / ship.                              |
+| `risky_scope_auto_merge`              | Asks the agent to auto-merge or merge a PR to main.                               |
+| `risky_scope_primary_decision`        | Primary work is making a new ADR / architecture decision.                         |
+| `risky_scope_vague_spike`             | Vague spike with no Acceptance Criteria.                                          |
 
 Safe-context phrasings recognised (do **not** block):
 
@@ -173,9 +178,9 @@ dispatcher.
 
 ### Exit codes
 
-| Code | Meaning |
-| --- | --- |
-| 0 | `ready_for_review` — Linear comment posted and issue promoted. |
-| 2 | `no_eligible_issue` / `refused` / `planned` / `config_error` (recoverable). |
-| 3 | `failed` / `checks_failed`. |
-| 64 | Bad CLI arguments. |
+| Code | Meaning                                                                     |
+| ---- | --------------------------------------------------------------------------- |
+| 0    | `ready_for_review` — Linear comment posted and issue promoted.              |
+| 2    | `no_eligible_issue` / `refused` / `planned` / `config_error` (recoverable). |
+| 3    | `failed` / `checks_failed`.                                                 |
+| 64   | Bad CLI arguments.                                                          |

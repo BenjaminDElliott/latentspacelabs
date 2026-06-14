@@ -31,50 +31,43 @@
  *   the builder returns.
  */
 
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
-import { redactOutput } from "../dispatcher/redact.js";
+import { redactOutput } from '../dispatcher/redact.js';
 
 /** Schema version stamped into every emitted artefact. SemVer string. */
-export const RUN_ARTIFACT_SCHEMA_VERSION = "1.0.0";
+export const RUN_ARTIFACT_SCHEMA_VERSION = '1.0.0';
 
 /** Surface the artefact came from. */
-export type RunSurface = "dispatcher" | "control-loop" | "opencode-harness";
+export type RunSurface = 'dispatcher' | 'control-loop' | 'opencode-harness';
 
 /** Artefact eligibility label per the LAT-140 distinction. */
-export type ArtefactClass = "operational_log" | "dataset_candidate";
+export type ArtefactClass = 'operational_log' | 'dataset_candidate';
 
 /** Coarse quality label assigned by the producer. Reviewers may revise. */
-export type QualityLabel =
-  | "ready_for_review"
-  | "needs_review"
-  | "low_quality"
-  | "unknown";
+export type QualityLabel = 'ready_for_review' | 'needs_review' | 'low_quality' | 'unknown';
 
 /** Coarse training-export eligibility decision recorded with the artefact. */
-export type TrainingEligibility =
-  | "eligible"
-  | "ineligible"
-  | "needs_human_decision";
+export type TrainingEligibility = 'eligible' | 'ineligible' | 'needs_human_decision';
 
 /** Cost class labels per ADR-0009 / ADR-0020. */
-export type CostClass = "low" | "medium" | "high" | "unknown";
+export type CostClass = 'low' | 'medium' | 'high' | 'unknown';
 
 /** Risk class labels per LAT-131 classifier. */
-export type RiskClass = "low" | "medium" | "high" | "unknown";
+export type RiskClass = 'low' | 'medium' | 'high' | 'unknown';
 
 /** Outcome the producer reports. Distinct from the ADR-0006 status enum. */
 export type RunArtefactOutcome =
-  | "succeeded"
-  | "ready_for_review"
-  | "checks_failed"
-  | "refused"
-  | "failed"
-  | "cancelled"
-  | "needs_human"
-  | "planned"
-  | "no_eligible_issue"
-  | "config_error";
+  | 'succeeded'
+  | 'ready_for_review'
+  | 'checks_failed'
+  | 'refused'
+  | 'failed'
+  | 'cancelled'
+  | 'needs_human'
+  | 'planned'
+  | 'no_eligible_issue'
+  | 'config_error';
 
 /** A single executed/observed check, with sanitised detail. */
 export interface ArtefactCheck {
@@ -84,9 +77,9 @@ export interface ArtefactCheck {
    * checks, or the policy id for policy checks). Never raw stdout.
    */
   command: string;
-  outcome: "passed" | "failed" | "skipped" | "manual";
+  outcome: 'passed' | 'failed' | 'skipped' | 'manual';
   durationMs: number;
-  kind: "shell" | "policy" | "manual";
+  kind: 'shell' | 'policy' | 'manual';
   detail?: string;
 }
 
@@ -129,7 +122,7 @@ export interface AcceptanceCriterionCoverage {
    * Coarse coverage status. Producers without diff-level signal default
    * to `unknown` and let the human reviewer mark it during PR review.
    */
-  status: "covered" | "partial" | "uncovered" | "unknown";
+  status: 'covered' | 'partial' | 'uncovered' | 'unknown';
 }
 
 /**
@@ -142,11 +135,9 @@ export interface AcceptanceCriterionCoverage {
  */
 export interface RedactionMetadata {
   /** Redactor module name. */
-  redactor: "dispatcher.redactOutput";
+  redactor: 'dispatcher.redactOutput';
   /** Categories the builder asked the redactor to apply. */
-  applied_patterns: ReadonlyArray<
-    "tokens" | "urls" | "pod_ids" | "extra_secrets"
-  >;
+  applied_patterns: ReadonlyArray<'tokens' | 'urls' | 'pod_ids' | 'extra_secrets'>;
   /** Approximate count of redactions per category, post-build. */
   redaction_counts: {
     tokens: number;
@@ -299,13 +290,10 @@ export interface RunArtefactInput {
   eligibility_reason?: string;
 }
 
-const PR_URL_HOSTS = new Set(["github.com", "linear.app"]);
+const PR_URL_HOSTS = new Set(['github.com', 'linear.app']);
 
-function sanitiseFreeText(
-  s: string | undefined,
-  extraSecrets: ReadonlyArray<string>,
-): string {
-  if (typeof s !== "string" || s.length === 0) return "";
+function sanitiseFreeText(s: string | undefined, extraSecrets: ReadonlyArray<string>): string {
+  if (typeof s !== 'string' || s.length === 0) return '';
   return redactOutput(s, {
     extraSecrets,
     redactNonLinearUrls: true,
@@ -317,7 +305,7 @@ function sanitisePath(
   extraSecrets: ReadonlyArray<string>,
 ): string | null {
   if (p === null || p === undefined) return null;
-  if (typeof p !== "string" || p.length === 0) return null;
+  if (typeof p !== 'string' || p.length === 0) return null;
   // Path-only: keep URL-shaped substrings out, but don't collapse the
   // path itself. We pass the path through the same redactor so a
   // mistakenly-pasted token in a path is still scrubbed.
@@ -328,14 +316,12 @@ function sanitisePath(
   });
 }
 
-function sanitisePrUrl(
-  url: string | null | undefined,
-): string | null {
+function sanitisePrUrl(url: string | null | undefined): string | null {
   if (url === null || url === undefined) return null;
-  if (typeof url !== "string" || url.length === 0) return null;
+  if (typeof url !== 'string' || url.length === 0) return null;
   try {
     const u = new URL(url);
-    if (PR_URL_HOSTS.has(u.host) || [...PR_URL_HOSTS].some((h) => u.host.endsWith("." + h))) {
+    if (PR_URL_HOSTS.has(u.host) || [...PR_URL_HOSTS].some((h) => u.host.endsWith('.' + h))) {
       return url;
     }
   } catch {
@@ -345,7 +331,7 @@ function sanitisePrUrl(
 }
 
 function sha256Hex(s: string): string {
-  return createHash("sha256").update(s, "utf8").digest("hex");
+  return createHash('sha256').update(s, 'utf8').digest('hex');
 }
 
 function countRedactions(before: string, after: string, marker: string): number {
@@ -377,7 +363,7 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
   const safeProvider = input.provider ? sanitiseFreeText(input.provider, extraSecrets) : null;
   const safeRuntimeId = input.runtime_id ? sanitiseFreeText(input.runtime_id, extraSecrets) : null;
   const safePackPath = sanitisePath(input.pack_path ?? null, extraSecrets);
-  const safeRefusalMsg = sanitiseFreeText(input.refusal_message ?? "", extraSecrets);
+  const safeRefusalMsg = sanitiseFreeText(input.refusal_message ?? '', extraSecrets);
   const safePrUrl = sanitisePrUrl(input.pr_url ?? null);
 
   const checks = (input.checks ?? []).map((c) => ({
@@ -386,15 +372,13 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
     outcome: c.outcome,
     durationMs: Math.max(0, Math.floor(c.durationMs)),
     kind: c.kind,
-    ...(c.detail !== undefined
-      ? { detail: sanitiseFreeText(c.detail, extraSecrets) }
-      : {}),
+    ...(c.detail !== undefined ? { detail: sanitiseFreeText(c.detail, extraSecrets) } : {}),
   }));
 
   const changedFiles: ChangedFilesSummary | null = input.changed_files
     ? {
         count: Math.max(0, Math.floor(input.changed_files.count)),
-        paths: input.changed_files.paths.map((p) => sanitisePath(p, extraSecrets) ?? ""),
+        paths: input.changed_files.paths.map((p) => sanitisePath(p, extraSecrets) ?? ''),
         truncated: !!input.changed_files.truncated,
       }
     : null;
@@ -411,7 +395,7 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
       // reviewer (or a future structural checker) flips it.
       return input.acceptance_criteria.map((criterion) => ({
         criterion: sanitiseFreeText(criterion, extraSecrets),
-        status: "unknown" as const,
+        status: 'unknown' as const,
       }));
     }
     return [];
@@ -424,12 +408,12 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
   // artefact was emitted from a non-empty source without us storing
   // the secret material itself.
   const rawPayload = [
-    input.raw_stdout ?? "",
-    "\n---STDERR---\n",
-    input.raw_stderr ?? "",
-    "\n---REFUSAL---\n",
-    input.refusal_message ?? "",
-  ].join("");
+    input.raw_stdout ?? '',
+    '\n---STDERR---\n',
+    input.raw_stderr ?? '',
+    '\n---REFUSAL---\n',
+    input.refusal_message ?? '',
+  ].join('');
   const payloadSha = sha256Hex(rawPayload);
 
   const safeStdoutRedacted = input.log_stdout_redacted
@@ -437,14 +421,14 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
     : null;
 
   const tokenCount =
-    countRedactions(input.raw_stdout ?? "", safeRefusalMsg, "<redacted>") +
-    countRedactions(input.raw_stdout ?? "", safeStdoutRedacted ?? "", "<redacted>");
+    countRedactions(input.raw_stdout ?? '', safeRefusalMsg, '<redacted>') +
+    countRedactions(input.raw_stdout ?? '', safeStdoutRedacted ?? '', '<redacted>');
   const urlCount =
-    countRedactions("", safeRefusalMsg, "<redacted-url>") +
-    countRedactions("", safeStdoutRedacted ?? "", "<redacted-url>");
+    countRedactions('', safeRefusalMsg, '<redacted-url>') +
+    countRedactions('', safeStdoutRedacted ?? '', '<redacted-url>');
   const podCount =
-    countRedactions("", safeRefusalMsg, "<redacted-pod-id>") +
-    countRedactions("", safeStdoutRedacted ?? "", "<redacted-pod-id>");
+    countRedactions('', safeRefusalMsg, '<redacted-pod-id>') +
+    countRedactions('', safeStdoutRedacted ?? '', '<redacted-pod-id>');
 
   const startedAt = input.started_at.toISOString();
   const endedAt = input.ended_at.toISOString();
@@ -460,13 +444,13 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
     sandbox_path: safeSandbox,
     provider: safeProvider,
     runtime_id: safeRuntimeId,
-    cost_class: input.cost_class ?? "unknown",
-    risk_level: input.risk_level ?? "unknown",
+    cost_class: input.cost_class ?? 'unknown',
+    risk_level: input.risk_level ?? 'unknown',
     classifier: input.classifier ?? null,
     pack_path: safePackPath,
     pack_sha256: packSha,
-    prompt_version: input.prompt_version ?? "unset@0.0.0",
-    skill_version: input.skill_version ?? "unset@0.0.0",
+    prompt_version: input.prompt_version ?? 'unset@0.0.0',
+    skill_version: input.skill_version ?? 'unset@0.0.0',
     outcome: input.outcome,
     refusal_code: input.refusal_code ?? null,
     refusal_message: safeRefusalMsg,
@@ -482,13 +466,13 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
     started_at: startedAt,
     ended_at: endedAt,
     duration_ms: durationMs,
-    artefact_class: input.artefact_class ?? "operational_log",
-    training_eligibility: input.training_eligibility ?? "needs_human_decision",
-    quality_label: input.quality_label ?? "unknown",
-    eligibility_reason: sanitiseFreeText(input.eligibility_reason ?? "", extraSecrets),
+    artefact_class: input.artefact_class ?? 'operational_log',
+    training_eligibility: input.training_eligibility ?? 'needs_human_decision',
+    quality_label: input.quality_label ?? 'unknown',
+    eligibility_reason: sanitiseFreeText(input.eligibility_reason ?? '', extraSecrets),
     redaction: {
-      redactor: "dispatcher.redactOutput",
-      applied_patterns: ["tokens", "urls", "pod_ids", "extra_secrets"],
+      redactor: 'dispatcher.redactOutput',
+      applied_patterns: ['tokens', 'urls', 'pod_ids', 'extra_secrets'],
       redaction_counts: {
         tokens: tokenCount,
         urls: urlCount,
@@ -508,7 +492,7 @@ export function buildRunArtefact(input: RunArtefactInput): RunArtefact {
  * key ordering keeps diffs in the `runs/` tree readable.
  */
 export function renderRunArtefactJson(artefact: RunArtefact): string {
-  return JSON.stringify(artefact, null, 2) + "\n";
+  return JSON.stringify(artefact, null, 2) + '\n';
 }
 
 /**
@@ -522,12 +506,12 @@ export function formatArtefactCompactRef(args: {
 }): string {
   const { artefact, artefactPath } = args;
   const sha = artefact.redaction.pre_redaction_payload_sha256.slice(0, 12);
-  const cls = artefact.artefact_class === "dataset_candidate" ? "dataset" : "log";
+  const cls = artefact.artefact_class === 'dataset_candidate' ? 'dataset' : 'log';
   return [
     `LAT-140 artefact: \`${artefactPath}\``,
     `payload-sha256: \`${sha}\``,
     `class=${cls}`,
     `quality=${artefact.quality_label}`,
     `outcome=${artefact.outcome}`,
-  ].join(" · ");
+  ].join(' · ');
 }

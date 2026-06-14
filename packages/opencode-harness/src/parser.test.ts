@@ -1,7 +1,7 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 
-import { parseTicketPack } from "./parser.js";
+import { parseTicketPack } from './parser.js';
 
 const MIN_PACK = `# opencode Ticket Pack: tiny
 
@@ -40,46 +40,43 @@ Touch one file.
 - **PR base:** \`main\`
 `;
 
-describe("parseTicketPack", () => {
-  it("parses header, goal, acceptance criteria, files, branch rules", () => {
-    const { pack, errors } = parseTicketPack(MIN_PACK, "/tmp/min.md");
+describe('parseTicketPack', () => {
+  it('parses header, goal, acceptance criteria, files, branch rules', () => {
+    const { pack, errors } = parseTicketPack(MIN_PACK, '/tmp/min.md');
     assert.deepEqual(errors, []);
     assert.ok(pack);
-    assert.equal(pack!.header.linearId, "LAT-42");
-    assert.equal(pack!.header.costBand, "low");
-    assert.equal(pack!.header.riskLevel, "low");
-    assert.equal(pack!.header.readinessStatus, "ready");
-    assert.equal(pack!.goal, "Touch one file.");
-    assert.deepEqual(pack!.acceptanceCriteria, ["file is touched."]);
-    assert.deepEqual(pack!.filesInScope, ["packages/foo/src/index.ts"]);
+    assert.equal(pack!.header.linearId, 'LAT-42');
+    assert.equal(pack!.header.costBand, 'low');
+    assert.equal(pack!.header.riskLevel, 'low');
+    assert.equal(pack!.header.readinessStatus, 'ready');
+    assert.equal(pack!.goal, 'Touch one file.');
+    assert.deepEqual(pack!.acceptanceCriteria, ['file is touched.']);
+    assert.deepEqual(pack!.filesInScope, ['packages/foo/src/index.ts']);
     assert.equal(pack!.filesForbidden.length >= 1, true);
-    assert.equal(pack!.branchRules.branch, "lat-42-touch-file");
-    assert.equal(pack!.branchRules.prTitlePrefix, "LAT-42:");
-    assert.equal(pack!.branchRules.prBase, "main");
+    assert.equal(pack!.branchRules.branch, 'lat-42-touch-file');
+    assert.equal(pack!.branchRules.prTitlePrefix, 'LAT-42:');
+    assert.equal(pack!.branchRules.prBase, 'main');
     assert.equal(
-      pack!.expectedChecks.some((c) => c.includes("npm run check")),
+      pack!.expectedChecks.some((c) => c.includes('npm run check')),
       true,
     );
   });
 
-  it("reports missing header fields", () => {
+  it('reports missing header fields', () => {
     const broken = `# pack\n\n## Header\n\n- **Pack version:** 1\n\n## Goal\n\nfoo\n`;
-    const { pack, errors } = parseTicketPack(broken, "/tmp/broken.md");
+    const { pack, errors } = parseTicketPack(broken, '/tmp/broken.md');
     assert.equal(pack, null);
-    assert.ok(errors.some((e) => e.toLowerCase().includes("linear id")));
-    assert.ok(errors.some((e) => e.toLowerCase().includes("readiness")));
+    assert.ok(errors.some((e) => e.toLowerCase().includes('linear id')));
+    assert.ok(errors.some((e) => e.toLowerCase().includes('readiness')));
   });
 
-  it("accepts inline allowlist (comma-separated)", () => {
+  it('accepts inline allowlist (comma-separated)', () => {
     const inline = MIN_PACK.replace(
-      "- **Files in scope (allowlist):**\n  - packages/foo/src/index.ts",
-      "- **Files in scope (allowlist):** packages/a/src/x.ts, packages/a/src/y.ts",
+      '- **Files in scope (allowlist):**\n  - packages/foo/src/index.ts',
+      '- **Files in scope (allowlist):** packages/a/src/x.ts, packages/a/src/y.ts',
     );
-    const { pack } = parseTicketPack(inline, "/tmp/inline.md");
+    const { pack } = parseTicketPack(inline, '/tmp/inline.md');
     assert.ok(pack);
-    assert.deepEqual(pack!.filesInScope, [
-      "packages/a/src/x.ts",
-      "packages/a/src/y.ts",
-    ]);
+    assert.deepEqual(pack!.filesInScope, ['packages/a/src/x.ts', 'packages/a/src/y.ts']);
   });
 });

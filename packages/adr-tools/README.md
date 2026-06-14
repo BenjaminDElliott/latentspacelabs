@@ -45,12 +45,9 @@ npm run validate --workspace @latentspacelabs/adr-tools -- path/to/dir
 ## Library surface
 
 ```ts
-import {
-  validateAdrDirectory,
-  formatResult,
-} from "@latentspacelabs/adr-tools";
+import { validateAdrDirectory, formatResult } from '@latentspacelabs/adr-tools';
 
-const result = await validateAdrDirectory("docs/decisions");
+const result = await validateAdrDirectory('docs/decisions');
 console.log(formatResult(result));
 if (result.errors.length > 0) process.exit(1);
 ```

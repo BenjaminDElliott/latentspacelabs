@@ -17,7 +17,7 @@ import type {
   RetroAggregationOptions,
   RetroAggregationResult,
   RetroCandidate,
-} from "./contract.js";
+} from './contract.js';
 
 /**
  * Suggest a promotion path per ADR-0010 for each failure category. The
@@ -27,40 +27,38 @@ import type {
  * cause so the retro surface stays small.
  */
 const PROMOTION_BY_CATEGORY: Record<FailureCategory, string> = {
-  none: "archive-with-rationale: clean run; no promotion needed.",
+  none: 'archive-with-rationale: clean run; no promotion needed.',
 
   // LAT-61 adapter-refusal categories — mostly prompt/template updates or
   // ADR candidates, because the recurrence usually means the dispatcher
   // doc or the ticket template is missing guidance the adapter now
   // enforces structurally.
   missing_approval:
-    "prompt/template update: dispatcher skill must surface the approval-required rule more clearly.",
+    'prompt/template update: dispatcher skill must surface the approval-required rule more clearly.',
   unsupported_ticket_shape:
-    "backlog item: widen adapter coverage or refuse earlier at readiness check.",
+    'backlog item: widen adapter coverage or refuse earlier at readiness check.',
   missing_minimum_context:
-    "prompt/template update: agent-ready ticket template must carry ticket title / summary / skill name.",
+    'prompt/template update: agent-ready ticket template must carry ticket title / summary / skill name.',
   missing_repo:
-    "prompt/template update: dispatcher must require repo=owner/name on every invocation.",
+    'prompt/template update: dispatcher must require repo=owner/name on every invocation.',
   missing_budget_cap:
-    "prompt/template update: agent-ready pre-flight must refuse tickets without numeric budget caps.",
+    'prompt/template update: agent-ready pre-flight must refuse tickets without numeric budget caps.',
   cost_runaway_risk:
-    "ADR candidate: recurring runaway-cost observations warrant revisiting ADR-0009 cost bands.",
+    'ADR candidate: recurring runaway-cost observations warrant revisiting ADR-0009 cost bands.',
   provider_refused:
-    "backlog item: investigate why the provider refused and whether the refusal is load-bearing.",
-  provider_error:
-    "backlog item: triage provider error class; possible provider adapter bug.",
-  provider_timeout:
-    "backlog item: extend timeout budget, split ticket scope, or switch provider.",
+    'backlog item: investigate why the provider refused and whether the refusal is load-bearing.',
+  provider_error: 'backlog item: triage provider error class; possible provider adapter bug.',
+  provider_timeout: 'backlog item: extend timeout budget, split ticket scope, or switch provider.',
   provider_not_configured:
-    "prompt/template update: runtime bootstrap docs must name the required provider config.",
+    'prompt/template update: runtime bootstrap docs must name the required provider config.',
 
   // Harness-added categories.
   missing_evidence_floor:
-    "prompt/template update: code-producing agent prompt must include the ADR-0006 / ADR-0003 evidence requirements.",
+    'prompt/template update: code-producing agent prompt must include the ADR-0006 / ADR-0003 evidence requirements.',
   recommendation_ladder_violation:
-    "prompt/template update: QA / PR-review agent prompt must reinforce the ADR-0007 severity ladder.",
+    'prompt/template update: QA / PR-review agent prompt must reinforce the ADR-0007 severity ladder.',
   preflight_ticket_not_agent_ready:
-    "prompt/template update: intake / refinement prompt must enforce agent-ready pre-flight before labelling.",
+    'prompt/template update: intake / refinement prompt must enforce agent-ready pre-flight before labelling.',
 };
 
 /**
@@ -85,7 +83,7 @@ export function aggregateRunsForRetro(
 
   for (const run of runs) {
     const cat = run.failure_category;
-    if (cat === "none") continue; // never a pattern
+    if (cat === 'none') continue; // never a pattern
     let bucket = byCategory.get(cat);
     if (!bucket) {
       bucket = { runIds: [], linearIds: [], seenLinear: new Set() };

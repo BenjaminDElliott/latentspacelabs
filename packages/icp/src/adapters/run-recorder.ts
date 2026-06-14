@@ -7,7 +7,7 @@
  * returns the serialised artefacts plus their conventional path so the
  * dispatch skill, tests, and the CLI can decide how to persist them.
  */
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 import {
   RUN_REPORT_SCHEMA_VERSION,
   type RunRecorder,
@@ -15,7 +15,7 @@ import {
   type RunRecorderOutput,
   type RunReport,
   type RunReportStatus,
-} from "../runtime/contract.js";
+} from '../runtime/contract.js';
 
 export function createRunRecorder(): RunRecorder {
   return {
@@ -25,9 +25,9 @@ export function createRunRecorder(): RunRecorder {
       const report: RunReport = {
         schema_version: RUN_REPORT_SCHEMA_VERSION,
         run_id: runId,
-        agent_type: "coding",
+        agent_type: 'coding',
         status,
-        triggered_by: "user",
+        triggered_by: 'user',
         linear_issue_id: input.linear_issue_id,
         autonomy_level: input.autonomy_level,
         started_at: input.started_at.toISOString(),
@@ -35,9 +35,9 @@ export function createRunRecorder(): RunRecorder {
         summary: input.summary,
         decisions: input.reasons,
         next_actions: [input.next_action],
-        errors: input.agent_result?.exit_signal === "failed" ? ["agent run failed"] : [],
+        errors: input.agent_result?.exit_signal === 'failed' ? ['agent run failed'] : [],
         cost: {
-          band: input.agent_result?.cost_band ?? "unknown",
+          band: input.agent_result?.cost_band ?? 'unknown',
           budget_cap_usd: input.budget_cap_usd,
           spent_usd: input.agent_result?.spent_usd ?? null,
           band_unavailable_reason: costBandUnavailableReason(input),
@@ -62,25 +62,25 @@ export function createRunRecorder(): RunRecorder {
 }
 
 function mapVerdictToStatus(input: RunRecorderInput): RunReportStatus {
-  if (input.dry_run) return "succeeded";
-  if (input.verdict === "blocked" || input.verdict === "stop") return "needs_human";
-  if (!input.agent_result) return "needs_human";
+  if (input.dry_run) return 'succeeded';
+  if (input.verdict === 'blocked' || input.verdict === 'stop') return 'needs_human';
+  if (!input.agent_result) return 'needs_human';
   switch (input.agent_result.exit_signal) {
-    case "succeeded":
-      return "succeeded";
-    case "failed":
-      return "failed";
-    case "cancelled":
-      return "cancelled";
-    case "needs_human":
-      return "needs_human";
+    case 'succeeded':
+      return 'succeeded';
+    case 'failed':
+      return 'failed';
+    case 'cancelled':
+      return 'cancelled';
+    case 'needs_human':
+      return 'needs_human';
   }
 }
 
 function renderMarkdown(report: RunReport, input: RunRecorderInput): string {
   const lines: string[] = [];
   lines.push(`# Agent Run Report: ${report.run_id}`);
-  lines.push("");
+  lines.push('');
   lines.push(`- **Run ID:** ${report.run_id}`);
   lines.push(`- **Agent type:** ${report.agent_type}`);
   lines.push(`- **Autonomy level:** ${report.autonomy_level}`);
@@ -91,34 +91,38 @@ function renderMarkdown(report: RunReport, input: RunRecorderInput): string {
   lines.push(
     `- **Budget state:** ${formatBudgetState(report.cost.budget_cap_usd, report.cost.spent_usd)}`,
   );
-  lines.push(`- **PR link:** ${report.correlation.pr_url ?? "n/a"}`);
-  lines.push(`- **PR branch / commit:** ${report.correlation.pr_branch ?? "n/a"} / ${report.correlation.commit_sha ?? "n/a"}`);
-  lines.push("");
-  lines.push("## Narrative");
-  lines.push("");
+  lines.push(`- **PR link:** ${report.correlation.pr_url ?? 'n/a'}`);
+  lines.push(
+    `- **PR branch / commit:** ${report.correlation.pr_branch ?? 'n/a'} / ${report.correlation.commit_sha ?? 'n/a'}`,
+  );
+  lines.push('');
+  lines.push('## Narrative');
+  lines.push('');
   lines.push(input.summary);
   if (input.dry_run) {
-    lines.push("");
-    lines.push("_Dry-run: policy evaluated only; no agent was invoked and no Linear write-back was posted._");
+    lines.push('');
+    lines.push(
+      '_Dry-run: policy evaluated only; no agent was invoked and no Linear write-back was posted._',
+    );
   }
-  lines.push("");
-  lines.push("## Evidence");
-  lines.push("");
+  lines.push('');
+  lines.push('## Evidence');
+  lines.push('');
   for (const r of report.decisions) lines.push(`- ${r}`);
-  if (report.decisions.length === 0) lines.push("- (no decisions recorded)");
-  lines.push("");
-  lines.push("## Next action");
-  lines.push("");
-  lines.push(`- ${report.next_actions[0] ?? "n/a"}`);
-  lines.push("");
-  lines.push("## Open questions");
-  lines.push("");
+  if (report.decisions.length === 0) lines.push('- (no decisions recorded)');
+  lines.push('');
+  lines.push('## Next action');
+  lines.push('');
+  lines.push(`- ${report.next_actions[0] ?? 'n/a'}`);
+  lines.push('');
+  lines.push('## Open questions');
+  lines.push('');
   if (input.open_questions.length === 0) {
-    lines.push("- none");
+    lines.push('- none');
   } else {
     for (const q of input.open_questions) lines.push(`- ${q}`);
   }
-  return lines.join("\n") + "\n";
+  return lines.join('\n') + '\n';
 }
 
 /**
@@ -132,20 +136,20 @@ function renderMarkdown(report: RunReport, input: RunRecorderInput): string {
 function costBandUnavailableReason(input: RunRecorderInput): string | null {
   const res = input.agent_result;
   if (!res) {
-    if (input.dry_run) return "dry-run: no agent invocation; no spend to record";
-    return "no agent run was invoked (policy refused or pre-dispatch abort)";
+    if (input.dry_run) return 'dry-run: no agent invocation; no spend to record';
+    return 'no agent run was invoked (policy refused or pre-dispatch abort)';
   }
-  if (res.cost_band !== "unknown") return null;
+  if (res.cost_band !== 'unknown') return null;
   const providerReason = res.cost_band_unavailable_reason;
-  if (typeof providerReason === "string" && providerReason.trim().length > 0) {
+  if (typeof providerReason === 'string' && providerReason.trim().length > 0) {
     return providerReason.trim();
   }
-  return "provider returned no cost-band evidence (ADR-0009 unknown state)";
+  return 'provider returned no cost-band evidence (ADR-0009 unknown state)';
 }
 
 function formatBudgetState(cap: number | null, spent: number | null): string {
-  if (cap === null) return "cap missing";
-  if (spent === null) return "within cap (spend unknown)";
-  if (spent > cap) return "exceeded";
-  return "within cap";
+  if (cap === null) return 'cap missing';
+  if (spent === null) return 'within cap (spend unknown)';
+  if (spent > cap) return 'exceeded';
+  return 'within cap';
 }

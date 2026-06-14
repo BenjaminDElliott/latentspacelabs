@@ -11,15 +11,15 @@
  * — only the redacted form ever leaves this module.
  */
 
-import { spawn as nodeSpawn } from "node:child_process";
+import { spawn as nodeSpawn } from 'node:child_process';
 
-import { redactOutput } from "./redact.js";
+import { redactOutput } from './redact.js';
 import type {
   ControlLoopJsonSummary,
   ControlLoopRunResult,
   DispatcherSpawn,
   DispatcherSpawnedProcess,
-} from "./types.js";
+} from './types.js';
 
 export interface RunControlLoopOptions {
   /** Absolute path to the control-loop CLI script. */
@@ -27,7 +27,7 @@ export interface RunControlLoopOptions {
   /** Absolute path to the generated ticket pack. */
   packPath: string;
   /** `mock` | `plan` | `live`. The dispatcher passes through whatever the operator chose. */
-  mode: "mock" | "plan" | "live";
+  mode: 'mock' | 'plan' | 'live';
   /** Working directory for the child process. */
   cwd: string;
   /** Environment for the child process. The dispatcher prunes secrets that the control loop does not need. */
@@ -58,19 +58,19 @@ export async function runControlLoopCli(
   const args: ReadonlyArray<string> = [
     opts.cliPath,
     opts.packPath,
-    "--mode",
+    '--mode',
     opts.mode,
-    "--format",
-    "json",
+    '--format',
+    'json',
   ];
 
-  const child = spawnImpl("node", args, { cwd: opts.cwd, env: opts.env });
+  const child = spawnImpl('node', args, { cwd: opts.cwd, env: opts.env });
 
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   return new Promise<ControlLoopRunResult>((resolve) => {
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
     let settled = false;
 
     const finalise = (exitCode: number, timedOut: boolean) => {
@@ -81,9 +81,7 @@ export async function runControlLoopCli(
         ...(opts.extraSecrets ? { extraSecrets: opts.extraSecrets } : {}),
       });
       const safeStderr = redactOutput(
-        timedOut
-          ? stderr + `\n[dispatcher] control-loop timed out after ${timeoutMs}ms`
-          : stderr,
+        timedOut ? stderr + `\n[dispatcher] control-loop timed out after ${timeoutMs}ms` : stderr,
         {
           ...(opts.extraSecrets ? { extraSecrets: opts.extraSecrets } : {}),
         },
@@ -98,24 +96,24 @@ export async function runControlLoopCli(
 
     const timer = setTimeout(() => {
       try {
-        child.kill("SIGTERM");
+        child.kill('SIGTERM');
       } catch {
         // best effort
       }
       finalise(124, true);
     }, timeoutMs);
 
-    child.stdout.on("data", (chunk) => {
-      stdout += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+    child.stdout.on('data', (chunk) => {
+      stdout += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
     });
-    child.stderr.on("data", (chunk) => {
-      stderr += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+    child.stderr.on('data', (chunk) => {
+      stderr += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
     });
-    child.on("error", () => {
+    child.on('error', () => {
       finalise(1, false);
     });
-    child.on("close", (code) => {
-      finalise(typeof code === "number" ? code : 1, false);
+    child.on('close', (code) => {
+      finalise(typeof code === 'number' ? code : 1, false);
     });
   });
 }
@@ -131,7 +129,7 @@ function extractJsonSummary(stdout: string): ControlLoopJsonSummary | null {
   if (trimmed.length === 0) return null;
 
   // Find the first `{` and try to parse from there.
-  const start = trimmed.indexOf("{");
+  const start = trimmed.indexOf('{');
   if (start < 0) return null;
   // Find the matching closing brace by simple bracket counting that
   // skips strings. Good enough for the canonical control-loop output.
@@ -139,11 +137,11 @@ function extractJsonSummary(stdout: string): ControlLoopJsonSummary | null {
   let inString = false;
   let escape = false;
   for (let i = start; i < trimmed.length; i += 1) {
-    const c = trimmed[i] ?? "";
+    const c = trimmed[i] ?? '';
     if (inString) {
       if (escape) {
         escape = false;
-      } else if (c === "\\") {
+      } else if (c === '\\') {
         escape = true;
       } else if (c === '"') {
         inString = false;
@@ -152,9 +150,9 @@ function extractJsonSummary(stdout: string): ControlLoopJsonSummary | null {
     }
     if (c === '"') {
       inString = true;
-    } else if (c === "{") {
+    } else if (c === '{') {
       depth += 1;
-    } else if (c === "}") {
+    } else if (c === '}') {
       depth -= 1;
       if (depth === 0) {
         const candidate = trimmed.slice(start, i + 1);
@@ -172,10 +170,10 @@ function extractJsonSummary(stdout: string): ControlLoopJsonSummary | null {
 }
 
 function looksLikeSummary(v: unknown): v is ControlLoopJsonSummary {
-  if (typeof v !== "object" || v === null) return false;
+  if (typeof v !== 'object' || v === null) return false;
   const o = v as { schemaVersion?: unknown; evidence?: unknown };
-  if (typeof o.schemaVersion !== "string") return false;
-  if (typeof o.evidence !== "object" || o.evidence === null) return false;
+  if (typeof o.schemaVersion !== 'string') return false;
+  if (typeof o.evidence !== 'object' || o.evidence === null) return false;
   const ev = o.evidence as { state?: unknown };
-  return typeof ev.state === "string";
+  return typeof ev.state === 'string';
 }

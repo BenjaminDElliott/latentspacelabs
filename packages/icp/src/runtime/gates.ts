@@ -31,14 +31,14 @@
  * explanation and a numeric severity so callers can prioritise.
  */
 export type ForbiddenAction =
-  | { code: "agent_type_forbidden"; severity: 1; message: string }
-  | { code: "repo_forbidden"; severity: 1; message: string }
-  | { code: "branch_forbidden"; severity: 2; message: string }
-  | { code: "branch_target_forbidden"; severity: 2; message: string }
-  | { code: "autonomy_exceeds_cap"; severity: 1; message: string }
-  | { code: "budget_cap_missing"; severity: 2; message: string }
-  | { code: "cost_band_runaway_risk"; severity: 1; message: string }
-  | { code: "forbidden_ticket_context"; severity: 2; message: string };
+  | { code: 'agent_type_forbidden'; severity: 1; message: string }
+  | { code: 'repo_forbidden'; severity: 1; message: string }
+  | { code: 'branch_forbidden'; severity: 2; message: string }
+  | { code: 'branch_target_forbidden'; severity: 2; message: string }
+  | { code: 'autonomy_exceeds_cap'; severity: 1; message: string }
+  | { code: 'budget_cap_missing'; severity: 2; message: string }
+  | { code: 'cost_band_runaway_risk'; severity: 1; message: string }
+  | { code: 'forbidden_ticket_context'; severity: 2; message: string };
 
 /**
  * Outcome of a pre-run gate evaluation.
@@ -48,8 +48,8 @@ export type ForbiddenAction =
  * (e.g. elevated cost band warning).
  */
 export type GateOutcome =
-  | { kind: "allowed"; hints: ReadonlyArray<string> }
-  | { kind: "blocked"; blockedBy: ReadonlyArray<ForbiddenAction> };
+  | { kind: 'allowed'; hints: ReadonlyArray<string> }
+  | { kind: 'blocked'; blockedBy: ReadonlyArray<ForbiddenAction> };
 
 /**
  * Evidence the gate logs about its decision. Every gate evaluation
@@ -168,10 +168,10 @@ export interface IsolationRules {
 
 /** Numeric autonomy rank for gate comparison. Higher = more dangerous. */
 const AUTONOMY_RANK: Record<string, number> = {
-  "L1-read-only": 1,
-  "L2-propose": 2,
-  "L3-with-approval": 3,
-  "L4-autonomous": 4,
+  'L1-read-only': 1,
+  'L2-propose': 2,
+  'L3-with-approval': 3,
+  'L4-autonomous': 4,
 };
 
 /**
@@ -181,37 +181,37 @@ const AUTONOMY_RANK: Record<string, number> = {
 function defaultForbiddenActions(): ReadonlyArray<ForbiddenAction> {
   return [
     {
-      code: "agent_type_forbidden",
+      code: 'agent_type_forbidden',
       severity: 1,
       message: `agent type is not in the approved set (expected "coding")`,
     },
     {
-      code: "repo_forbidden",
+      code: 'repo_forbidden',
       severity: 1,
       message: `repository is not in the approved list`,
     },
     {
-      code: "branch_target_forbidden",
+      code: 'branch_target_forbidden',
       severity: 2,
       message: `branch target is in the forbidden set`,
     },
     {
-      code: "autonomy_exceeds_cap",
+      code: 'autonomy_exceeds_cap',
       severity: 1,
       message: `requested autonomy exceeds runtime cap`,
     },
     {
-      code: "budget_cap_missing",
+      code: 'budget_cap_missing',
       severity: 2,
       message: `budget cap is required for side-effecting runs`,
     },
     {
-      code: "cost_band_runaway_risk",
+      code: 'cost_band_runaway_risk',
       severity: 1,
       message: `pre-invocation cost band is runaway_risk`,
     },
     {
-      code: "forbidden_ticket_context",
+      code: 'forbidden_ticket_context',
       severity: 2,
       message: `ticket context contains a forbidden directive`,
     },
@@ -229,14 +229,11 @@ function defaultForbiddenActions(): ReadonlyArray<ForbiddenAction> {
  * - prefix wildcard: `"lat-*"` matches `"lat-186-anything"`
  * - regex: `"/^release-.*$/"` matches `"release-1.0.0"`
  */
-export function branchMatches(
-  target: string,
-  patterns: ReadonlyArray<string>,
-): boolean {
+export function branchMatches(target: string, patterns: ReadonlyArray<string>): boolean {
   if (patterns.length === 0) return true;
   for (const pattern of patterns) {
-    if (pattern === "*") return true;
-    if (pattern.startsWith("/") && pattern.endsWith("/")) {
+    if (pattern === '*') return true;
+    if (pattern.startsWith('/') && pattern.endsWith('/')) {
       // Regex pattern
       try {
         const re = new RegExp(pattern.slice(1, -1));
@@ -244,7 +241,7 @@ export function branchMatches(
       } catch {
         // Invalid regex — fall through to next pattern
       }
-    } else if (pattern.endsWith("*")) {
+    } else if (pattern.endsWith('*')) {
       // Prefix wildcard
       const prefix = pattern.slice(0, -1);
       if (target.startsWith(prefix)) return true;
@@ -266,10 +263,10 @@ export function branchMatches(
 export function repoApproved(repo: string, approved: ReadonlyArray<string>): boolean {
   if (approved.length === 0) return true;
   for (const a of approved) {
-    if (a === "*") return true;
-    if (a.endsWith("/*")) {
+    if (a === '*') return true;
+    if (a.endsWith('/*')) {
       const owner = a.slice(0, -2);
-      if (repo.startsWith(owner + "/")) return true;
+      if (repo.startsWith(owner + '/')) return true;
     }
     if (repo === a) return true;
   }
@@ -302,19 +299,17 @@ export function runPreRunGate(
   const { agent_type, linear_issue_id } = input;
 
   // Always run these rules regardless of dry_run.
-  rulesApplied.push("agent_type_check");
-  rulesApplied.push("repo_check");
-  rulesApplied.push("branch_target_check");
-  rulesApplied.push("autonomy_check");
-  rulesApplied.push("budget_cap_check");
-  rulesApplied.push("cost_band_check");
-  rulesApplied.push("guardrail_check");
+  rulesApplied.push('agent_type_check');
+  rulesApplied.push('repo_check');
+  rulesApplied.push('branch_target_check');
+  rulesApplied.push('autonomy_check');
+  rulesApplied.push('budget_cap_check');
+  rulesApplied.push('cost_band_check');
+  rulesApplied.push('guardrail_check');
 
   // 1. Agent type check — always enforced.
-  if (agent_type !== "coding") {
-    const action = rules.forbidden_actions.find(
-      (a) => a.code === "agent_type_forbidden",
-    );
+  if (agent_type !== 'coding') {
+    const action = rules.forbidden_actions.find((a) => a.code === 'agent_type_forbidden');
     if (action) {
       blockedBy.push({
         ...action,
@@ -326,9 +321,7 @@ export function runPreRunGate(
   // 2. Repository check.
   if (input.repo) {
     if (!repoApproved(input.repo, rules.approved_repos)) {
-      const action = rules.forbidden_actions.find(
-        (a) => a.code === "repo_forbidden",
-      );
+      const action = rules.forbidden_actions.find((a) => a.code === 'repo_forbidden');
       if (action) {
         blockedBy.push({
           ...action,
@@ -340,13 +333,9 @@ export function runPreRunGate(
 
   // 3. Branch target check (always enforced).
   if (input.branch_target) {
-    const targetForbidden = rules.forbidden_branch_targets.includes(
-      input.branch_target,
-    );
+    const targetForbidden = rules.forbidden_branch_targets.includes(input.branch_target);
     if (targetForbidden) {
-      const action = rules.forbidden_actions.find(
-        (a) => a.code === "branch_target_forbidden",
-      );
+      const action = rules.forbidden_actions.find((a) => a.code === 'branch_target_forbidden');
       if (action) {
         blockedBy.push({
           ...action,
@@ -360,9 +349,7 @@ export function runPreRunGate(
   if (!input.dry_run) {
     const requestedRank = AUTONOMY_RANK[input.autonomy_level] ?? 0;
     if (requestedRank > rules.max_autonomy_rank) {
-      const action = rules.forbidden_actions.find(
-        (a) => a.code === "autonomy_exceeds_cap",
-      );
+      const action = rules.forbidden_actions.find((a) => a.code === 'autonomy_exceeds_cap');
       if (action) {
         blockedBy.push({
           ...action,
@@ -378,9 +365,7 @@ export function runPreRunGate(
   // 5. Budget cap check (skipped for dry runs).
   if (rules.require_budget_cap && !input.dry_run) {
     if (input.budget_cap_usd === null || input.budget_cap_usd === undefined) {
-      const action = rules.forbidden_actions.find(
-        (a) => a.code === "budget_cap_missing",
-      );
+      const action = rules.forbidden_actions.find((a) => a.code === 'budget_cap_missing');
       if (action) {
         blockedBy.push({
           ...action,
@@ -392,10 +377,8 @@ export function runPreRunGate(
 
   // 6. Cost band check (skipped for dry runs).
   if (rules.block_runaway_cost && !input.dry_run) {
-    if (input.cost_band_observed === "runaway_risk") {
-      const action = rules.forbidden_actions.find(
-        (a) => a.code === "cost_band_runaway_risk",
-      );
+    if (input.cost_band_observed === 'runaway_risk') {
+      const action = rules.forbidden_actions.find((a) => a.code === 'cost_band_runaway_risk');
       if (action) {
         blockedBy.push({
           ...action,
@@ -410,9 +393,7 @@ export function runPreRunGate(
     for (const guardrail of input.guardrails) {
       for (const forbidden of rules.forbidden_guardrails) {
         if (guardrail.toLowerCase().includes(forbidden.toLowerCase())) {
-          const action = rules.forbidden_actions.find(
-            (a) => a.code === "forbidden_ticket_context",
-          );
+          const action = rules.forbidden_actions.find((a) => a.code === 'forbidden_ticket_context');
           if (action) {
             blockedBy.push({
               ...action,
@@ -433,8 +414,8 @@ export function runPreRunGate(
 
   const outcome: GateOutcome =
     blockedBy.length > 0
-      ? { kind: "blocked", blockedBy: Object.freeze([...blockedBy]) }
-      : { kind: "allowed", hints: Object.freeze([...hints]) };
+      ? { kind: 'blocked', blockedBy: Object.freeze([...blockedBy]) }
+      : { kind: 'allowed', hints: Object.freeze([...hints]) };
 
   const evidence: GateEvidence = {
     evaluationId: `eval_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
@@ -462,15 +443,12 @@ export function runPreRunGate(
 export function buildDefaultRules(): IsolationRules {
   return {
     forbidden_actions: defaultForbiddenActions(),
-    approved_repos: ["BenjaminDElliott/latentspacelabs"],
-    forbidden_branch_targets: ["main", "master"],
+    approved_repos: ['BenjaminDElliott/latentspacelabs'],
+    forbidden_branch_targets: ['main', 'master'],
     max_autonomy_rank: 3, // L3-with-approval cap by default
     require_budget_cap: true,
     block_runaway_cost: true,
-    forbidden_guardrails: [
-      "do not touch production secrets",
-      "no auto-merge",
-    ],
+    forbidden_guardrails: ['do not touch production secrets', 'no auto-merge'],
   };
 }
 

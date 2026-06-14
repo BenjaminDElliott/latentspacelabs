@@ -12,51 +12,51 @@
  * optional fields the cockpit actually surfaces. Unknown top-level keys pass
  * through untouched per ADR-0006's extensibility contract.
  */
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import type { CockpitRunRecord } from "./types.js";
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { CockpitRunRecord } from './types.js';
 import type {
   AgentType,
   AutonomyLevel,
   RunReport,
   RunReportStatus,
   TriggeredBy,
-} from "../runtime/contract.js";
+} from '../runtime/contract.js';
 
 const REQUIRED_AGENT_TYPES: ReadonlyArray<AgentType> = [
-  "coding",
-  "qa",
-  "review",
-  "sre",
-  "pm",
-  "research",
-  "observability",
+  'coding',
+  'qa',
+  'review',
+  'sre',
+  'pm',
+  'research',
+  'observability',
 ];
 
 const REQUIRED_STATUSES: ReadonlyArray<RunReportStatus> = [
-  "started",
-  "succeeded",
-  "failed",
-  "cancelled",
-  "needs_human",
+  'started',
+  'succeeded',
+  'failed',
+  'cancelled',
+  'needs_human',
 ];
 
 const REQUIRED_AUTONOMY: ReadonlyArray<AutonomyLevel> = [
-  "L1-read-only",
-  "L2-propose",
-  "L3-with-approval",
-  "L4-autonomous",
+  'L1-read-only',
+  'L2-propose',
+  'L3-with-approval',
+  'L4-autonomous',
 ];
 
 const TRIGGERED_BY: ReadonlyArray<TriggeredBy> = [
-  "user",
-  "linear_status",
-  "schedule",
-  "webhook",
-  "agent",
-  "github_comment",
-  "hook",
-  "mcp",
+  'user',
+  'linear_status',
+  'schedule',
+  'webhook',
+  'agent',
+  'github_comment',
+  'hook',
+  'mcp',
 ];
 
 export interface ReaderResult {
@@ -76,11 +76,11 @@ export async function readRunsDir(runsDir: string): Promise<ReaderResult> {
     entries = await readdir(runsDir);
   } catch (err) {
     const code = (err as NodeJS.ErrnoException | null)?.code;
-    if (code === "ENOENT") return { runs: [], rejected: [] };
+    if (code === 'ENOENT') return { runs: [], rejected: [] };
     throw err;
   }
 
-  const jsonFiles = entries.filter((e) => e.endsWith(".json"));
+  const jsonFiles = entries.filter((e) => e.endsWith('.json'));
   const runs: CockpitRunRecord[] = [];
   const rejected: { _path: string; reason: string }[] = [];
 
@@ -88,7 +88,7 @@ export async function readRunsDir(runsDir: string): Promise<ReaderResult> {
     const path = join(runsDir, name);
     let raw: string;
     try {
-      raw = await readFile(path, "utf8");
+      raw = await readFile(path, 'utf8');
     } catch (err) {
       rejected.push({ path, reason: `read failed: ${String(err)}` });
       continue;
@@ -118,23 +118,23 @@ export function parseRunJson(
   } catch (err) {
     return { ok: false, reason: `invalid JSON: ${String(err)}` };
   }
-  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
-    return { ok: false, reason: "envelope is not a JSON object" };
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+    return { ok: false, reason: 'envelope is not a JSON object' };
   }
   const env = obj as Record<string, unknown>;
 
-  const schemaVersion = str(env["schema_version"]);
-  const runId = str(env["run_id"]);
-  const agentType = str(env["agent_type"]);
-  const status = str(env["status"]);
-  const triggeredBy = str(env["triggered_by"]);
-  const linearIssueId = str(env["linear_issue_id"]);
-  const autonomyLevel = str(env["autonomy_level"]);
-  const startedAt = str(env["started_at"]);
-  const endedAt = str(env["ended_at"]);
+  const schemaVersion = str(env['schema_version']);
+  const runId = str(env['run_id']);
+  const agentType = str(env['agent_type']);
+  const status = str(env['status']);
+  const triggeredBy = str(env['triggered_by']);
+  const linearIssueId = str(env['linear_issue_id']);
+  const autonomyLevel = str(env['autonomy_level']);
+  const startedAt = str(env['started_at']);
+  const endedAt = str(env['ended_at']);
 
-  if (!schemaVersion) return { ok: false, reason: "missing schema_version" };
-  if (!runId) return { ok: false, reason: "missing run_id" };
+  if (!schemaVersion) return { ok: false, reason: 'missing schema_version' };
+  if (!runId) return { ok: false, reason: 'missing run_id' };
   if (!agentType || !REQUIRED_AGENT_TYPES.includes(agentType as AgentType)) {
     return { ok: false, reason: `invalid agent_type: ${String(agentType)}` };
   }
@@ -147,15 +147,13 @@ export function parseRunJson(
   // otherwise-useful records.
   const tb: TriggeredBy = TRIGGERED_BY.includes(triggeredBy as TriggeredBy)
     ? (triggeredBy as TriggeredBy)
-    : "user";
-  const au: AutonomyLevel = REQUIRED_AUTONOMY.includes(
-    autonomyLevel as AutonomyLevel,
-  )
+    : 'user';
+  const au: AutonomyLevel = REQUIRED_AUTONOMY.includes(autonomyLevel as AutonomyLevel)
     ? (autonomyLevel as AutonomyLevel)
-    : "L3-with-approval";
+    : 'L3-with-approval';
 
-  const cost = pickCost(env["cost"]);
-  const correlation = pickCorrelation(env["correlation"]);
+  const cost = pickCost(env['cost']);
+  const correlation = pickCorrelation(env['correlation']);
 
   const record: CockpitRunRecord = {
     schema_version: schemaVersion,
@@ -163,32 +161,32 @@ export function parseRunJson(
     agent_type: agentType as AgentType,
     status: status as RunReportStatus,
     triggered_by: tb,
-    linear_issue_id: linearIssueId || "",
+    linear_issue_id: linearIssueId || '',
     autonomy_level: au,
-    started_at: startedAt ?? "",
-    ended_at: endedAt ?? "",
-    summary: str(env["summary"]) ?? "",
-    decisions: strArray(env["decisions"]),
-    next_actions: strArray(env["next_actions"]),
-    errors: strArray(env["errors"]),
+    started_at: startedAt ?? '',
+    ended_at: endedAt ?? '',
+    summary: str(env['summary']) ?? '',
+    decisions: strArray(env['decisions']),
+    next_actions: strArray(env['next_actions']),
+    errors: strArray(env['errors']),
     cost,
     correlation,
   };
 
-  const riskLevel = str(env["risk_level"]);
+  const riskLevel = str(env['risk_level']);
   if (
-    riskLevel === "low" ||
-    riskLevel === "medium" ||
-    riskLevel === "high" ||
-    riskLevel === "critical"
+    riskLevel === 'low' ||
+    riskLevel === 'medium' ||
+    riskLevel === 'high' ||
+    riskLevel === 'critical'
   ) {
     record.risk_level = riskLevel;
   }
 
-  const meta = env["agent_metadata"];
-  if (typeof meta === "object" && meta !== null && !Array.isArray(meta)) {
+  const meta = env['agent_metadata'];
+  if (typeof meta === 'object' && meta !== null && !Array.isArray(meta)) {
     const mm = meta as Record<string, unknown>;
-    const model = str(mm["model"]);
+    const model = str(mm['model']);
     if (model) record.agent_metadata = { ...mm, model };
     else record.agent_metadata = { ...mm };
   }
@@ -197,54 +195,50 @@ export function parseRunJson(
 }
 
 function str(v: unknown): string | undefined {
-  return typeof v === "string" ? v : undefined;
+  return typeof v === 'string' ? v : undefined;
 }
 
 function strArray(v: unknown): ReadonlyArray<string> {
   if (!Array.isArray(v)) return [];
-  return v.filter((x): x is string => typeof x === "string");
+  return v.filter((x): x is string => typeof x === 'string');
 }
 
-function pickCost(v: unknown): RunReport["cost"] {
-  const empty: RunReport["cost"] = {
-    band: "unknown",
+function pickCost(v: unknown): RunReport['cost'] {
+  const empty: RunReport['cost'] = {
+    band: 'unknown',
     budget_cap_usd: null,
     spent_usd: null,
     band_unavailable_reason: null,
   };
-  if (typeof v !== "object" || v === null || Array.isArray(v)) return empty;
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return empty;
   const c = v as Record<string, unknown>;
-  const band = str(c["band"]);
-  const bandSafe: RunReport["cost"]["band"] =
-    band === "normal" ||
-    band === "elevated" ||
-    band === "runaway_risk" ||
-    band === "unknown"
+  const band = str(c['band']);
+  const bandSafe: RunReport['cost']['band'] =
+    band === 'normal' || band === 'elevated' || band === 'runaway_risk' || band === 'unknown'
       ? band
-      : "unknown";
-  const reason = c["band_unavailable_reason"];
+      : 'unknown';
+  const reason = c['band_unavailable_reason'];
   return {
     band: bandSafe,
-    budget_cap_usd: typeof c["budget_cap_usd"] === "number" ? c["budget_cap_usd"] : null,
-    spent_usd: typeof c["spent_usd"] === "number" ? c["spent_usd"] : null,
-    band_unavailable_reason:
-      typeof reason === "string" && reason.length > 0 ? reason : null,
+    budget_cap_usd: typeof c['budget_cap_usd'] === 'number' ? c['budget_cap_usd'] : null,
+    spent_usd: typeof c['spent_usd'] === 'number' ? c['spent_usd'] : null,
+    band_unavailable_reason: typeof reason === 'string' && reason.length > 0 ? reason : null,
   };
 }
 
-function pickCorrelation(v: unknown): RunReport["correlation"] {
-  const empty: RunReport["correlation"] = {
+function pickCorrelation(v: unknown): RunReport['correlation'] {
+  const empty: RunReport['correlation'] = {
     pr_url: null,
     pr_branch: null,
     commit_sha: null,
     linear_comment_url: null,
   };
-  if (typeof v !== "object" || v === null || Array.isArray(v)) return empty;
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return empty;
   const c = v as Record<string, unknown>;
   return {
-    pr_url: str(c["pr_url"]) ?? null,
-    pr_branch: str(c["pr_branch"]) ?? null,
-    commit_sha: str(c["commit_sha"]) ?? null,
-    linear_comment_url: str(c["linear_comment_url"]) ?? null,
+    pr_url: str(c['pr_url']) ?? null,
+    pr_branch: str(c['pr_branch']) ?? null,
+    commit_sha: str(c['commit_sha']) ?? null,
+    linear_comment_url: str(c['linear_comment_url']) ?? null,
   };
 }

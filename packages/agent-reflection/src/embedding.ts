@@ -46,7 +46,7 @@ function hash(str: string): number {
   for (let i = 0; i < str.length; i++) {
     h = (h * 33) ^ str.charCodeAt(i);
   }
-  return (h >>> 0); // unsigned 32-bit
+  return h >>> 0; // unsigned 32-bit
 }
 
 /**
@@ -111,21 +111,21 @@ export function buildExperienceEmbedding(
   const outcomeVec = stringToBinaryVector(experience.outcomeClassification, dim);
 
   // Aggregate action types and tags
-  const actionTypeStr = experience.actionTypes.join(" ");
+  const actionTypeStr = experience.actionTypes.join(' ');
   const actionVec = stringToBinaryVector(actionTypeStr, dim);
 
-  const tagStr = experience.tags.join(" ");
+  const tagStr = experience.tags.join(' ');
   const tagVec = tagStr.length > 0 ? stringToBinaryVector(tagStr, dim) : zeroVector(dim);
 
   // Weighted combination (task summary is most important for retrieval)
   const combined = new Float32Array(dim);
   for (let i = 0; i < dim; i++) {
     combined[i] =
-      3.0 * taskVec[i] +     // Task summary: highest weight
-      1.5 * typeVec[i] +     // Task type: moderate weight
-      1.0 * actionVec[i] +   // Actions performed: baseline weight
-      0.5 * outcomeVec[i] +  // Outcome: low weight
-      0.3 * tagVec[i];       // Tags: lowest weight
+      3.0 * taskVec[i] + // Task summary: highest weight
+      1.5 * typeVec[i] + // Task type: moderate weight
+      1.0 * actionVec[i] + // Actions performed: baseline weight
+      0.5 * outcomeVec[i] + // Outcome: low weight
+      0.3 * tagVec[i]; // Tags: lowest weight
   }
 
   // Normalize
@@ -142,10 +142,7 @@ export function buildExperienceEmbedding(
 /**
  * Build an embedding from a search query (text to match against experiences).
  */
-export function buildQueryEmbedding(
-  query: string,
-  config?: Partial<EmbeddingConfig>,
-): Embedding {
+export function buildQueryEmbedding(query: string, config?: Partial<EmbeddingConfig>): Embedding {
   const dim: number = (config?.dimension ?? DEFAULT_DIMENSION) as number;
   return stringToBinaryVector(query, dim);
 }
@@ -156,9 +153,7 @@ export function buildQueryEmbedding(
  */
 export function cosineSimilarity(a: Embedding, b: Embedding): number {
   if (a.length !== b.length) {
-    throw new Error(
-      `Embedding dimensions mismatch: ${a.length} vs ${b.length}`,
-    );
+    throw new Error(`Embedding dimensions mismatch: ${a.length} vs ${b.length}`);
   }
 
   let dotProduct = 0;

@@ -16,7 +16,7 @@
  *   5. Return a ReflectionOutput with all generated content
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 
 import type {
   ExperienceAction,
@@ -29,9 +29,9 @@ import type {
   ReflectionInput,
   ReflectionOutput,
   ReflectionStructured,
-} from "./types.js";
-import { DEFAULT_REFLECTION_ENGINE_CONFIG } from "./types.js";
-import { getExpectedTokenBudget, mergeReflectionEngineConfig } from "./config.js";
+} from './types.js';
+import { DEFAULT_REFLECTION_ENGINE_CONFIG } from './types.js';
+import { getExpectedTokenBudget, mergeReflectionEngineConfig } from './config.js';
 
 // ─── Rule Extraction Heuristics ─────────────────────────────────────────────
 
@@ -52,41 +52,37 @@ interface PatternRule {
 
 const BUILTIN_PATTERNS: PatternRule[] = [
   {
-    matches: (action) => action.type.includes("terminal") && !action.success,
+    matches: (action) => action.type.includes('terminal') && !action.success,
     toRule: (action) => ({
       id: randomUUID(),
-      description: "Terminal command failed — check path and permissions",
-      triggerCondition: "Terminal action returns non-zero exit code",
+      description: 'Terminal command failed — check path and permissions',
+      triggerCondition: 'Terminal action returns non-zero exit code',
       recommendedAction:
-        "Verify working directory exists, check file permissions, and validate command syntax before retrying.",
+        'Verify working directory exists, check file permissions, and validate command syntax before retrying.',
       confidence: 0.7,
       applicationCount: 0,
       successRate: 0,
     }),
   },
   {
-    matches: (action) =>
-      action.type.includes("file") &&
-      action.output.length > 10000,
+    matches: (action) => action.type.includes('file') && action.output.length > 10000,
     toRule: (action) => ({
       id: randomUUID(),
-      description: "Large file output — consider streaming or truncation",
-      triggerCondition: "File read/write operation produces output >10KB",
+      description: 'Large file output — consider streaming or truncation',
+      triggerCondition: 'File read/write operation produces output >10KB',
       recommendedAction:
-        "For files >10KB, read in chunks or use head/tail to preview before full read.",
+        'For files >10KB, read in chunks or use head/tail to preview before full read.',
       confidence: 0.6,
       applicationCount: 0,
       successRate: 0,
     }),
   },
   {
-    matches: (action) =>
-      action.durationMs > 5000 && action.success,
+    matches: (action) => action.durationMs > 5000 && action.success,
     toRule: (action) => ({
       id: randomUUID(),
-      description: "Slow successful action — consider caching",
-      triggerCondition:
-        "Action takes >5 seconds and succeeds",
+      description: 'Slow successful action — consider caching',
+      triggerCondition: 'Action takes >5 seconds and succeeds',
       recommendedAction:
         "For actions that consistently take >5s, cache results when input parameters don't change.",
       confidence: 0.5,
@@ -95,28 +91,26 @@ const BUILTIN_PATTERNS: PatternRule[] = [
     }),
   },
   {
-    matches: (action) =>
-      action.type.includes("linear") && action.success,
+    matches: (action) => action.type.includes('linear') && action.success,
     toRule: (action) => ({
       id: randomUUID(),
-      description: "Linear API call succeeded — note response pattern",
-      triggerCondition: "Any Linear MCP tool call succeeds",
+      description: 'Linear API call succeeded — note response pattern',
+      triggerCondition: 'Any Linear MCP tool call succeeds',
       recommendedAction:
-        "Linear API responses are consistent; prefer cached results for repeated queries with same parameters.",
+        'Linear API responses are consistent; prefer cached results for repeated queries with same parameters.',
       confidence: 0.8,
       applicationCount: 0,
       successRate: 0,
     }),
   },
   {
-    matches: (action) =>
-      action.type.includes("write_file") && action.success,
+    matches: (action) => action.type.includes('write_file') && action.success,
     toRule: (action) => ({
       id: randomUUID(),
-      description: "File write succeeded — consider verification read",
-      triggerCondition: "File write operation succeeds",
+      description: 'File write succeeded — consider verification read',
+      triggerCondition: 'File write operation succeeds',
       recommendedAction:
-        "After writing files, read back a portion to verify the write was successful, especially for large files.",
+        'After writing files, read back a portion to verify the write was successful, especially for large files.',
       confidence: 0.75,
       applicationCount: 0,
       successRate: 0,
@@ -171,10 +165,7 @@ export class ReflectionEngine {
     // Generate one reflection per action (for fine-grained review) plus
     // one aggregate reflection for the overall task.
     const actionReflections: ReflectionEntry[] = [];
-    const aggregateReflection = this.generateAggregateReflection(
-      experience,
-      depth,
-    );
+    const aggregateReflection = this.generateAggregateReflection(experience, depth);
 
     for (const action of experience.actions) {
       const actionRef = this.generateActionReflection(action, experience, depth);
@@ -203,10 +194,7 @@ export class ReflectionEngine {
    */
   generateActionReflection(
     action: ExperienceAction,
-    context: Pick<
-      ExperienceLogEntry,
-      "taskPrompt" | "taskSummary" | "workspaceContext"
-    >,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary' | 'workspaceContext'>,
     depth?: ReflectionDepth,
   ): ReflectionEntry {
     const reflectionDepth = depth ?? this.config.defaultDepth;
@@ -215,7 +203,7 @@ export class ReflectionEngine {
     const rules = this.extractRules(action);
 
     return {
-      schemaVersion: "1.0.0",
+      schemaVersion: '1.0.0',
       id: randomUUID(),
       depth: reflectionDepth,
       generatedAt: new Date().toISOString(),
@@ -245,18 +233,15 @@ export class ReflectionEngine {
     const structured: ReflectionStructured = {
       actionSummary: `Task completed: ${experience.taskSummary}`,
       actionOutcome:
-        experience.outcome.classification === "success"
-          ? "success"
-          : experience.outcome.classification === "partial_success"
-            ? "partial"
-            : "failure",
+        experience.outcome.classification === 'success'
+          ? 'success'
+          : experience.outcome.classification === 'partial_success'
+            ? 'partial'
+            : 'failure',
       isRetry: false,
       metrics: {
         durationMs: totalDuration,
-        outputSize: experience.actions.reduce(
-          (sum, a) => sum + a.output.length,
-          0,
-        ),
+        outputSize: experience.actions.reduce((sum, a) => sum + a.output.length, 0),
         errorCount: failedActions,
       },
       taskType: this.inferTaskType(experience),
@@ -264,16 +249,12 @@ export class ReflectionEngine {
       suggestedRules: this.inferSuggestedRules(experience),
     };
 
-    const freeForm = this.buildAggregateFreeForm(
-      experience,
-      structured,
-      reflectionDepth,
-    );
+    const freeForm = this.buildAggregateFreeForm(experience, structured, reflectionDepth);
 
     const rules = this.extractAggregateRules(experience);
 
     return {
-      schemaVersion: "1.0.0",
+      schemaVersion: '1.0.0',
       id: randomUUID(),
       depth: reflectionDepth,
       generatedAt: new Date().toISOString(),
@@ -288,14 +269,17 @@ export class ReflectionEngine {
 
   private buildStructuredReflection(
     action: ExperienceAction,
-    context: Pick<
-      ExperienceLogEntry,
-      "taskPrompt" | "taskSummary" | "workspaceContext"
-    >,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary' | 'workspaceContext'>,
   ): ReflectionStructured {
     return {
-      actionSummary: `${action.type} → ${action.success ? "success" : "failure"} (${action.durationMs}ms)`,
-      actionOutcome: action.success ? "success" : action.output.includes("error") || action.output.includes("Error") || action.output.includes("Error:") ? "failure" : "partial",
+      actionSummary: `${action.type} → ${action.success ? 'success' : 'failure'} (${action.durationMs}ms)`,
+      actionOutcome: action.success
+        ? 'success'
+        : action.output.includes('error') ||
+            action.output.includes('Error') ||
+            action.output.includes('Error:')
+          ? 'failure'
+          : 'partial',
       isRetry: this.isRetry(action),
       metrics: {
         durationMs: action.durationMs,
@@ -313,20 +297,17 @@ export class ReflectionEngine {
   private buildFreeFormReasoning(
     structured: ReflectionStructured,
     action: ExperienceAction,
-    context: Pick<
-      ExperienceLogEntry,
-      "taskPrompt" | "taskSummary" | "workspaceContext"
-    >,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary' | 'workspaceContext'>,
     depth: ReflectionDepth,
   ): string {
     const budget = getExpectedTokenBudget(depth);
 
     switch (depth) {
-      case "quick":
+      case 'quick':
         return this.buildQuickSummary(structured, action, context);
-      case "standard":
+      case 'standard':
         return this.buildStandardReasoning(structured, action, context);
-      case "deep":
+      case 'deep':
         return this.buildDeepAnalysis(structured, action, context, budget);
     }
   }
@@ -334,34 +315,30 @@ export class ReflectionEngine {
   private buildQuickSummary(
     structured: ReflectionStructured,
     action: ExperienceAction,
-    context: Pick<ExperienceLogEntry, "taskPrompt" | "taskSummary">,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary'>,
   ): string {
     // Quick summary: ≤50 tokens (roughly ≤300 chars)
     const lines: string[] = [];
 
-    if (structured.actionOutcome === "success") {
-      lines.push(
-        `Action ${structured.actionSummary} completed successfully.`,
-      );
+    if (structured.actionOutcome === 'success') {
+      lines.push(`Action ${structured.actionSummary} completed successfully.`);
       if (structured.isRetry) {
-        lines.push("Retried after initial failure.");
+        lines.push('Retried after initial failure.');
       }
       if (action.durationMs > 3000) {
         lines.push(`Took ${action.durationMs}ms — consider caching.`);
       }
     } else {
-      lines.push(
-        `Action ${structured.actionSummary}. Output: ${truncate(action.output, 100)}.`,
-      );
+      lines.push(`Action ${structured.actionSummary}. Output: ${truncate(action.output, 100)}.`);
     }
 
-    return lines.join(" ");
+    return lines.join(' ');
   }
 
   private buildStandardReasoning(
     structured: ReflectionStructured,
     action: ExperienceAction,
-    context: Pick<ExperienceLogEntry, "taskPrompt" | "taskSummary">,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary'>,
   ): string {
     // Standard reasoning: ≤150 tokens (roughly ≤900 chars)
     const lines: string[] = [];
@@ -373,24 +350,25 @@ export class ReflectionEngine {
       lines.push(`Outcome: Success in ${action.durationMs}ms.`);
       lines.push(`Insight: ${structured.keyInsight}`);
       if (structured.isRetry) {
-        lines.push("Retried successfully — the approach works but may need one correction.");
+        lines.push('Retried successfully — the approach works but may need one correction.');
       }
     } else {
       const errorMsg = truncate(
-        action.output.match(/(?:error|Error|Exception|failed|fail):?\s*(.+)/i)?.[1] ?? action.output,
+        action.output.match(/(?:error|Error|Exception|failed|fail):?\s*(.+)/i)?.[1] ??
+          action.output,
         200,
       );
       lines.push(`Outcome: Failed. Error: ${errorMsg}`);
       lines.push(`Suggestion: ${this.generateActionSuggestion(action)}`);
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   private buildDeepAnalysis(
     structured: ReflectionStructured,
     action: ExperienceAction,
-    context: Pick<ExperienceLogEntry, "taskPrompt" | "taskSummary" | "workspaceContext">,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary' | 'workspaceContext'>,
     budget: number,
   ): string {
     // Deep analysis: ≤500 tokens (roughly ≤3000 chars)
@@ -410,7 +388,7 @@ export class ReflectionEngine {
     if (!action.success) {
       lines.push(this.analyzeRootCause(action));
     } else {
-      lines.push("No error detected. Action completed within expected parameters.");
+      lines.push('No error detected. Action completed within expected parameters.');
     }
 
     lines.push(`\n--- Improvements ---`);
@@ -423,10 +401,10 @@ export class ReflectionEngine {
         lines.push(`  • ${rule.description}`);
       }
     } else {
-      lines.push("  No new rules extracted.");
+      lines.push('  No new rules extracted.');
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   // ─── Aggregate Free-Form Builder ─────────────────────────────────────────
@@ -439,20 +417,18 @@ export class ReflectionEngine {
     const budget = getExpectedTokenBudget(depth);
 
     switch (depth) {
-      case "quick": {
+      case 'quick': {
         const summary = experience.outcome.classification;
         return `Task "${experience.taskSummary}" completed (${summary}). ${experience.actions.length} actions, ${experience.durationMs}ms total.`;
       }
-      case "standard": {
+      case 'standard': {
         const successes = experience.actions.filter((a) => a.success).length;
         const failures = experience.actions.length - successes;
         const topIssues: string[] = [];
 
         for (const action of experience.actions) {
           if (!action.success) {
-            topIssues.push(
-              `${action.type}: ${truncate(action.output, 80)}`,
-            );
+            topIssues.push(`${action.type}: ${truncate(action.output, 80)}`);
           }
         }
 
@@ -461,15 +437,12 @@ export class ReflectionEngine {
           `Outcome: ${experience.outcome.classification} (quality: ${experience.outcome.qualityScore}/100)`,
           `Actions: ${successes} succeeded, ${failures} failed`,
           ...(topIssues.length > 0
-            ? [
-                `Issues:`,
-                ...topIssues.slice(0, 3).map((i) => `  - ${i}`),
-              ]
+            ? [`Issues:`, ...topIssues.slice(0, 3).map((i) => `  - ${i}`)]
             : []),
           `Key insight: ${structured.keyInsight}`,
-        ].join("\n");
+        ].join('\n');
       }
-      case "deep": {
+      case 'deep': {
         const successes = experience.actions.filter((a) => a.success).length;
         const failures = experience.actions.length - successes;
 
@@ -491,7 +464,7 @@ export class ReflectionEngine {
           ``,
           `--- Next Time ---`,
           this.generateNextTimeSuggestions(experience),
-        ].join("\n");
+        ].join('\n');
       }
     }
   }
@@ -499,8 +472,7 @@ export class ReflectionEngine {
   // ─── Rule Extraction ─────────────────────────────────────────────────────
 
   private extractRules(action: ExperienceAction): ExtractedRule[] {
-    return BUILTIN_PATTERNS.filter((p) => p.matches(action))
-      .map((p) => p.toRule(action));
+    return BUILTIN_PATTERNS.filter((p) => p.matches(action)).map((p) => p.toRule(action));
   }
 
   private extractAggregateRules(experience: ExperienceLogEntry): ExtractedRule[] {
@@ -533,21 +505,18 @@ export class ReflectionEngine {
     // Heuristic: if the action type includes "retry" or the output mentions
     // retry/retry, it's likely a retry.
     return (
-      action.type.toLowerCase().includes("retry") ||
-      action.output.toLowerCase().includes("retry") ||
-      action.output.toLowerCase().includes("attempt")
+      action.type.toLowerCase().includes('retry') ||
+      action.output.toLowerCase().includes('retry') ||
+      action.output.toLowerCase().includes('attempt')
     );
   }
 
-  private calculateConfidence(
-    structured: ReflectionStructured,
-    action: ExperienceAction,
-  ): number {
+  private calculateConfidence(structured: ReflectionStructured, action: ExperienceAction): number {
     let confidence = 0.5; // Base confidence
 
     // Higher confidence for clear outcomes
-    if (structured.actionOutcome === "success") confidence += 0.2;
-    if (structured.actionOutcome === "failure") confidence += 0.1;
+    if (structured.actionOutcome === 'success') confidence += 0.2;
+    if (structured.actionOutcome === 'failure') confidence += 0.1;
 
     // Higher confidence for longer output (more signals)
     if (action.output.length > 500) confidence += 0.1;
@@ -571,50 +540,49 @@ export class ReflectionEngine {
   }
 
   private inferTaskType(
-    experience: Pick<ExperienceLogEntry, "actions" | "taskPrompt" | "taskSummary">,
+    experience: Pick<ExperienceLogEntry, 'actions' | 'taskPrompt' | 'taskSummary'>,
   ): string {
     return this.inferTaskTypeFromActions(experience.actions);
   }
 
   private inferTaskTypeFromAction(
     action: ExperienceAction,
-    context: Pick<ExperienceLogEntry, "taskPrompt" | "taskSummary">,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary'>,
   ): string {
     return this.inferTaskTypeFromActions([action]);
   }
 
-  private inferTaskTypeFromActions(
-    actions: ExperienceAction[],
-  ): string {
+  private inferTaskTypeFromActions(actions: ExperienceAction[]): string {
     // Analyze action types to infer the task type
     const typeSet = new Set(actions.map((a) => a.type.toLowerCase()));
 
-    if (typeSet.has("mcp_linear_get_issue") || typeSet.has("mcp_linear_save_issue")) {
-      return "linear_task_management";
+    if (typeSet.has('mcp_linear_get_issue') || typeSet.has('mcp_linear_save_issue')) {
+      return 'linear_task_management';
     }
-    if (typeSet.has("terminal") || typeSet.has("write_file") || typeSet.has("read_file")) {
-      return "code_development";
+    if (typeSet.has('terminal') || typeSet.has('write_file') || typeSet.has('read_file')) {
+      return 'code_development';
     }
-    if (typeSet.has("mcp_linear_list_issues") || typeSet.has("mcp_linear_list_projects")) {
-      return "linear_query";
+    if (typeSet.has('mcp_linear_list_issues') || typeSet.has('mcp_linear_list_projects')) {
+      return 'linear_query';
     }
-    if (typeSet.has("mcp_linear_save_comment") || typeSet.has("mcp_linear_delete_comment")) {
-      return "comment_management";
+    if (typeSet.has('mcp_linear_save_comment') || typeSet.has('mcp_linear_delete_comment')) {
+      return 'comment_management';
     }
-    if (typeSet.has("mcp_linear_get_document") || typeSet.has("mcp_linear_save_document")) {
-      return "document_management";
+    if (typeSet.has('mcp_linear_get_document') || typeSet.has('mcp_linear_save_document')) {
+      return 'document_management';
     }
-    if (typeSet.has("mcp_linear_create_issue_label") || typeSet.has("mcp_linear_delete_attachment")) {
-      return "organization";
+    if (
+      typeSet.has('mcp_linear_create_issue_label') ||
+      typeSet.has('mcp_linear_delete_attachment')
+    ) {
+      return 'organization';
     }
 
     // Fall back to analyzing the task prompt
-    return "general";
+    return 'general';
   }
 
-  private generateKeyInsight(
-    action: ExperienceAction,
-  ): string {
+  private generateKeyInsight(action: ExperienceAction): string {
     if (action.success) {
       if (action.durationMs > 5000) {
         return `This action succeeded but was slow (${action.durationMs}ms). Consider caching or pre-fetching next time.`;
@@ -635,47 +603,47 @@ export class ReflectionEngine {
   private generateActionSuggestion(action: ExperienceAction): string {
     if (!action.success) {
       const output = action.output.toLowerCase();
-      if (output.includes("permission") || output.includes("denied") || output.includes("access")) {
-        return "Check file/directory permissions and try again.";
+      if (output.includes('permission') || output.includes('denied') || output.includes('access')) {
+        return 'Check file/directory permissions and try again.';
       }
-      if (output.includes("not found") || output.includes("ENOENT")) {
-        return "Verify the file path exists. Use list_directory to check available files.";
+      if (output.includes('not found') || output.includes('ENOENT')) {
+        return 'Verify the file path exists. Use list_directory to check available files.';
       }
-      if (output.includes("timeout") || output.includes("timed out")) {
-        return "The action timed out. Try with a shorter scope or larger timeout.";
+      if (output.includes('timeout') || output.includes('timed out')) {
+        return 'The action timed out. Try with a shorter scope or larger timeout.';
       }
-      if (output.includes("invalid") || output.includes("malformed")) {
+      if (output.includes('invalid') || output.includes('malformed')) {
         return "Check the input format. Review the action's expected parameters.";
       }
     }
-    return "Review the action output and try with adjusted parameters.";
+    return 'Review the action output and try with adjusted parameters.';
   }
 
   private analyzeRootCause(action: ExperienceAction): string {
     const output = action.output.toLowerCase();
 
-    if (output.includes("permission") || output.includes("denied")) {
-      return "Permission denied — likely a file or API access issue.";
+    if (output.includes('permission') || output.includes('denied')) {
+      return 'Permission denied — likely a file or API access issue.';
     }
-    if (output.includes("not found") || output.includes("enoent")) {
-      return "Resource not found — path or ID may be incorrect.";
+    if (output.includes('not found') || output.includes('enoent')) {
+      return 'Resource not found — path or ID may be incorrect.';
     }
-    if (output.includes("timeout") || output.includes("timed out")) {
-      return "Timeout — the operation took too long or the server was unresponsive.";
+    if (output.includes('timeout') || output.includes('timed out')) {
+      return 'Timeout — the operation took too long or the server was unresponsive.';
     }
-    if (output.includes("invalid") || output.includes("malformed")) {
-      return "Invalid input — check parameter types and formats.";
+    if (output.includes('invalid') || output.includes('malformed')) {
+      return 'Invalid input — check parameter types and formats.';
     }
-    if (output.includes("rate limit") || output.includes("too many")) {
-      return "Rate limited — reduce request frequency or add backoff.";
+    if (output.includes('rate limit') || output.includes('too many')) {
+      return 'Rate limited — reduce request frequency or add backoff.';
     }
 
-    return "Unknown cause — inspect the raw output for clues.";
+    return 'Unknown cause — inspect the raw output for clues.';
   }
 
   private generateImprovementSuggestions(
     action: ExperienceAction,
-    context: Pick<ExperienceLogEntry, "taskPrompt" | "taskSummary">,
+    context: Pick<ExperienceLogEntry, 'taskPrompt' | 'taskSummary'>,
   ): string {
     const suggestions: string[] = [];
 
@@ -695,37 +663,36 @@ export class ReflectionEngine {
       );
     }
 
-    return suggestions.length > 0 ? suggestions.join(" ") : "No improvements needed.";
+    return suggestions.length > 0 ? suggestions.join(' ') : 'No improvements needed.';
   }
 
   private analyzePatterns(experience: ExperienceLogEntry): string {
     const successes = experience.actions.filter((a) => a.success).length;
     const failures = experience.actions.length - successes;
-    const avgDuration = experience.actions.length > 0
-      ? experience.actions.reduce((sum, a) => sum + a.durationMs, 0) / experience.actions.length
-      : 0;
+    const avgDuration =
+      experience.actions.length > 0
+        ? experience.actions.reduce((sum, a) => sum + a.durationMs, 0) / experience.actions.length
+        : 0;
 
     const lines: string[] = [];
-    lines.push(`Success rate: ${successes}/${experience.actions.length} (${(successes / Math.max(1, experience.actions.length) * 100).toFixed(0)}%)`);
+    lines.push(
+      `Success rate: ${successes}/${experience.actions.length} (${((successes / Math.max(1, experience.actions.length)) * 100).toFixed(0)}%)`,
+    );
     lines.push(`Average action duration: ${avgDuration.toFixed(0)}ms`);
 
     // Check for retry patterns
     const retries = experience.actions.filter((a) => this.isRetry(a));
     if (retries.length > 0) {
-      lines.push(
-        `Retry pattern detected: ${retries.length} actions were retries.`,
-      );
+      lines.push(`Retry pattern detected: ${retries.length} actions were retries.`);
     }
 
     // Check for slow actions
     const slowActions = experience.actions.filter((a) => a.durationMs > 5000);
     if (slowActions.length > 0) {
-      lines.push(
-        `Slow actions: ${slowActions.map((a) => a.type).join(", ")} all took >5s.`,
-      );
+      lines.push(`Slow actions: ${slowActions.map((a) => a.type).join(', ')} all took >5s.`);
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   private generateNextTimeSuggestions(experience: ExperienceLogEntry): string {
@@ -735,10 +702,7 @@ export class ReflectionEngine {
     const failureByType = new Map<string, number>();
     for (const action of experience.actions) {
       if (!action.success) {
-        failureByType.set(
-          action.type,
-          (failureByType.get(action.type) ?? 0) + 1,
-        );
+        failureByType.set(action.type, (failureByType.get(action.type) ?? 0) + 1);
       }
     }
 
@@ -754,15 +718,15 @@ export class ReflectionEngine {
     const slowActions = experience.actions.filter((a) => a.durationMs > 5000);
     if (slowActions.length > 0) {
       suggestions.push(
-        `Consider caching for slow actions: ${slowActions.map((a) => a.type).join(", ")}.`,
+        `Consider caching for slow actions: ${slowActions.map((a) => a.type).join(', ')}.`,
       );
     }
 
     if (suggestions.length === 0) {
-      suggestions.push("No significant issues detected. The workflow was efficient.");
+      suggestions.push('No significant issues detected. The workflow was efficient.');
     }
 
-    return suggestions.join("\n");
+    return suggestions.join('\n');
   }
 }
 
@@ -770,5 +734,5 @@ export class ReflectionEngine {
 
 function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength) + "...";
+  return str.slice(0, maxLength) + '...';
 }

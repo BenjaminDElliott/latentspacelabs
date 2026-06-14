@@ -22,7 +22,7 @@
  * - `deep`: Full analysis with multi-factor evaluation, confidence scores,
  *   and extracted rules. Used for critical or novel actions.
  */
-export type ReflectionDepth = "quick" | "standard" | "deep";
+export type ReflectionDepth = 'quick' | 'standard' | 'deep';
 
 // ─── Experience Action ──────────────────────────────────────────────────────
 
@@ -83,7 +83,7 @@ export interface ExperienceObservation {
  */
 export interface ExperienceOutcome {
   /** Overall classification of the outcome. */
-  classification: "success" | "partial_success" | "failure" | "interrupted";
+  classification: 'success' | 'partial_success' | 'failure' | 'interrupted';
 
   /** Numeric score 0–100 where 100 is perfect. */
   qualityScore: number;
@@ -112,7 +112,7 @@ export interface ExperienceOutcome {
  */
 export interface ExperienceLogEntry {
   /** Schema version — increment when the structure changes. */
-  schemaVersion: "1.0.0";
+  schemaVersion: '1.0.0';
 
   /** Stable unique identifier for this experience. */
   id: string;
@@ -173,7 +173,7 @@ export interface ExperienceLogEntry {
  */
 export interface ReflectionEntry {
   /** Schema version for reflection format. */
-  schemaVersion: "1.0.0";
+  schemaVersion: '1.0.0';
 
   /** Unique ID for this reflection. */
   id: string;
@@ -221,7 +221,7 @@ export interface ReflectionStructured {
   actionSummary: string;
 
   /** Outcome classification for this specific action/step. */
-  actionOutcome: "success" | "failure" | "partial" | "skipped";
+  actionOutcome: 'success' | 'failure' | 'partial' | 'skipped';
 
   /**
    * Whether this action was a retry or a first attempt.
@@ -347,7 +347,7 @@ export interface SimilaritySearchOptions {
   tagFilter?: string[];
 
   /** Filter by outcome classification. */
-  outcomeFilter?: ExperienceOutcome["classification"];
+  outcomeFilter?: ExperienceOutcome['classification'];
 
   /** Filter by workspace context. */
   workspaceFilter?: string;
@@ -388,7 +388,7 @@ export interface ReflectionEngineConfig {
  * Balances usefulness with overhead constraints.
  */
 export const DEFAULT_REFLECTION_ENGINE_CONFIG: ReflectionEngineConfig = {
-  defaultDepth: "standard",
+  defaultDepth: 'standard',
   maxReflectionTokens: 500,
   alwaysIncludeFreeForm: true,
   ruleActionThreshold: 0.5,
@@ -432,7 +432,7 @@ export interface ReflectionOutput {
  * Thrown when the experience store exceeds its configured limit.
  */
 export class ExperienceStoreFullError extends Error {
-  override readonly name = "ExperienceStoreFullError";
+  override readonly name = 'ExperienceStoreFullError';
   constructor(message: string) {
     super(message);
   }
@@ -442,7 +442,7 @@ export class ExperienceStoreFullError extends Error {
  * Thrown when an experience cannot be serialized or deserialized.
  */
 export class ExperienceParseError extends Error {
-  override readonly name = "ExperienceParseError";
+  override readonly name = 'ExperienceParseError';
   constructor(message: string) {
     super(message);
   }

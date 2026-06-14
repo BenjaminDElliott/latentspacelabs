@@ -50,6 +50,7 @@ agent-bench
 ## MQA Scoring
 
 Scorecards use Multi-Quality Assessment facets:
+
 - **Architecture** (0-100) — System design quality
 - **Tests** (0-100) — Test coverage and quality
 - **Quality** (0-100) — Code quality, readability, maintainability
