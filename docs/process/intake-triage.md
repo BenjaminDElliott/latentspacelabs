@@ -89,6 +89,16 @@ After PARA, assign one or more action classes. An intake item can carry more tha
 - **Open question** — unresolved ambiguity that blocks routing; parked explicitly rather than guessed.
 - **Retro learning** — an observation about *how we work* that should feed back into process docs, templates, or the triage prompt itself.
 
+### Multi-intent detection (extension)
+
+The classification above assumes one intent per input. Real-world brain dumps, voice notes, and GitHub comment chains routinely contain multiple intents (e.g., a ticket request + an ADR suggestion + a retro learning). When intake detects ≥2 action-class signals, scope shifts, self-referential routing feedback, or explicit multi-part enumerations, it applies the split/repair/escalate rules defined in [`intake-multi-intent-rules.md`](intake-multi-intent-rules.md). In brief:
+
+- **Split** into ≥2 triage items when intents are independent (different surfaces, different concerns). Each split item gets its own classification, confidence, risk, and destination.
+- **Merge** when intents are tightly coupled (share the same decision context; one cannot be scoped without the other).
+- **Repair** when the input references a prior routing decision and proposes a correction — either repair in place, repair + fork, or repair to archive.
+- **Escalate** to PRD / ADR / research spike / backlog refinement when the multi-intent or repair input crosses risk, scope, or research thresholds (see `intake-multi-intent-rules.md` → *Escalation rules*).
+- **No generic planner/router.** The agent applies these as conditional checks during triage — not as a separate planning phase.
+
 ## Triage output shape
 
 Every triage run — whether from Perplexity, a Linear comment, or a GitHub comment — produces this shape. Fields are required unless marked optional.
@@ -180,9 +190,10 @@ When in doubt about reversibility, treat as non-reversible.
 
 - `operating-model.md`
 - `mobile-intake-ux.md` — low-friction chat/mobile interaction contract for the capture step.
+- `intake-multi-intent-rules.md` — multi-intent detection, split, repair, and escalation rules (extension to this doc).
 - `qa-review-evidence.md` (verification of code-producing runs).
 - `docs/templates/agent-ready-ticket.md`
 - ADRs: `0001-use-perplexity-linear-and-github-as-control-plane.md`, `0003-linear-persistence-boundary.md`, `0005-linear-dependency-and-sequencing-model.md`, `0008-agent-control-layer-and-perplexity-boundary.md`, `0009-cost-controls-and-runaway-cost-interrupts.md`.
 - ADR-0007: `docs/decisions/0007-qa-review-evidence-workflow.md` (QA and PR-review evidence workflow).
-- Process: `cost-controls.md` (cost bands and runaway-cost interrupt), `approval-gates-and-autonomy-rules.md` (full rule matrix).
-- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence), `LAT-6` (approval and cost-control gates).
+- Process: `cost-controls.md` (cost bands and runaway-cost interrupt), `approval-gates-and-autonomy-rules.md` (full rule matrix), `research-spike-lifecycle.md` (bounded spike workflow), `retrospective-learning-loop.md` (how findings feed back into process docs).
+- Linear: `LAT-10` (this policy), `LAT-12` (low-friction chat/mobile intake UX), `LAT-15` (dependency and sequencing model), `LAT-8` (QA / review evidence), `LAT-6` (approval and cost-control gates), `LAT-29` (low-friction intake PRD), `LAT-123` (Overmind experiment audit), `LAT-125` (this multi-intent escalation rules extension).
