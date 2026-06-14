@@ -25,6 +25,7 @@ Docs are canonical; skills and commands are downstream operational adapters. A s
 - `thread-approved-merge-authority.md` — When an agent may mechanically execute a PR merge under Ben's explicit in-thread approval, the pre-merge ready-to-merge gate, refusal cases, the terse approval packet, and the post-merge Linear write-back.
 - `retrospective-learning-loop.md` — Bounded retro step: how evidence from run reports, QA/review, intake, and dispatch becomes prompt/template/backlog/ADR changes.
 - `research-spike-lifecycle.md` — Lifecycle for bounded research spikes from triage intake through findings to graduation (PRD / ADR / backlog / archive), with stop conditions, escalation, and Linear state model.
+- `parallel-merge-train.md` (LAT-45) — Merge-train protocol for parallel agent-created PRs: merge order selection, rebase strategy, conflict resolution for shared docs and code, stale PR handling, and merge batch execution.
 
 ## What does not live here
 
