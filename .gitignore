@@ -16,3 +16,27 @@ coverage/
 # real bearer token must live in `.mcp.local.json` and stay untracked.
 .mcp.local.json
 .mcp.*.local.json
+
+# Plaintext token / secret files — agents may write these locally during
+# development or sandbox runs. Never commit a file that could contain a
+# raw credential value.
+*.token
+*.key
+*.secret
+*.pem
+*-credentials.json
+service-account*.json
+credentials.json
+secret.json
+token.json
+
+# Local environment files used by common tooling (Claude Code, Claude CLI,
+# etc.) that may hold API keys or bearer tokens.
+.claude.json
+.claude.json.local
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.test
+.env.*.local
