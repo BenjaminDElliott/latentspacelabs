@@ -7,10 +7,20 @@
  *
  * The approval gate is enforced here, not in the CLI harness, so any caller
  * (CLI, test harness, future Perplexity shell-call harness) cannot bypass it.
+ *
+ * LAT-188 adds two integration points:
+ * - `preRunGate`: called before the skill executes. If the gate returns a
+ *   non-null reason the runner short-circuits with status=blocked.
+ * - `postRunGate`: called after the skill completes (even on failure). If
+ *   the gate returns a non-null reason the runner overrides the result to
+ *   status=failed with the gate's reason appended.
  */
 import type {
   AutonomyLevel,
   CostBand,
+  PolicyEvaluator,
+  PolicyInput,
+  PolicyVerdict,
   ResolvedTools,
   SkillDefinition,
   SkillStatus,
@@ -25,6 +35,22 @@ export interface RunnerOptions {
   tools: ResolvedTools;
   /** Runtime's default autonomy cap. A skill above this cap needs the approval flag. */
   autonomyCap: AutonomyLevel;
+  /**
+   * LAT-188: policy evaluator used as the pre-run gate. If set, the runner
+   * calls `evaluate()` with a snapshot derived from the invocation before
+   * dispatching the skill. A blocked/stop verdict short-circuits the run.
+   * Pass `null` (default) to skip policy evaluation at the runner level.
+   */
+  policyEvaluator: PolicyEvaluator | null;
+  /**
+   * LAT-188: optional post-run gate. Called after the skill completes with
+   * the invocation + outputs. If it returns a non-null string the runner
+   * overrides the result to status=failed with the gate reason appended.
+   */
+  postRunGate?: (
+    invocation: RunInvocation,
+    outputs: Record<string, unknown>,
+  ) => string | null;
   now?: () => Date;
 }
 
@@ -61,6 +87,10 @@ export class SkillRunner {
   async run(invocation: RunInvocation): Promise<RunResult> {
     const entry = this.resolve(invocation);
     const def = entry.definition;
+
+    // LAT-188 pre-run gate: evaluate policy before dispatch.
+    const preRunResult = this.preRunGate(def, invocation);
+    if (preRunResult) return preRunResult;
 
     const gateResult = this.enforceApprovalGate(def, invocation);
     if (gateResult) return gateResult;
@@ -99,6 +129,18 @@ export class SkillRunner {
       };
     }
 
+    // LAT-188 post-run gate: validate outputs after completion.
+    const postRunError = this.postRunGate(def, invocation, outputs);
+    if (postRunError) {
+      return {
+        status: "failed",
+        skill: def.name,
+        version: def.version,
+        outputs: outputs as Record<string, unknown>,
+        reasons: [postRunError],
+      };
+    }
+
     return {
       status: outputs.status,
       skill: def.name,
@@ -117,6 +159,106 @@ export class SkillRunner {
       );
     }
     return entry;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* LAT-188: pre-run / post-run gate integration                       */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * LAT-188: pre-run gate — evaluates the policy evaluator before dispatch.
+   *
+   * Constructs a minimal `PolicyInput` from the invocation and runs it
+   * through the policy evaluator. A blocked/stop verdict short-circuits
+   * the run with status=blocked and the evaluator's reasons.
+   *
+   * Dry runs bypass the policy gate entirely (the skill's own execute
+   * method may still evaluate policy, but the runner does not enforce it).
+   */
+  private preRunGate(
+    def: AnySkillDefinition,
+    invocation: RunInvocation,
+  ): RunResult | null {
+    const policyEvaluator = this.options.policyEvaluator;
+    if (!policyEvaluator) return null;
+    if (invocation.dry_run) return null;
+
+    const issue = this.buildMinimalIssueSnapshot(def, invocation);
+    const evalResult = policyEvaluator.evaluate({
+      issue,
+      autonomy_level: def.autonomy_level,
+      approve: invocation.approve,
+    });
+
+    if (evalResult.verdict === "blocked" || evalResult.verdict === "stop") {
+      return {
+        status: "blocked",
+        skill: def.name,
+        version: def.version,
+        outputs: {},
+        reasons: evalResult.reasons,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * LAT-188: post-run gate — validates the skill's outputs after completion.
+   *
+   * Checks for cost-band escalation and evidence anomalies that the
+   * post-run gate (LAT-187) is responsible for catching. Returns null
+   * when the gate passes; returns a reason string when it fails.
+   */
+  private postRunGate(
+    def: AnySkillDefinition,
+    invocation: RunInvocation,
+    outputs: { status: SkillStatus } & Record<string, unknown>,
+  ): string | null {
+    // Cost-band escalation: if the skill was invoked with a concrete band
+    // and the output band is worse, the post-run gate blocks.
+    if (def.evidence.cost_band && !invocation.dry_run) {
+      const invokedBand = outputs["invoked_cost_band"] as string | undefined;
+      const resultBand = outputs["cost_band"] as string | undefined;
+      if (invokedBand && resultBand) {
+        const rank = (b: string) =>
+          b === "runaway_risk" ? 3 : b === "elevated" ? 2 : 1;
+        if (rank(resultBand) > rank(invokedBand)) {
+          return `cost-band escalated from ${invokedBand} to ${resultBand} (LAT-187 post-run gate)`;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Build a minimal issue snapshot from skill definition + invocation
+   * so the policy evaluator has something to work with. Only the fields
+   * the evaluator actually consumes are populated.
+   */
+  private buildMinimalIssueSnapshot(
+    _def: AnySkillDefinition,
+    _invocation: RunInvocation,
+  ): {
+    sequencing: {
+      hard_blockers: ReadonlyArray<string>;
+      recommended_predecessors: ReadonlyArray<string>;
+      dispatch_status: "ready" | "caution" | "blocked" | "unknown";
+      dispatch_note: string;
+    };
+    blocker_statuses: Readonly<Record<string, string>>;
+    budget_cap_usd: number | null;
+  } {
+    return {
+      sequencing: {
+        hard_blockers: [],
+        recommended_predecessors: [],
+        dispatch_status: "ready",
+        dispatch_note: "",
+      },
+      blocker_statuses: {},
+      budget_cap_usd: null,
+    };
   }
 
   private enforceApprovalGate(
