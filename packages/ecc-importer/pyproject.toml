@@ -1,0 +1,16 @@
+[project]
+name = "ecc-importer"
+version = "1.0.0"
+description = "ECC (affaan-m/ECC) skill import pipeline for Hermes Agent"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+ecc-import = "ecc_importer.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[tool.setuptools.packages.find]
+where = ["src"]
