@@ -177,3 +177,67 @@ export interface DispatcherSpawnedProcess {
   on(event: "close", cb: (code: number | null) => void): void;
   kill(signal?: NodeJS.Signals | number): boolean;
 }
+
+/** Classification of a transient error for retry purposes. */
+export type TransientErrorKind =
+  | "network_error"
+  | "timeout"
+  | "rate_limit"
+  | "server_error";
+
+/**
+ * Metadata describing why an error is classified as transient.
+ * Used for logging, metrics, and retry backoff decisions.
+ */
+export interface TransientErrorInfo {
+  /** Why this error is considered transient. */
+  kind: TransientErrorKind;
+  /** The original error message (safe for logging). */
+  message: string;
+  /** HTTP status code when applicable, else null. */
+  httpStatus: number | null;
+  /** Retry-After header value in seconds when available, else null. */
+  retryAfterSeconds: number | null;
+}
+
+/**
+ * Configuration for the error recovery engine. All values are bounded
+ * to prevent runaway retries in production.
+ */
+export interface ErrorRecoveryConfig {
+  /** Maximum number of attempts (first attempt + retries). Default: 3. */
+  maxAttempts: number;
+  /** Base delay in milliseconds for exponential backoff. Default: 1000. */
+  baseDelayMs: number;
+  /** Maximum delay cap in milliseconds. Default: 30000. */
+  maxDelayMs: number;
+  /** Optional linear multiplier on top of exponential growth. Default: 1.0. */
+  delayMultiplier: number;
+  /**
+   * Whether to jitter the delay (add 0-25% randomness).
+   * Reduces thundering herd on rate-limited services. Default: true.
+   */
+  jitter: boolean;
+}
+
+/** Result of a retryable invocation, carrying both success and failure info. */
+export interface RetryResult<T> {
+  /** Whether any attempt succeeded. */
+  succeeded: boolean;
+  /** The successful result (only when succeeded is true). */
+  value?: T;
+  /** Number of attempts made. */
+  attempts: number;
+  /** Total wall-clock time in milliseconds. */
+  totalDurationMs: number;
+  /** Details of the last (failed) attempt, if any. */
+  lastError: Error | null;
+  /** Transient error classification of the last attempt, if applicable. */
+  transientInfo: TransientErrorInfo | null;
+}
+
+/**
+ * A function that can be retried. Receives the attempt number (1-based)
+ * and must return a promise resolving to T.
+ */
+export type RetryableFn<T> = (attempt: number) => Promise<T>;

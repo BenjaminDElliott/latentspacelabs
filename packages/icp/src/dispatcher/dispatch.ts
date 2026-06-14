@@ -25,10 +25,21 @@ import { randomUUID } from "node:crypto";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type {
+  ErrorRecoveryConfig,
+  RetryResult,
+  TransientErrorInfo,
+  ControlLoopRunResult,
+} from "./types.js";
+
 import {
   runControlLoopCli,
   type RunControlLoopOptions,
 } from "./control-loop-runner.js";
+import {
+  runControlLoopWithRetry,
+  defaultErrorRecoveryConfig,
+} from "./error-recovery.js";
 import { evaluateEligibility } from "./select.js";
 import { buildTicketPack } from "./ticket-pack.js";
 import { redactOutput } from "./redact.js";
@@ -70,6 +81,12 @@ export interface DispatcherConfig {
   extraSecrets: ReadonlyArray<string>;
   /** Subset of process.env to forward to the child. */
   childEnv: Record<string, string>;
+  /**
+   * LAT-322: error recovery configuration for the control-loop invocation.
+   * Controls retry count, backoff delays, and transient failure detection.
+   * When null, defaults are used.
+   */
+  errorRecoveryConfig?: ErrorRecoveryConfig | null;
 }
 
 export interface DispatcherDeps {
