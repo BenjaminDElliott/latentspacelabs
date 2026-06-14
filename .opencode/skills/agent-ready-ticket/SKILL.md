@@ -7,6 +7,8 @@ description: Validate that the input is a well-formed opencode ticket pack befor
 
 The implementation runtime never starts work from a Linear URL or a free-form prompt. It starts from a **ticket pack** produced upstream by the planner. The contract is `docs/templates/opencode-ticket-pack.md`.
 
+For the full implementation workflow, see `docs/templates/local-agent-prompt.md`.
+
 ## When to use
 
 - First step of `lat-implement`, `lat-qa`, and any planner refusal flow.
@@ -16,7 +18,7 @@ The implementation runtime never starts work from a Linear URL or a free-form pr
 
 Read the ticket pack and confirm, in order:
 
-1. **Header present.** `Linear ID` matches `^LAT-\d+$`. `Pack version`, `Cost band`, `Risk level`, `Readiness status` are populated (not blank, not `TBD`).
+1. **Header present.** `Linear ID` matches `^LAT-\\d+$`. `Pack version`, `Cost band`, `Risk level`, `Readiness status` are populated (not blank, not `TBD`).
 2. **`Readiness status`** is one of `ready | blocked | needs_clarification | too_large`. Only `ready` proceeds; the others halt with that status echoed back.
 3. **`Goal`** is one sentence describing one observable outcome.
 4. **`Acceptance criteria`** has at least one checkbox bullet.

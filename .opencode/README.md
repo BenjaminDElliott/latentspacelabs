@@ -10,14 +10,25 @@ These assets configure the opencode + local-Qwen implementation runtime for this
 ## Layout
 
 - `skills/` — reusable instruction modules the agents load. One directory per skill, each with a `SKILL.md`.
+  - `implement-ticket/SKILL.md` — execution flow for bounded implementation.
+  - `repo-guardrails/SKILL.md` — hard rules for TypeScript, paths, secrets, git.
+  - `local-agent-commands/SKILL.md` — reusable command snippets (git, npm, TS, secrets, PR/Lin ear evidence).
+  - `agent-ready-ticket/SKILL.md` — pack validation contract.
+  - `qa-evidence/SKILL.md` — read-only QA verification.
+  - `small-model-decomposition/SKILL.md` — sizing heuristics for the planner.
+  - `pr-review-fix/SKILL.md` — review-comment fixes without scope expansion.
 - `agents/` — agent definitions with role, scope, and permission posture (`ticket-implementer`, `ticket-qa`, `ticket-planner`).
 - `commands/` — short slash-style entry points (`lat-implement`, `lat-qa`, `lat-fix-review`).
 
 ## Source of truth
 
+The single canonical system prompt for all implementation runs is:
+
+- **`docs/templates/local-agent-prompt.md`** — the complete implementation workflow: inspect, plan, smallest change, map criteria, check, evidence. Referenced by `implement-ticket`, `local-agent-commands`, and `ticket-implementer`.
+
 The single contract these assets consume is:
 
-- `docs/templates/opencode-ticket-pack.md` — the **ticket pack** shape produced upstream by the planner. The implementer never queries Linear or GitHub for ticket context; it reads only the pack.
+- **`docs/templates/opencode-ticket-pack.md`** — the **ticket pack** shape produced upstream by the planner. The implementer never queries Linear or GitHub for ticket context; it reads only the pack.
 
 If the ticket pack is missing or malformed, agents must refuse rather than guess.
 

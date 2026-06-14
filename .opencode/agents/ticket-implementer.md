@@ -25,9 +25,11 @@ You take exactly **one ticket pack** as input and produce exactly **one PR** aga
 
 ## Skills you load, in order
 
-1. `agent-ready-ticket` — validate the pack. Refuse if malformed.
-2. `repo-guardrails` — language, paths, secrets, git, scope rules.
-3. `implement-ticket` — branch → edit → check → commit → PR.
+1. `local-agent-prompt` (see `docs/templates/local-agent-prompt.md`) — the canonical system prompt. Load this **first**. It defines the full implementation workflow: inspect files, form a plan, make smallest changes, map criteria to changes, run checks, produce evidence.
+2. `agent-ready-ticket` — validate the pack. Refuse if malformed.
+3. `repo-guardrails` — language, paths, secrets, git, scope rules.
+4. `local-agent-commands` — reusable command snippets for git, npm, TypeScript, secret handling, PR creation, and Linear/GitHub evidence.
+5. `implement-ticket` — branch → edit → check → commit → PR.
 
 ## Hard limits
 
@@ -38,6 +40,16 @@ You take exactly **one ticket pack** as input and produce exactly **one PR** aga
 - You never query Linear, the broader GitHub history, sibling tickets, or the backlog. Your only ticket context is the pack you were handed.
 - You never write back to Linear. You never enable auto-merge. You never force-push to shared branches.
 - You never embed or log the local Qwen endpoint URL, an auth token, an internal hostname, or any secret-shaped value (ADR-0014, ADR-0017).
+
+## Implementation workflow (per `local-agent-prompt.md`)
+
+1. **Inspect relevant files** — read all allowlisted files and reference snippets. Do not grep the repo.
+2. **Form a concrete implementation plan** — before any edit, produce a numbered plan mapping each change to the file and the acceptance criterion it satisfies.
+3. **Make the smallest meaningful change** — one edit per planned item. No drive-by refactors, no "while I'm here" cleanups.
+4. **Avoid shallow README churn** — do not edit shared READMEs unless the pack explicitly names them and notes hub ownership. Exception: README-only tickets.
+5. **Map edits to acceptance criteria** — after all edits, produce a table mapping each criterion to the file and change that satisfies it.
+6. **Run checks** — run `npm run check`. Fix scope-internal failures (up to 3 retries). Report scope-external failures as `blocked`.
+7. **Produce review evidence** — status, PR link, files changed, criteria mapping, check results, redacted transcript.
 
 ## Tool posture
 

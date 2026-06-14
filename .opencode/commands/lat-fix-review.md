@@ -24,7 +24,7 @@ Address reviewer comments on a PR opened by an earlier `/lat-implement` run, **w
 ## What this command does
 
 1. Hands the pack and the PR to the `ticket-implementer` agent in fix-review mode.
-2. The agent runs `agent-ready-ticket` (re-validate the pack), `repo-guardrails`, and `pr-review-fix`.
+2. The agent loads `docs/templates/local-agent-prompt.md` (canonical system prompt), then runs `agent-ready-ticket` (re-validate the pack), `repo-guardrails`, `local-agent-commands`, and `pr-review-fix`.
 3. For each unresolved review comment:
    - **In-scope** (touches an allowlisted file, no new criterion, no new dep): apply smallest fix, re-run `npm run check`, push to the same branch, reply with the commit SHA.
    - **Out-of-scope**: refuse with a one-line PR reply pointing the reviewer at a follow-up ticket. Do not silently widen the allowlist.

@@ -23,9 +23,10 @@ The ticket pack must conform to `docs/templates/opencode-ticket-pack.md`. The co
 ## What this command does
 
 1. Hands the pack at `${pack}` to the `ticket-implementer` agent.
-2. The agent runs `agent-ready-ticket` → `repo-guardrails` → `implement-ticket`.
-3. On success: one branch, one PR against `main`, one status report.
-4. On refusal: a status of `blocked | needs_clarification | too_large` with a short reason. No PR is opened.
+2. The agent loads `docs/templates/local-agent-prompt.md` (canonical system prompt) for the full workflow, then runs `agent-ready-ticket` → `repo-guardrails` → `local-agent-commands` → `implement-ticket`.
+3. The agent follows the implementation workflow: inspect files → form a plan → make smallest changes → map criteria to changes → run checks → produce evidence.
+4. On success: one branch, one PR against `main`, one status report.
+5. On refusal: a status of `blocked | needs_clarification | too_large` with a short reason. No PR is opened.
 
 ## What this command does not do
 
