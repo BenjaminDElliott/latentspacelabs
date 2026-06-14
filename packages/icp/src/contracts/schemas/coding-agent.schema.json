@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/coding-agent.schema.json",
+  "title": "Coding Agent I/O Contract",
+  "description": "I/O contract for coding agent type (L1–L4 autonomy). Validates AgentInvocationRequest → AgentInvocationResult with TicketInvocationContext.",
+  "type": "object",
+  "definitions": {
+    "TicketInvocationContext": {
+      "type": "object",
+      "required": ["title", "summary", "guardrails", "non_goals"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable title from Linear. Never a secret."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Short summary of what the ticket asks the provider to do."
+        },
+        "guardrails": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 0,
+          "description": "ADR-0008 / ADR-0013 / ADR-0017 guardrails."
+        },
+        "non_goals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 0,
+          "description": "Non-goals / out-of-scope notes. Empty array valid; null not."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AgentInvocationRequest": {
+      "type": "object",
+      "required": ["agent_type", "linear_issue_id", "autonomy_level", "approve", "dry_run"],
+      "properties": {
+        "agent_type": {
+          "type": "string",
+          "const": "coding",
+          "description": "Fixed to 'coding' for the coding-agent adapter (ADR-0013)."
+        },
+        "linear_issue_id": {
+          "type": "string",
+          "pattern": "^[A-Z]+-\\d+$",
+          "description": "Linear issue identifier (e.g. LAT-178)."
+        },
+        "autonomy_level": {
+          "type": "string",
+          "enum": ["L1-read-only", "L2-propose", "L3-with-approval", "L4-autonomous"],
+          "description": "Autonomy level per ADR-0008."
+        },
+        "approve": {
+          "type": "boolean",
+          "description": "Explicit approval flag (ADR-0013 requires approval for L3+)."
+        },
+        "dry_run": {
+          "type": "boolean",
+          "description": "Whether this is a dry run."
+        },
+        "repo": {
+          "type": ["string", "null"],
+          "pattern": "^[\\w.-]+\\/[\\w.-]+$",
+          "description": "owner/name repository."
+        },
+        "branch_target": {
+          "type": ["string", "null"],
+          "description": "Base branch, typically 'main'."
+        },
+        "branch_naming": {
+          "type": ["string", "null"],
+          "description": "Branch naming convention, typically 'lat-<n>-<slug>'."
+        },
+        "ticket_context": {
+          "$ref": "#/definitions/TicketInvocationContext"
+        },
+        "budget_cap_usd": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Numeric ADR-0009 budget cap."
+        },
+        "cost_band_observed": {
+          "type": ["string", "null"],
+          "enum": ["normal", "elevated", "runaway_risk", "unknown"],
+          "description": "Best-known cost band before invocation."
+        },
+        "skill_name_and_version": {
+          "type": ["string", "null"],
+          "pattern": "^[^@]+@[^@]+$",
+          "description": "name@version of the originating skill."
+        },
+        "run_id": {
+          "type": ["string", "null"],
+          "description": "Stable per-run correlation id."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AgentInvocationResult": {
+      "type": "object",
+      "required": ["exit_signal", "pr_url", "pr_branch", "commit_sha", "cost_band", "spent_usd", "cost_band_unavailable_reason", "notes"],
+      "properties": {
+        "exit_signal": {
+          "type": "string",
+          "enum": ["succeeded", "failed", "cancelled", "needs_human"],
+          "description": "Outcome of the agent invocation."
+        },
+        "pr_url": {
+          "type": ["string", "null"],
+          "description": "GitHub PR URL, null if none produced."
+        },
+        "pr_branch": {
+          "type": ["string", "null"],
+          "description": "PR branch name, null if none."
+        },
+        "commit_sha": {
+          "type": ["string", "null"],
+          "description": "Commit SHA, null if none."
+        },
+        "cost_band": {
+          "type": "string",
+          "enum": ["normal", "elevated", "runaway_risk", "unknown"],
+          "description": "Cost band classification per ADR-0009."
+        },
+        "spent_usd": {
+          "type": ["number", "null"],
+          "description": "USD spent, null if unknown."
+        },
+        "cost_band_unavailable_reason": {
+          "type": ["string", "null"],
+          "description": "Secret-safe reason cost band is unavailable."
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Sanitised notes from the provider."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "description": "Input schema: valid coding agent invocation request"
+    }
+  ],
+  "$ref": "#/definitions/AgentInvocationRequest"
+}

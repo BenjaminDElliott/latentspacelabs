@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/qa-evaluation.schema.json",
+  "title": "QA/Review Agent I/O Contract",
+  "description": "I/O contract for QA and review agent types. Validates EvaluationRunInput → EvaluationReport.",
+  "type": "object",
+  "definitions": {
+    "EvaluationFinding": {
+      "type": "object",
+      "required": ["severity", "category", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["nit", "low", "medium", "high", "critical"],
+          "description": "ADR-0007 severity ladder."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "none",
+            "missing_approval",
+            "unsupported_ticket_shape",
+            "missing_minimum_context",
+            "missing_repo",
+            "missing_budget_cap",
+            "cost_runaway_risk",
+            "provider_refused",
+            "provider_error",
+            "provider_timeout",
+            "provider_not_configured",
+            "missing_evidence_floor",
+            "recommendation_ladder_violation",
+            "preflight_ticket_not_agent_ready"
+          ],
+          "description": "Failure category — closed vocabulary."
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable finding description."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvaluationReport": {
+      "type": "object",
+      "required": ["run_id", "linear_issue_id", "recommendation", "failure_category", "findings", "risks", "evidence", "next_action"],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Run identifier."
+        },
+        "linear_issue_id": {
+          "type": "string",
+          "description": "Linear issue identifier."
+        },
+        "recommendation": {
+          "type": "string",
+          "enum": ["approve", "approve-with-nits", "request-changes", "block-merge", "needs-human"],
+          "description": "ADR-0007 recommendation ladder."
+        },
+        "failure_category": {
+          "type": "string",
+          "description": "Primary failure category for retro aggregation."
+        },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EvaluationFinding" },
+          "minItems": 0,
+          "description": "All findings."
+        },
+        "risks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 0,
+          "description": "One-line per risk."
+        },
+        "evidence": {
+          "type": "object",
+          "required": ["pr_url", "run_report_path", "linear_comment_url"],
+          "properties": {
+            "pr_url": {
+              "type": ["string", "null"]
+            },
+            "run_report_path": {
+              "type": ["string", "null"]
+            },
+            "linear_comment_url": {
+              "type": ["string", "null"]
+            }
+          },
+          "additionalProperties": false,
+          "description": "Evidence pointers."
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Single recommended next step."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvaluationRunInput": {
+      "type": "object",
+      "required": ["run_id", "linear_issue_id", "agent_result", "has_run_report", "has_linear_write_back"],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "linear_issue_id": {
+          "type": "string"
+        },
+        "agent_result": {
+          "type": "object",
+          "required": ["exit_signal"],
+          "properties": {
+            "exit_signal": {
+              "type": "string",
+              "enum": ["succeeded", "failed", "cancelled", "needs_human"]
+            }
+          },
+          "additionalProperties": true
+        },
+        "claimed_recommendation": {
+          "type": ["string", "null"],
+          "enum": ["approve", "approve-with-nits", "request-changes", "block-merge", "needs-human", null],
+          "description": "Null means no review artefact yet."
+        },
+        "has_run_report": {
+          "type": "boolean"
+        },
+        "has_linear_write_back": {
+          "type": "boolean"
+        },
+        "finding_severities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["nit", "low", "medium", "high", "critical"]
+          },
+          "minItems": 0
+        },
+        "pr_url": {
+          "type": ["string", "null"]
+        },
+        "run_report_path": {
+          "type": ["string", "null"]
+        },
+        "linear_comment_url": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/EvaluationRunInput" },
+    { "$ref": "#/definitions/EvaluationReport" }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/run-artifact.schema.json",
+  "title": "Observability Agent I/O Contract",
+  "description": "I/O contract for observability agent type. Validates RunArtefact (LAT-140 structured run artifact).",
+  "type": "object",
+  "definitions": {
+    "RunArtefact": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "invocation_id",
+        "surface",
+        "producer",
+        "outcome",
+        "started_at",
+        "ended_at",
+        "ticket_id",
+        "pack_path",
+        "pack_content_hash",
+        "refusal_code",
+        "refusal_message",
+        "stdout_redacted",
+        "stderr_redacted",
+        "artefact_class",
+        "artefact_checks"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Artifact schema version."
+        },
+        "invocation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface": {
+          "type": "string",
+          "enum": ["dispatcher", "cockpit", "cli", "skill"],
+          "description": "Surface where this artifact was produced."
+        },
+        "producer": {
+          "type": "string",
+          "description": "Producer identifier (e.g. 'lat129-dispatcher')."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "ready_for_review",
+            "checks_failed",
+            "failed",
+            "refused",
+            "planned",
+            "no_eligible_issue",
+            "config_error"
+          ]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ended_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ticket_id": {
+          "type": "string"
+        },
+        "pack_path": {
+          "type": "string"
+        },
+        "pack_content_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of pack content for integrity."
+        },
+        "refusal_code": {
+          "type": ["string", "null"]
+        },
+        "refusal_message": {
+          "type": ["string", "null"]
+        },
+        "stdout_redacted": {
+          "type": "string"
+        },
+        "stderr_redacted": {
+          "type": "string"
+        },
+        "artefact_class": {
+          "type": "string",
+          "enum": ["branch", "pr", "patch", "diff"],
+          "description": "Kind of actionable review artifact."
+        },
+        "artefact_checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "outcome"],
+            "properties": {
+              "name": { "type": "string" },
+              "outcome": {
+                "type": "string",
+                "enum": ["passed", "failed", "skipped", "manual"]
+              },
+              "durationMs": { "type": "number" },
+              "detail": { "type": ["string", "null"] }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "acceptance_criteria_coverage": {
+          "type": ["object", "null"],
+          "properties": {
+            "total": { "type": "number" },
+            "covered": { "type": "number" },
+            "uncovered": { "type": ["array", "null"], "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "changed_files_summary": {
+          "type": ["object", "null"],
+          "properties": {
+            "added": { "type": "array", "items": { "type": "string" } },
+            "modified": { "type": "array", "items": { "type": "string" } },
+            "deleted": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "classifier_evidence": {
+          "type": ["object", "null"],
+          "properties": {
+            "risk_level": { "type": ["string", "null"] },
+            "cost_class": { "type": ["string", "null"] },
+            "quality_label": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "risk_class": {
+          "type": ["string", "null"],
+          "enum": ["low", "medium", "high", "critical", null]
+        },
+        "training_eligibility": {
+          "type": ["object", "null"],
+          "properties": {
+            "eligible": { "type": "boolean" },
+            "reason": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "redaction_metadata": {
+          "type": ["object", "null"],
+          "properties": {
+            "secret_count": { "type": "number" },
+            "patterns_used": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/definitions/RunArtefact"
+}
