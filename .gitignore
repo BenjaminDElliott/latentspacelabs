@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+runs/*/budget_state.json
+runs/*/report.md
+runs/test-run/

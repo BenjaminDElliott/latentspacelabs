@@ -1,0 +1,1357 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery</title>
+<!--Generated on Thu Jun 11 17:53:56 2026 by LaTeXML (version 0.8.8) http://dlmf.nist.gov/LaTeXML/.-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="/static/browse/0.3.4/css/arxiv-html-papers-20260131.css" type="text/css">
+<script src="/static/browse/0.3.4/js/arxiv-html-papers-20260131.js"></script>
+<script>
+  // Restore the saved color scheme preference, or
+  // enact the browser preference if "automatic", 
+  // without expecting DOM load to have completed.
+  //
+  // Also restore any saved readingmode and ToC display preferences.
+  function initializeReadingPreferences() {
+    let saved_theme = localStorage.getItem("ar5iv_theme") || "automatic";
+    if (saved_theme === "automatic") {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        saved_theme = "dark";
+      }
+    }
+    if (saved_theme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    const tocDisplay = localStorage.getItem('arxiv_html_paper_toc_display');
+    if (tocDisplay) {
+      document.documentElement.setAttribute("data-toc-display", tocDisplay);
+    }
+    const readingMode = localStorage.getItem('arxiv_html_paper_reading_mode');
+    if (readingMode) {
+      document.documentElement.setAttribute("data-reading-mode", readingMode);
+    }
+  }
+  // Run as soon as JS starts, to minimize repainting
+  initializeReadingPreferences();
+</script>
+<link rel="apple-touch-icon" sizes="180x180"
+  href="/static/browse/0.3.4/images/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32"
+  href="/static/browse/0.3.4/images/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16"
+  href="/static/browse/0.3.4/images/icons/favicon-16x16.png">
+<link rel="manifest" href="/static/browse/0.3.4/images/icons/site.webmanifest">
+<link rel="mask-icon" href="/static/browse/0.3.4/images/icons/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="stylesheet" type="text/css" media="screen" href="https://use.typekit.net/utz6mli.css">
+</head>
+<body>
+<dialog id="modal-form" aria-labelledby="modal-title" closedby="any">
+  <form id="modal-form-content" method="dialog" enctype="multipart/form-data">
+    <header class="modal-header">
+      <h5 id="modal-title" class="modal-title">Report GitHub Issue</h5>
+      <button type="submit" formnovalidate class="modal-close" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <label for="form_title">Title:</label>
+      <input class="form-control" id="form_title" name="form_title" required placeholder="Enter title">
+
+      <p id="selectedTextModalDescription" hidden>Content selection saved. Describe the issue below:</p>
+
+      <label for="description">Description:</label>
+      <textarea class="form-control" id="description" name="description" required maxlength="500"
+        placeholder="500 characters maximum"></textarea>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="submit" value="internal-report" class="sr-only modal-submit">Submit without GitHub</button>
+      <button type="submit" value="github-report" class="modal-submit">Submit in GitHub</button>
+    </footer>
+  </form>
+</dialog>
+
+<header class="arxiv-html-header">
+  <div class="html-header-logo">
+    <a href="/">
+      <img alt="arXiv logo" class="logo desktop-only" width="100"
+        src="/static/browse/0.3.4/images/arxiv-logo-one-color-white.svg">
+      <span class="sr-only">Back to arXiv</span>
+    </a>
+  </div>
+  <!--TOC, dark mode, links-->
+  <nav class="html-header-nav">
+    <a class="header-button hover-effect desktop-only" href="https://info.arxiv.org/about/accessible_HTML.html"
+      target="_blank">Why HTML?</a>
+    <a class="header-button" title="Report an Issue" href="#" title="Report an issue"
+      onclick="event.preventDefault(); showModalForm();">
+      <svg role="presentation" class="mobile-only toggle-icon" aria-hidden="true" height="1.25rem"
+        viewBox="0 0 640 640">
+        <path
+          d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+      </svg>
+      <span class="desktop-only">Report Issue</span></a>
+    <!--back to abstract-->
+    <a class="header-button" title="Back to abstract page" aria-label="Back to abstract page"
+      href="/abs/2606.13662v1">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 512 512" fill="#ffffff"
+        aria-hidden="true">
+        <path
+          d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z">
+        </path>
+      </svg>
+      <span class="desktop-only">Back to Abstract</span>
+    </a>
+    <!-- PDF download link -->
+    <a class="header-button" title="Download PDF" href="/pdf/2606.13662v1"
+      target="_blank">
+      <svg class="mobile-only toggle-icon" role="presentation" height="1.25rem" viewBox="0 0 576 542">
+        <path
+          d="M208 48L96 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0 48-80 0c-35.3 0-64-28.7-64-64L32 64C32 28.7 60.7 0 96 0L229.5 0c17 0 33.3 6.7 45.3 18.7L397.3 141.3c12 12 18.7 28.3 18.7 45.3l0 149.5-48 0 0-128-88 0c-39.8 0-72-32.2-72-72l0-88zM348.1 160L256 67.9 256 136c0 13.3 10.7 24 24 24l68.1 0zM240 380l32 0c33.1 0 60 26.9 60 60s-26.9 60-60 60l-12 0 0 28c0 11-9 20-20 20s-20-9-20-20l0-128c0-11 9-20 20-20zm32 80c11 0 20-9 20-20s-9-20-20-20l-12 0 0 40 12 0zm96-80l32 0c28.7 0 52 23.3 52 52l0 64c0 28.7-23.3 52-52 52l-32 0c-11 0-20-9-20-20l0-128c0-11 9-20 20-20zm32 128c6.6 0 12-5.4 12-12l0-64c0-6.6-5.4-12-12-12l-12 0 0 88 12 0zm76-108c0-11 9-20 20-20l48 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 24 28 0c11 0 20 9 20 20s-9 20-20 20l-28 0 0 44c0 11-9 20-20 20s-20-9-20-20l0-128z" />
+      </svg>
+      <span class="desktop-only">Download PDF</span></a>
+    <!-- navigational table of contents toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleNavTOC();" title="Toggle navigation"
+      aria-label="Toggle navigation">
+      <svg height="1.25rem" role="presentation" viewBox="0 0 512 512">
+        <path
+          d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z">
+        </path>
+      </svg>
+    </a>
+    <!--- collapsable header / reading mode toggle -->
+    <a class="header-button toggle-icon" href="javascript:toggleReadingMode();"
+      title="Disable reading mode, show header and footer">
+      <svg role="presentation" height="1.25rem"
+        viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+        <path
+          d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32S0 334.3 0 352l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z" />
+      </svg>
+    </a>
+    <!--- colored theme toggle -->
+    <button type="button" class="header-button color-tog" onclick="toggleColorScheme();" title="Toggle dark/light mode" aria-label="Toggle color scheme">
+      <span class="toggle-icon automatic-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon light-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+      <span class="toggle-icon dark-tog" aria-hidden="true">
+        <svg role="presentation" height="1.25rem" viewBox="0 0 24 24">
+          <path
+            d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z">
+          </path>
+        </svg>
+      </span>
+    </button>
+  </nav>
+</header><nav class="ltx_page_navbar">
+<nav class="ltx_TOC">
+<ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_abstract"><a href="#abstract1" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Abstract</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S1" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S2" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Related Work</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS1" title="In 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Agents for Scientific Discovery</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S2.SS2" title="In 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Agent Environments and Research Integrity</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S3" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span><span class="ltx_text ltx_font_smallcaps">EurekAgent</span></span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS1" title="In 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.1 </span>System Overview</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS1.SSS0.Px1" title="In 3.1 System Overview ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Prepare Stage.</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS1.SSS0.Px2" title="In 3.1 System Overview ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Propose Stage.</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS1.SSS0.Px3" title="In 3.1 System Overview ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Implement Stage.</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="#S3.SS2" title="In 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3.2 </span>Environment Engineering in <span class="ltx_text ltx_font_smallcaps">EurekAgent</span></span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS2.SSS0.Px1" title="In 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Permissions Engineering.</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS2.SSS0.Px2" title="In 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Artifact Engineering.</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS2.SSS0.Px3" title="In 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Budget Engineering.</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_paragraph"><a href="#S3.SS2.SSS0.Px4" title="In 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">Human-in-the-loop Engineering.</span></a></li>
+</ol>
+</li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="#S4" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Experiments</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS1" title="In 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>Mathematics</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS2" title="In 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>Kernel Engineering</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="#S4.SS3" title="In 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.3 </span>Machine Learning Engineering</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="#S5" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Conclusion and Limitations</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_bibliography"><a href="#bib" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title">References</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="#A1" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A </span><span class="ltx_text ltx_font_smallcaps">EurekAgent</span> Hyperparameter Settings</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="#A2" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">B </span>Selected MLE-Bench Lite Competitions</span></a></li>
+</ol></nav>
+</nav>
+<div class="ltx_page_main">
+<div id="infobox" class="infobox">
+  <a id="license-tr" href="https://info.arxiv.org/help/license/index.html#licenses-available">
+    License: CC BY 4.0
+  </a>
+  <div id="watermark-tr">
+arXiv:2606.13662v1 [cs.AI] 11 Jun 2026</div>
+</div><div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<h1 class="ltx_title ltx_title_document">
+<span id="id1.1" class="ltx_text" style="position:relative; bottom:-0.1pt;"><img src="2606.13662v1/logos/EurekAgent1_no_text.png" id="id1.1.g1" class="ltx_graphics ltx_img_square" width="19" height="23" alt="[Uncaptioned image]"></span> <span id="id12.id1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>: Agent Environment Engineering is 
+<br class="ltx_break">All You Need for Autonomous Scientific Discovery</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><span id="id11.10.10" class="ltx_text ltx_inline-block" style="width:397.5pt;">
+<span id="id11.10.10.10" class="ltx_tabular ltx_align_top">
+<span class="ltx_tbody">
+<span id="id5.4.4.4.4" class="ltx_tr">
+<span id="id5.4.4.4.4.4" class="ltx_td ltx_align_center">Amy Xin<sup id="id5.4.4.4.4.4.1" class="ltx_sup"><span id="id5.4.4.4.4.4.1.1" class="ltx_text ltx_font_italic">1</span></sup>, Jiening Siow<sup id="id5.4.4.4.4.4.2" class="ltx_sup"><span id="id5.4.4.4.4.4.2.1" class="ltx_text ltx_font_italic">1</span></sup>, Junjie Wang<sup id="id5.4.4.4.4.4.3" class="ltx_sup"><span id="id5.4.4.4.4.4.3.1" class="ltx_text ltx_font_italic">1</span></sup>, Zijun Yao<sup id="id5.4.4.4.4.4.4" class="ltx_sup"><span id="id5.4.4.4.4.4.4.1" class="ltx_text ltx_font_italic">1</span></sup>,</span></span>
+<span id="id9.8.8.8.8" class="ltx_tr">
+<span id="id9.8.8.8.8.4" class="ltx_td ltx_align_center"><span id="id9.8.8.8.8.4.4" class="ltx_text ltx_font_bold">Fanjin Zhang<sup id="id9.8.8.8.8.4.4.1" class="ltx_sup"><span id="id9.8.8.8.8.4.4.1.1" class="ltx_text ltx_font_medium ltx_font_italic">2</span></sup>, Jian Song<sup id="id9.8.8.8.8.4.4.2" class="ltx_sup"><span id="id9.8.8.8.8.4.4.2.1" class="ltx_text ltx_font_medium ltx_font_italic">2</span></sup>, Lei Hou<sup id="id9.8.8.8.8.4.4.3" class="ltx_sup"><span id="id9.8.8.8.8.4.4.3.1" class="ltx_text ltx_font_medium ltx_font_italic">1</span></sup>, Juanzi Li<sup id="id9.8.8.8.8.4.4.4" class="ltx_sup"><span id="id9.8.8.8.8.4.4.4.1" class="ltx_text ltx_font_medium ltx_font_italic">1</span></sup></span></span></span>
+<span id="id11.10.10.10.10" class="ltx_tr">
+<span id="id11.10.10.10.10.2" class="ltx_td ltx_align_center"><sup id="id11.10.10.10.10.2.1" class="ltx_sup"><span id="id11.10.10.10.10.2.1.1" class="ltx_text ltx_font_italic">1</span></sup>Department of Computer Science and Technology, Tsinghua University  <sup id="id11.10.10.10.10.2.2" class="ltx_sup"><span id="id11.10.10.10.10.2.2.1" class="ltx_text ltx_font_italic">2</span></sup>Zhipu AI</span></span>
+<span id="id11.10.10.10.11.1" class="ltx_tr">
+<span id="id11.10.10.10.11.1.1" class="ltx_td ltx_align_center"><span id="id11.10.10.10.11.1.1.1" class="ltx_text ltx_font_typewriter">{xin-x25, xiaojn25}@mails.tsinghua.edu.cn</span></span></span>
+</span>
+</span></span>
+</span></span>
+</div>
+
+<div id="abstract1" class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6>
+<p class="ltx_p">LLM-based agents
+have shown increasing potential in automating scientific discovery.
+Given an optimizable metric and an execution environment,
+they can propose, validate, and iterate scientific solutions,
+and have produced results that outperform human-designed approaches.
+As model capabilities continue to improve,
+we argue that the bottleneck for autonomous scientific discovery is shifting from prescribing agent workflows to designing agent environments—the resources, constraints, and interfaces that shape agent behavior.
+We frame this
+as <span class="ltx_text ltx_font_bold ltx_font_italic">environment engineering</span>: building environments that amplify productive behaviors, such as open-ended exploration, systematic artifact management, and inter-agent collaboration, while suppressing harmful behaviors, such as reward hacking and high-friction human oversight.
+We present <span class="ltx_text ltx_font_bold ltx_font_smallcaps">EurekAgent</span>, an environment-engineered agent system for
+metric-driven autonomous scientific discovery.
+<span class="ltx_text ltx_font_smallcaps">EurekAgent</span> engineers the environment along four dimensions: permissions engineering for bounded agent execution and isolated evaluation; artifact engineering for filesystem and Git-based collaboration; budget engineering for budget-aware exploration; and human-in-the-loop engineering for easy human supervision and intervention.
+<span class="ltx_text ltx_font_smallcaps">EurekAgent</span> sets new state-of-the-art results on multiple
+mathematics,
+kernel engineering, and machine learning
+tasks, including new state-of-the-art 26-circle packing results discovered with less than $11 in total API cost.
+We open-source our code and results<span class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">1</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">1</sup><span class="ltx_tag ltx_tag_note">1</span><a href="https://github.com/THU-Team-Eureka/EurekAgent" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/THU-Team-Eureka/EurekAgent</a></span></span></span>, and call for environment engineering as a core research direction for developing reliable autonomous research agents.</p>
+</div>
+<figure id="S0.F1" class="ltx_figure"><img src="2606.13662v1/x1.png" id="S0.F1.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="747" height="392" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 1: </span><span id="S0.F1.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> score evolution progress on the 26-circle packing problem.</figcaption>
+</figure>
+<figure id="S0.T1" class="ltx_table">
+<div id="S0.T1.8" class="ltx_inline-block ltx_align_center ltx_transformed_outer" style="width:433.6pt;height:27.9pt;vertical-align:-12.8pt;"><span class="ltx_transformed_inner" style="transform:translate(-264.1pt,17.0pt) scale(0.450826751242332,0.450826751242332) ;">
+<table id="S0.T1.8.8" class="ltx_tabular ltx_align_middle">
+<tbody class="ltx_tbody">
+<tr id="S0.T1.8.8.9.1" class="ltx_tr">
+<td id="S0.T1.8.8.9.1.1" class="ltx_td ltx_border_tt" style="padding:1pt 3.0pt;"></td>
+<td id="S0.T1.8.8.9.1.2" class="ltx_td ltx_align_center ltx_border_tt" style="padding:1pt 3.0pt;" colspan="3"><span id="S0.T1.8.8.9.1.2.1" class="ltx_text ltx_font_bold">Mathematics</span></td>
+<td id="S0.T1.8.8.9.1.3" class="ltx_td ltx_align_center ltx_border_tt" style="padding:1pt 3.0pt;"><span id="S0.T1.8.8.9.1.3.1" class="ltx_text ltx_font_bold">Kernel Eng.</span></td>
+<td id="S0.T1.8.8.9.1.4" class="ltx_td ltx_align_center ltx_border_tt" style="padding:1pt 3.0pt;"><span id="S0.T1.8.8.9.1.4.1" class="ltx_text ltx_font_bold">Machine Learning</span></td>
+</tr>
+<tr id="S0.T1.5.5.5" class="ltx_tr">
+<td id="S0.T1.5.5.5.6" class="ltx_td" style="padding:1pt 3.0pt;"></td>
+<td id="S0.T1.1.1.1.1" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">Circle Packing (<math id="S0.T1.1.1.1.1.m1" class="ltx_Math" alttext="\uparrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↑</mo><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math>)</td>
+<td id="S0.T1.2.2.2.2" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">Erdős’ Min. Overlap (<math id="S0.T1.2.2.2.2.m1" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</td>
+<td id="S0.T1.3.3.3.3" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">1st Autocorr. Ineq. (<math id="S0.T1.3.3.3.3.m1" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</td>
+<td id="S0.T1.4.4.4.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">TriMul (<math id="S0.T1.4.4.4.4.m1" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</td>
+<td id="S0.T1.5.5.5.5" class="ltx_td ltx_nopad_l ltx_nopad_r ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">MLE-Bench (<math id="S0.T1.5.5.5.5.m1" class="ltx_Math" alttext="\uparrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↑</mo><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math>)</td>
+</tr>
+<tr id="S0.T1.7.7.7" class="ltx_tr">
+<td id="S0.T1.7.7.7.3" class="ltx_td ltx_align_left ltx_border_t" style="padding:1pt 3.0pt;">Prev. Best Human</td>
+<td id="S0.T1.6.6.6.1" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">
+<math id="S0.T1.6.6.6.1.m1" class="ltx_Math" alttext="\sim" display="inline" intent=":literal"><semantics><mo>∼</mo><annotation encoding="application/x-tex">\sim</annotation></semantics></math> 2.634[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib3" title="Erich’s Packing Center" class="ltx_ref">5</a></cite>]</td>
+<td id="S0.T1.7.7.7.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">0.380927[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib1" title="The minimum overlap problem revisited" class="ltx_ref">7</a></cite>]</td>
+<td id="S0.T1.7.7.7.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">1.509730[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib2" title="Improved bounds on the supremum of autoconvolutions" class="ltx_ref">18</a></cite>]</td>
+<td id="S0.T1.7.7.7.2" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;"><math id="S0.T1.7.7.7.2.m1" class="ltx_Math" alttext="2096.04\,\mu\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><mn>2096.04</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">2096.04\,\mu\mathrm{s}</annotation></semantics></math></td>
+<td id="S0.T1.7.7.7.6" class="ltx_td ltx_nopad_l ltx_nopad_r ltx_align_center ltx_border_t" style="padding:1pt 3.0pt;">N/A</td>
+</tr>
+<tr id="S0.T1.8.8.8" class="ltx_tr">
+<td id="S0.T1.8.8.8.2" class="ltx_td ltx_align_left" style="padding:1pt 3.0pt;">Prev. Best AI</td>
+<td id="S0.T1.8.8.8.3" class="ltx_td ltx_nopad_l ltx_align_center" style="padding:1pt 3.0pt;">2.635986[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib4" title="Thetaevolve: test-time learning on open problems" class="ltx_ref">27</a></cite>]</td>
+<td id="S0.T1.8.8.8.4" class="ltx_td ltx_nopad_l ltx_align_center" style="padding:1pt 3.0pt;">0.380876[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S0.T1.8.8.8.5" class="ltx_td ltx_nopad_l ltx_align_center" style="padding:1pt 3.0pt;">1.502863[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S0.T1.8.8.8.1" class="ltx_td ltx_nopad_l ltx_align_center" style="padding:1pt 3.0pt;">
+<math id="S0.T1.8.8.8.1.m1" class="ltx_Math" alttext="2247.78\,\mu\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><mn>2247.78</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">2247.78\,\mu\mathrm{s}</annotation></semantics></math>[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S0.T1.8.8.8.6" class="ltx_td ltx_nopad_l ltx_nopad_r ltx_align_center" style="padding:1pt 3.0pt;">71.43%[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib6" title="AIBuildAI: an ai agent for automatically building ai models" class="ltx_ref">31</a></cite>]</td>
+</tr>
+<tr id="S0.T1.8.8.10.2" class="ltx_tr">
+<td id="S0.T1.8.8.10.2.1" class="ltx_td ltx_align_left ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;"><span id="S0.T1.8.8.10.2.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span></td>
+<td id="S0.T1.8.8.10.2.2" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;">2.635<span id="S0.T1.8.8.10.2.2.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">999</span>
+</td>
+<td id="S0.T1.8.8.10.2.3" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;">0.3808<span id="S0.T1.8.8.10.2.3.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">70</span>
+</td>
+<td id="S0.T1.8.8.10.2.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;">1.5028<span id="S0.T1.8.8.10.2.4.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">61</span>
+</td>
+<td id="S0.T1.8.8.10.2.5" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;"><span id="S0.T1.8.8.10.2.5.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">2005.03 µs</span></td>
+<td id="S0.T1.8.8.10.2.6" class="ltx_td ltx_nopad_l ltx_nopad_r ltx_align_center ltx_border_bb ltx_border_t" style="padding:1pt 3.0pt;"><span id="S0.T1.8.8.10.2.6.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">85.71%</span></td>
+</tr>
+</tbody>
+</table>
+</span></div>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 1: </span>An overview of <span id="S0.T1.18.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>’s performance on metric-driven research tasks across mathematics, kernel engineering, and machine learning. <span id="S0.T1.19.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> sets new state-of-the-art across all mathematics and kernel engineering tasks, and ranks first on the evaluated MLE-Bench subset. (<math id="S0.T1.11.m1" class="ltx_Math" alttext="\uparrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↑</mo><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math>) denotes higher is better, while (<math id="S0.T1.12.m2" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>) denotes lower is better. <em id="S0.T1.20.3" class="ltx_emph ltx_font_italic">Prev. Best Human</em> and <em id="S0.T1.21.4" class="ltx_emph ltx_font_italic">Prev. Best AI</em> denote the best published human and AI results before <span id="S0.T1.22.5" class="ltx_text ltx_font_smallcaps">EurekAgent</span>.</figcaption>
+</figure>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2>
+
+<div id="S1.p1" class="ltx_para ltx_noindent">
+<p id="S1.p1.1" class="ltx_p">Large language models are increasingly transforming scientific discovery from manual trial-and-error to computational exploration:
+in domains where research progress can be measured by
+an optimizable metric, LLM-based agents can autonomously propose hypotheses, run experiments, observe feedback, and iterate solutions, reducing human effort in method tuning while largely expanding the scale of exploration.
+LLM-based agents have already produced strong results in tasks across domains such as mathematics, algorithms, kernel engineering, and machine learning engineering <cite class="ltx_cite ltx_citemacro_citep">(Jiang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="Aide: ai-driven exploration in the space of code" class="ltx_ref">2025</a>; Novikov<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib8" title="Alphaevolve: a coding agent for scientific and algorithmic discovery" class="ltx_ref">2025</a>; Lange<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Shinkaevolve: towards open-ended and sample-efficient program evolution" class="ltx_ref">2025</a>; Wang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="Thetaevolve: test-time learning on open problems" class="ltx_ref">2025</a>; Yuksekgonul<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">2026</a>; Ouyang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib10" title="Kernelbench: can llms write efficient gpu kernels?" class="ltx_ref">2025</a>; Chan<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib11" title="Mle-bench: evaluating machine learning agents on machine learning engineering" class="ltx_ref">2025</a>; Yang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="R&amp;d-agent: automating data-driven ai solution building through llm-powered automated research, development, and evolution" class="ltx_ref">2025</a>; Zhang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="AIBuildAI: an ai agent for automatically building ai models" class="ltx_ref">2026</a>; Li<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib20" title="The FM agent" class="ltx_ref">2025</a>)</cite>.
+We envision this as an emerging paradigm shift in scientific research: humans increasingly focus on selecting valuable directions, formulating meaningful metrics, and supervising validity, while agents execute large volumes of methodological exploration.</p>
+</div>
+<div id="S1.p2" class="ltx_para ltx_noindent">
+<p id="S1.p2.1" class="ltx_p">Most existing autonomous research systems realize this vision by prescribing research-specific agentic workflows.
+Evolutionary systems such as AlphaEvolve explicitly maintain populations of candidate programs and use evaluator feedback to guide mutation and selection <cite class="ltx_cite ltx_citemacro_citep">(Novikov<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib8" title="Alphaevolve: a coding agent for scientific and algorithmic discovery" class="ltx_ref">2025</a>; Lange<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Shinkaevolve: towards open-ended and sample-efficient program evolution" class="ltx_ref">2025</a>; Liu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib13" title="Evox: meta-evolution for automated discovery" class="ltx_ref">2026b</a>)</cite>.
+Machine learning systems such as AIDE organize exploration around solution trees, feedback loops, and role-specialized agents <cite class="ltx_cite ltx_citemacro_citep">(Jiang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="Aide: ai-driven exploration in the space of code" class="ltx_ref">2025</a>; Yang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="R&amp;d-agent: automating data-driven ai solution building through llm-powered automated research, development, and evolution" class="ltx_ref">2025</a>)</cite>.
+More recent systems introduce structured debate, periodic self-review, and self-learning modules <cite class="ltx_cite ltx_citemacro_citep">(Liu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib17" title="AutoResearchClaw: self-reinforcing autonomous research with human-ai collaboration" class="ltx_ref">2026a</a>; Qu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib18" title="Coral: towards autonomous multi-agent evolution for open-ended discovery" class="ltx_ref">2026</a>)</cite>.
+While these designs can be effective, they also encode strong assumptions about how research should proceed.
+As general-purpose coding agents like Claude Code and Codex become stronger, recent evidence suggests that much of the useful capability may already reside in the base agent: given a clear research task and an optimizable metric, these agents can already discover new state-of-the-art scientific solutions <cite class="ltx_cite ltx_citemacro_citep">(Liu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib15" title="Can coding agents optimize algorithms autonomously?" class="ltx_ref">2026c</a>; Karpathy, <a href="#bib.bib16" title="autoresearch: AI agents running research on single-GPU nanochat training automatically" class="ltx_ref">2026</a>)</cite>.
+On ResearchClawBench <cite class="ltx_cite ltx_citemacro_citep">(Xu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib19" title="ResearchClawBench: a benchmark for end-to-end autonomous scientific research" class="ltx_ref">2026</a>)</cite>, a benchmark of 40 research tasks across 10 diverse domains, both Claude Code and Codex, used as standalone general-purpose agents, outperform all evaluated research-specific agent systems.</p>
+</div>
+<div id="S1.p3" class="ltx_para ltx_noindent">
+<p id="S1.p3.1" class="ltx_p">However, task performance alone does not make reliable autonomous researchers.
+Scientific discovery requires rigor, reproducibility, and inspectability, yet agents may contaminate evaluations, manipulate artifacts, or fail to follow procedural constraints.
+Such reward-hacking and observability failures have already been reported in agentic research systems <cite class="ltx_cite ltx_citemacro_citep">(Luo<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib21" title="The more you automate, the less you see: hidden pitfalls of ai scientist systems" class="ltx_ref">2025</a>; Kokoromyti, <a href="#bib.bib22" title="Anatomy of a reward hack: a real story from the latest GPU Mode NVFP4 competition" class="ltx_ref">2026</a>; Anthropic, <a href="#bib.bib23" title="Claude Opus 4.7 system card" class="ltx_ref">2026</a>)</cite>.
+Therefore, trusting agents without environmental constraints can lead to
+impressive but
+unreliable results.</p>
+</div>
+<div id="S1.p4" class="ltx_para ltx_noindent">
+<p id="S1.p4.1" class="ltx_p">These observations suggest that as general-purpose agents become more capable, the bottleneck for autonomous scientific discovery is shifting from prescribing agent behavior through detailed workflows to engineering the environments in which agents operate.
+We frame this as <em id="S1.p4.1.1" class="ltx_emph ltx_font_italic">environment engineering</em>.
+This
+echoes Gibson’s theory of affordances in ecological psychology: an environment shapes the possibilities for action available to an actor, “either for good or ill” <cite class="ltx_cite ltx_citemacro_citep">(Gibson, <a href="#bib.bib47" title="The ecological approach to visual perception" class="ltx_ref">1979</a>)</cite>.
+For scientific discovery, a well-engineered environment should suppress harmful affordances such as evaluation tampering and artifact manipulation, while amplifying productive affordances such as free exploration, accurate rewards, inter-agent coordination, and easy human supervision.
+The analogy is a capable PhD student: productivity comes not from minute-by-minute instructions, but from accountability, research autonomy, accurate feedback, peer collaboration, and mentor supervision.</p>
+</div>
+<div id="S1.p5" class="ltx_para ltx_noindent">
+<p id="S1.p5.1" class="ltx_p">We present <span id="S1.p5.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>, an agent system for autonomous scientific discovery that coordinates off-the-shelf CLI agents through four environment engineering dimensions: (1) permissions engineering, to expose useful capabilities and resources while preventing research-integrity violations; (2) artifact engineering, to structure solutions, logs, and evaluation results as shared progress memory; (3) budget engineering, to enable budget-aware exploration with runtime and compute boundaries; and (4) human-in-the-loop engineering, to support easy human supervision and intervention.
+Within this environment, the agent remains free to select its own research workflows and strategies.</p>
+</div>
+<div id="S1.p6" class="ltx_para ltx_noindent">
+<p id="S1.p6.1" class="ltx_p">We evaluate <span id="S1.p6.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on metric-driven research tasks spanning mathematics, kernel engineering, and machine learning engineering.
+Using off-the-shelf CLI agents and environment-level design, <span id="S1.p6.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> achieves new state-of-the-art results across all mathematics and kernel engineering tasks, and ranks first on the evaluated MLE-Bench subset.
+Furthermore, with Claude Code as the CLI agent and GLM-5.1 as the base model, <span id="S1.p6.1.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> achieves new state-of-the-art results on the three mathematics tasks with an average API cost below $17, where the 26-circle packing task achieves the lowest API cost of $11.
+We call for environment engineering as a core research direction for building capable, efficient, and responsible autonomous research agents.
+</p>
+</div>
+</section>
+<section id="S2" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">2 </span>Related Work</h2>
+
+<section id="S2.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.1 </span>Agents for Scientific Discovery</h3>
+
+<div id="S2.SS1.p1" class="ltx_para ltx_noindent">
+<p id="S2.SS1.p1.1" class="ltx_p">Autonomous research agents have attracted growing interest
+to accelerate scientific with large-scale computational exploration.
+Systems such as The AI Scientist aim to automate scientific research in an end-to-end manner, covering stages such as idea generation, experimentation, and paper
+writing <cite class="ltx_cite ltx_citemacro_citep">(Lu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib26" title="The ai scientist: towards fully automated open-ended scientific discovery" class="ltx_ref">2024</a>)</cite>.
+Within this broader vision, one especially concrete direction is scientific discovery with verifiable objectives and optimizable metrics, where agents
+autonomously explore and evolve solutions through evaluator feedback.
+In machine learning engineering, systems such as AIDE, R&amp;D-Agent, AIBuildAI, MLE-STAR, and ML-Master formulate progress as iterative code development guided by
+validation scores <cite class="ltx_cite ltx_citemacro_citep">(Jiang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib7" title="Aide: ai-driven exploration in the space of code" class="ltx_ref">2025</a>; Yang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib12" title="R&amp;d-agent: automating data-driven ai solution building through llm-powered automated research, development, and evolution" class="ltx_ref">2025</a>; Zhang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib6" title="AIBuildAI: an ai agent for automatically building ai models" class="ltx_ref">2026</a>; Nam<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib36" title="Mle-star: machine learning engineering agent via search and targeted refinement" class="ltx_ref">2026</a>; Zhu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib37" title="Toward ultra-long-horizon agentic science: cognitive accumulation for machine learning engineering" class="ltx_ref">2026</a>)</cite>.
+In algorithmic and mathematical discovery, training-free solution evolution methods such as FunSearch, AlphaEvolve, ShinkaEvolve, EvoX, AdaEvolve, and OpenEvolve use LLMs to propose or mutate candidate programs under evaluator-guided
+selection <cite class="ltx_cite ltx_citemacro_citep">(Romera-Paredes<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib25" title="Mathematical discoveries from program search with large language models" class="ltx_ref">2024</a>; Novikov<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib8" title="Alphaevolve: a coding agent for scientific and algorithmic discovery" class="ltx_ref">2025</a>; Lange<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib9" title="Shinkaevolve: towards open-ended and sample-efficient program evolution" class="ltx_ref">2025</a>; Liu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib13" title="Evox: meta-evolution for automated discovery" class="ltx_ref">2026b</a>; Cemri<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib41" title="Adaevolve: adaptive llm driven zeroth-order optimization" class="ltx_ref">2026</a>; Sharma, <a href="#bib.bib42" title="OpenEvolve: an open-source evolutionary coding agent" class="ltx_ref">2025</a>)</cite>.
+More recently, test-time training systems such as ThetaEvolve and TTT-Discover further use the optimizable metric as a reward signal to update the model during
+exploration <cite class="ltx_cite ltx_citemacro_citep">(Wang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="Thetaevolve: test-time learning on open problems" class="ltx_ref">2025</a>; Yuksekgonul<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">2026</a>)</cite>.
+These systems demonstrate the power of evaluator-guided discovery, but they typically use fixed workflows to prescribe core agent behaviors such as proposal, mutation, selection, or reflection.
+<span id="S2.SS1.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> instead uses strong general-purpose CLI agents as basic nodes, and focuses on engineering an environment that lets agents exercise their own capabilities
+reliability.</p>
+</div>
+</section>
+<section id="S2.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">2.2 </span>Agent Environments and Research Integrity</h3>
+
+<div id="S2.SS2.p1" class="ltx_para ltx_noindent">
+<p id="S2.SS2.p1.1" class="ltx_p">As agents become more autonomous, the surrounding environment becomes a central determinant of reliability.
+Some recent
+systems have begun to recognize the importance of environment reliability and introduce safeguards for specific failure modes.
+For example, MLE-STAR adds leakage checking for machine learning pipelines,
+and CORAL hides grader code behind an evaluation
+interface <cite class="ltx_cite ltx_citemacro_citep">(Nam<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib36" title="Mle-star: machine learning engineering agent via search and targeted refinement" class="ltx_ref">2026</a>; Qu<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib18" title="Coral: towards autonomous multi-agent evolution for open-ended discovery" class="ltx_ref">2026</a>)</cite>.
+At the same time, analyses of
+real reward-hacking incidents show that agents can exploit weak evaluation protocols, contaminate evidence, or violate procedural assumptions <cite class="ltx_cite ltx_citemacro_citep">(Luo<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib21" title="The more you automate, the less you see: hidden pitfalls of ai scientist systems" class="ltx_ref">2025</a>; Kokoromyti, <a href="#bib.bib22" title="Anatomy of a reward hack: a real story from the latest GPU Mode NVFP4 competition" class="ltx_ref">2026</a>; Anthropic, <a href="#bib.bib23" title="Claude Opus 4.7 system card" class="ltx_ref">2026</a>)</cite>.
+Instruction-following failures in complex agentic settings further suggest that reliability cannot be delegated entirely to prompt engineering <cite class="ltx_cite ltx_citemacro_citep">(Qi<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib24" title="Agentif: benchmarking instruction following of large language models in agentic scenarios" class="ltx_ref">2025</a>)</cite>.
+Some existing work therefore explores environment design to avoid common failures, but these are usually introduced as task-specific safeguards.
+<span id="S2.SS2.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> makes environment engineering the central design objective: it organizes permissions, artifacts, budgets, and human oversight as first-class mechanisms for supporting open-ended agent exploration while preserving evaluator integrity, traceability, and reproducibility.</p>
+</div>
+<figure id="S2.F2" class="ltx_figure"><img src="2606.13662v1/x2.png" id="S2.F2.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="830" height="523" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 2: </span>Overview of <span id="S2.F2.3.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>. Given task inputs and budgets, <span id="S2.F2.4.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> executes a prepare stage followed by repeated propose and parallel implement stages, while the environment engineering layer provides secure evaluation, artifact memory, budget control, and human oversight.</figcaption>
+</figure>
+</section>
+</section>
+<section id="S3" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">3 </span><span id="S3.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>
+</h2>
+
+<div id="S3.p1" class="ltx_para ltx_noindent">
+<p id="S3.p1.1" class="ltx_p">In this section, we present the system design of <span id="S3.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>.
+Figure <a href="#S2.F2" title="Figure 2 ‣ 2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a> summarizes the overall architecture.
+We first overview the overall system loop ( <a href="#S3.SS1" title="3.1 System Overview ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.1</span></a>), then detail the environment engineering designs
+( <a href="#S3.SS2" title="3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3.2</span></a>).</p>
+</div>
+<section id="S3.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.1 </span>System Overview</h3>
+
+<div id="S3.SS1.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS1.p1.4" class="ltx_p"><span id="S3.SS1.p1.4.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> is an environment-engineered agent system for metric-driven research tasks.
+Given a problem description, a hidden evaluation script, a submission-format specification document, optional initial code, and time and API cost budgets, <span id="S3.SS1.p1.4.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> coordinates multiple sessions of off-the-shelf CLI agents
+to autonomously propose and iterate high-scoring solutions.
+Instead of prescribing a detailed research workflow,
+<span id="S3.SS1.p1.4.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> engineers an outer environment that organizes agent activity through a simple three-stage loop:</p>
+<table id="S3.Ex1" class="ltx_equation ltx_eqn_table">
+
+<tbody><tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math id="S3.Ex1.m1" class="ltx_Math" alttext="\textsc{Prepare}\rightarrow\left[\textsc{Propose}_{r}\rightarrow\{\textsc{Implement}_{r,p}\}_{p=1}^{P_{r}}\right]_{r=1}^{R},\quad P_{r}\leq P," display="block" intent=":literal"><semantics><mrow><mrow><mrow><mtext class="ltx_font_smallcaps">Prepare</mtext><mo stretchy="false">→</mo><msubsup><mrow><mo>[</mo><mrow><msub><mtext class="ltx_font_smallcaps">Propose</mtext><mi>r</mi></msub><mo stretchy="false">→</mo><msubsup><mrow><mo stretchy="false">{</mo><msub><mtext class="ltx_font_smallcaps">Implement</mtext><mrow><mi>r</mi><mo>,</mo><mi>p</mi></mrow></msub><mo stretchy="false">}</mo></mrow><mrow><mi>p</mi><mo>=</mo><mn>1</mn></mrow><msub><mi>P</mi><mi>r</mi></msub></msubsup></mrow><mo>]</mo></mrow><mrow><mi>r</mi><mo>=</mo><mn>1</mn></mrow><mi>R</mi></msubsup></mrow><mo rspace="1.167em">,</mo><mrow><msub><mi>P</mi><mi>r</mi></msub><mo>≤</mo><mi>P</mi></mrow></mrow><mo>,</mo></mrow><annotation encoding="application/x-tex">\textsc{Prepare}\rightarrow\left[\textsc{Propose}_{r}\rightarrow\{\textsc{Implement}_{r,p}\}_{p=1}^{P_{r}}\right]_{r=1}^{R},\quad P_{r}\leq P,</annotation></semantics></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr></tbody>
+</table>
+<p id="S3.SS1.p1.3" class="ltx_p">where <math id="S3.SS1.p1.1.m1" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> is the maximum number of
+iteration rounds
+and <math id="S3.SS1.p1.2.m2" class="ltx_Math" alttext="P" display="inline" intent=":literal"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> is the maximum number of parallel implementation sessions per implement stage, both adjustable by the user.
+Each round consists of one proposal session followed by up to <math id="S3.SS1.p1.3.m3" class="ltx_Math" alttext="P" display="inline" intent=":literal"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> parallel implementation sessions.
+Across stages and rounds, the environment only handles outer-loop coordination: it initializes the workspace, transitions between stages, specifies each session’s objective and required deliverables, exposes the tool and resource interfaces, records and ranks scored solutions, persists run and session state, and enforces time and cost budgets. Within these boundaries, CLI-agent sessions freely decide their own research strategies, experiment plans, implementation details, and refinement processes.</p>
+</div>
+<section id="S3.SS1.SSS0.Px1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Prepare Stage.</h4>
+
+<div id="S3.SS1.SSS0.Px1.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS1.SSS0.Px1.p1.1" class="ltx_p">Before iteration begins, <span id="S3.SS1.SSS0.Px1.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> launches a preparation agent session to set up a reliable runtime setup for subsequent solution iteration.
+The agent reads the problem description, the evaluator-facing submission requirements document, and optional initial code; tests the
+hidden evaluation service; and installs or validates required runtime dependencies. If the problem setup is ambiguous or broken, the
+agent can pause and request human clarification rather than allowing optimization to proceed from an unreliable setup. The stage ends
+by writing a preparation summary and a completion artifact, which become shared context for later proposal and implementation sessions.
+This stage is executed only once at the beginning of the research process; after that, <span id="S3.SS1.SSS0.Px1.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> executes <math id="S3.SS1.SSS0.Px1.p1.1.m1" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> rounds of
+propose–implement iteration.</p>
+</div>
+</section>
+<section id="S3.SS1.SSS0.Px2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Propose Stage.</h4>
+
+<div id="S3.SS1.SSS0.Px2.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS1.SSS0.Px2.p1.1" class="ltx_p">At the beginning of each iteration round, <span id="S3.SS1.SSS0.Px2.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> launches a proposal agent session to generate diverse initial hypotheses for the next round of solution
+optimization. The session reads the task inputs, the preparation summary, and the ranked best solutions from previous rounds, if any. It
+may also inspect previous-round workspaces for implementation details and use web search or browsing tools to gather related literature or existing open-source solutions. It then writes a manifest containing up to <math id="S3.SS1.SSS0.Px2.p1.1.m1" class="ltx_Math" alttext="P" display="inline" intent=":literal"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> candidate hypotheses
+and creates an implementation-ready description for each hypothesis. This stage acts as the fan-in step of <span id="S3.SS1.SSS0.Px2.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span>: empirical evidence
+from earlier rounds, together with information from the internet, is distilled into a new set of promising, diverse, and independently
+executable research hypotheses.</p>
+</div>
+</section>
+<section id="S3.SS1.SSS0.Px3" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Implement Stage.</h4>
+
+<div id="S3.SS1.SSS0.Px3.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS1.SSS0.Px3.p1.1" class="ltx_p">The implement stage is the fan-out step of <span id="S3.SS1.SSS0.Px3.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>. For each proposed hypothesis, <span id="S3.SS1.SSS0.Px3.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> launches a separate implementation agent session in
+parallel and assigns it a separate workspace. Each session starts from its assigned hypothesis as an initial direction, but may
+iteratively refine, debug, or modify the solution according to feedback from the hidden evaluator. Sessions submit candidate
+solutions through the secure evaluation service, which records all evaluated submissions and maintains both intermediate results and the
+best valid result. After the parallel implement sessions complete or exhaust their budgets, <span id="S3.SS1.SSS0.Px3.p1.1.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> automatically ranks all valid submissions, and updates a ranked solution history file as shared context for the next round. This propose-implement loop combines broad parallel exploration with cross-round accumulation of empirical progress,
+continuing for improvement until the budget limits or stage completion conditions are reached.</p>
+</div>
+</section>
+</section>
+<section id="S3.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">3.2 </span>Environment Engineering in <span id="S3.SS2.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>
+</h3>
+
+<div id="S3.SS2.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS2.p1.1" class="ltx_p"><span id="S3.SS2.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> is designed through four environment engineering dimensions: (1) permissions engineering, (2) artifact engineering, (3) budget engineering, and (4) human-in-the-loop engineering.
+The goal is to grant agent sessions enough affordances to perform open-ended solution optimization,
+while making the research process reliable, inspectable, and resource-bounded.
+</p>
+</div>
+<figure id="S3.F3" class="ltx_figure"><img src="2606.13662v1/figures/monitor.png" id="S3.F3.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="431" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 3: </span>The <span id="S3.F3.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> web monitor interface. The monitor provides a user-friendly overview of each run, including status logs, score evolution, per-round and global best approaches, and budget usage. It also records complete session
+transcripts in an organized view, allowing users to inspect full trajectories of every agent session.</figcaption>
+</figure>
+<section id="S3.SS2.SSS0.Px1" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Permissions Engineering.</h4>
+
+<div id="S3.SS2.SSS0.Px1.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS2.SSS0.Px1.p1.1" class="ltx_p">Scientific discovery agents need broad capabilities, but unconstrained capability can compromise research integrity.
+<span id="S3.SS2.SSS0.Px1.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> imposes system-level permission boundaries to support productive exploration while preventing research-integrity violations.
+On the productive side, <span id="S3.SS2.SSS0.Px1.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> provides a freely configurable
+Python environment, workspace-level shell access, capable web search and browser tools, and full access to the same run’s previous-round artifacts.
+This gives agents researcher-like access to tools, files, internet, and prior experience to aid solution iteration.
+On the constraint side, <span id="S3.SS2.SSS0.Px1.p1.1.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> uses run-level isolation and controller-owned interfaces to prevent common failure modes.
+Each run executes inside a Docker container with a mounted workspace, protecting files
+outside the run from accidental or adversarial modification.
+The hidden evaluator with possible test data are kept outside the agent-visible workspace and exposed only through a secure grading service: agents can submit candidates and receive official scores, but cannot inspect or modify the
+evaluator itself.
+The authoritative result files generated by the hidden evaluator
+are automatically updated by the system, and hooks are implemented to block agent modification of these controller-owned files.
+<span id="S3.SS2.SSS0.Px1.p1.1.4" class="ltx_text ltx_font_smallcaps">EurekAgent</span> also enforces same-round isolation among parallel implementation sessions: an implementation session may learn from previous rounds, but cannot inspect or copy from peer approaches in the same round, reducing premature collapse toward a single local direction.
+For GPU tasks, <span id="S3.SS2.SSS0.Px1.p1.1.5" class="ltx_text ltx_font_smallcaps">EurekAgent</span> uses a default-deny policy: GPUs are invisible unless acquired through a provided GPU helper API, which records lock ownership and ensures
+that each physical GPU is held by at most one agent session at a time.
+Together, these mechanisms expose useful resources while removing high-risk affordances such as evaluator leakage, score tampering, uncontrolled GPU contention, and same-round solution copying.</p>
+</div>
+</section>
+<section id="S3.SS2.SSS0.Px2" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Artifact Engineering.</h4>
+
+<div id="S3.SS2.SSS0.Px2.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS2.SSS0.Px2.p1.1" class="ltx_p"><span id="S3.SS2.SSS0.Px2.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> uses the filesystem coupled with Git history as shared long-term memory.
+The filesystem stores stage deliverables for
+cross-session communication, including preparation summaries, proposal manifests, hypotheses, solution code, evaluator feedback, and scored submissions.
+<span id="S3.SS2.SSS0.Px2.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> also maintains system-managed artifacts: web-search history is logged as a cache of explored internet information, and official scores are automatically recorded and ranked.
+The ranked historical solutions enable later agent sessions to quickly identify strong prior solutions and inspect their code, logs, and intermediate results when needed.
+All run artifacts are persisted under the run directory, providing the persistent substrate for traceability, interruption recovery, and resumability.
+Within each session, Git commits track solution evolution.
+We instruct agents to describe both the current standalone solution and what changed from the previous version in each commit message.</p>
+</div>
+</section>
+<section id="S3.SS2.SSS0.Px3" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Budget Engineering.</h4>
+
+<div id="S3.SS2.SSS0.Px3.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS2.SSS0.Px3.p1.1" class="ltx_p">Autonomous research agents can consume substantial time, compute, and API budget, so <span id="S3.SS2.SSS0.Px3.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> makes budget limits part of the environment
+settings.
+<span id="S3.SS2.SSS0.Px3.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> controls resources along two axes: wall-clock time and API cost.
+For time, users specify separate limits for proposal and implementation sessions, reflecting that hypothesis generation and long-running
+solution iteration require different time scales.
+Furthermore, <span id="S3.SS2.SSS0.Px3.p1.1.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> makes agents time-aware through both active and passive mechanisms:
+(i) actively, agents can call a provided time-checking helper API to inspect elapsed and remaining time for the current stage;
+(ii) passively, when the deadline for a stage is approaching and required deliverables are still missing, <span id="S3.SS2.SSS0.Px3.p1.1.4" class="ltx_text ltx_font_smallcaps">EurekAgent</span> injects a warning message asking the agent to stop exploration and generate the necessary artifacts.
+For API cost, <span id="S3.SS2.SSS0.Px3.p1.1.5" class="ltx_text ltx_font_smallcaps">EurekAgent</span> tracks accumulated token usage across sessions, but does not expose token consumption information to the agent.
+When the cost limit is reached, the run is aborted and the current workspace is preserved as the final snapshot.
+Budget control also supports operational continuity for long-running research processes.
+<span id="S3.SS2.SSS0.Px3.p1.1.6" class="ltx_text ltx_font_smallcaps">EurekAgent</span> persists each stage’s session identifier, status, elapsed time, and effective budget, so an interrupted run can resume from the latest filesystem state under the remaining budget rather than restarting from scratch.
+Users may also revise the configured time limits, or grant explicit extra resume time when a stage has exhausted its budget before producing required artifacts.
+This makes budget engineering not only a stopping rule, but also an operational interface for controlled continuation.</p>
+</div>
+<figure id="S3.F4" class="ltx_figure"><img src="2606.13662v1/figures/tui.png" id="S3.F4.g1" class="ltx_graphics ltx_centering ltx_img_landscape" width="598" height="207" alt="Refer to caption">
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_figure">Figure 4: </span>The <span id="S3.F4.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> terminal UI interface. The terminal UI preserves a CLI-agent style view for inspecting live session outputs and communicating with agents through the bottom input box. Left: prepare-stage
+snapshot. Right: implement-stage snapshot with three parallel implementation sessions; users can preview all sessions or enter any session to inspect details and communicate.</figcaption>
+</figure>
+</section>
+<section id="S3.SS2.SSS0.Px4" class="ltx_paragraph">
+<h4 class="ltx_title ltx_title_paragraph">Human-in-the-loop Engineering.</h4>
+
+<div id="S3.SS2.SSS0.Px4.p1" class="ltx_para ltx_noindent">
+<p id="S3.SS2.SSS0.Px4.p1.1" class="ltx_p">Although <span id="S3.SS2.SSS0.Px4.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> supports fully autonomous iteration, scientific discovery still benefits from human oversight.
+<span id="S3.SS2.SSS0.Px4.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> therefore provides two complementary interfaces.
+On one hand, a terminal UI (Figure <a href="#S3.F4" title="Figure 4 ‣ Budget Engineering. ‣ 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>) exposes per-approach progress, raw session outputs, and an input box for users to communicate with active sessions.
+On the other hand, a web monitor (Figure <a href="#S3.F3" title="Figure 3 ‣ 3.2 Environment Engineering in EurekAgent ‣ 3 EurekAgent ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a>) provides higher-level views of the run, presenting a visualized score evolution with per-round and global best approaches.
+These interfaces preserve agent autonomy while keeping the process fully observable and allowing humans to redirect agent behavior when needed.
+</p>
+</div>
+</section>
+</section>
+</section>
+<section id="S4" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">4 </span>Experiments</h2>
+
+<div id="S4.p1" class="ltx_para ltx_noindent">
+<p id="S4.p1.1" class="ltx_p">We evaluate <span id="S4.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on three domains: mathematics, kernel engineering, and machine learning engineering.
+We focus on tasks with optimizable metrics, where progress can be measured by objective scores.
+All experiments use <span id="S4.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> with Claude Code as the CLI agent and GLM-5.1 as the base LLM.
+Building on this setting, we configure the Web Search Prime MCP<span id="footnote2" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">2</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">2</sup><span class="ltx_tag ltx_tag_note">2</span><a href="https://docs.z.ai/devpack/mcp/search-mcp-server" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://docs.z.ai/devpack/mcp/search-mcp-server</a></span></span></span> to enable search engine capabilities, and the Playwright MCP<span id="footnote3" class="ltx_note ltx_role_footnote"><sup class="ltx_note_mark">3</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">3</sup><span class="ltx_tag ltx_tag_note">3</span><a href="https://github.com/microsoft/playwright-mcp" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/microsoft/playwright-mcp</a></span></span></span> to enable web browser navigation.</p>
+</div>
+<section id="S4.SS1" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.1 </span>Mathematics</h3>
+
+<div id="S4.SS1.p1" class="ltx_para ltx_noindent">
+<p id="S4.SS1.p1.1" class="ltx_p">We evaluate <span id="S4.SS1.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on three mathematical optimization problems following prior work
+ <cite class="ltx_cite ltx_citemacro_citep">(Novikov<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib8" title="Alphaevolve: a coding agent for scientific and algorithmic discovery" class="ltx_ref">2025</a>; Wang<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib4" title="Thetaevolve: test-time learning on open problems" class="ltx_ref">2025</a>; Yuksekgonul<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">2026</a>)</cite>:
+(1) circle packing, where the objective is to place 26 non-overlapping circles inside a unit square and maximize the sum of their radii, using the OpenEvolve-style evaluator with a <math id="S4.SS1.p1.1.m1" class="ltx_Math" alttext="10^{-6}" display="inline" intent=":literal"><semantics><msup><mn>10</mn><mrow><mo>−</mo><mn>6</mn></mrow></msup><annotation encoding="application/x-tex">10^{-6}</annotation></semantics></math> tolerance for boundary and overlap checks;
+(2) Erdős’ minimum overlap, where the objective is to minimize the limiting maximum overlap between two equal-size sets; and
+(3) the first autocorrelation inequality, where the objective is to find a nonnegative construction that certifies the tightest known upper bound on an autoconvolution constant.
+For circle packing, we compare against the previous best AI result reported under the same tolerance setting.
+All three problems have verifiable and optimizable objective functions, making them suitable for agentic solution iteration.
+We report <span id="S4.SS1.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> hyperparameter settings in Appendix <a href="#A1" title="Appendix A EurekAgent Hyperparameter Settings ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A</span></a>.</p>
+</div>
+<figure id="S4.T2" class="ltx_table">
+<table id="S4.T2.3" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T2.3.4.1" class="ltx_tr">
+<th id="S4.T2.3.4.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_r ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;">Task</th>
+<th id="S4.T2.3.4.1.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;"><span id="S4.T2.3.4.1.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span></th>
+<th id="S4.T2.3.4.1.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_r ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;">LLM</th>
+<th id="S4.T2.3.4.1.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;">Prev. Best AI</th>
+<th id="S4.T2.3.4.1.5" class="ltx_td ltx_nopad_r ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding-left:4.0pt;padding-right:4.0pt;">LLM</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T2.1.1" class="ltx_tr">
+<th id="S4.T2.1.1.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">Circle Packing (<math id="S4.T2.1.1.1.m1" class="ltx_Math" alttext="\uparrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↑</mo><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math>)</th>
+<td id="S4.T2.1.1.2" class="ltx_td ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">2.635<span id="S4.T2.1.1.2.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">999</span>
+</td>
+<td id="S4.T2.1.1.3" class="ltx_td ltx_align_center ltx_border_r ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">GLM-5.1</td>
+<td id="S4.T2.1.1.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">2.635986[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib4" title="Thetaevolve: test-time learning on open problems" class="ltx_ref">27</a></cite>]</td>
+<td id="S4.T2.1.1.5" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_t" style="padding-left:4.0pt;padding-right:4.0pt;">R1-Distill-Qwen3-8B</td>
+</tr>
+<tr id="S4.T2.2.2" class="ltx_tr">
+<th id="S4.T2.2.2.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_r" style="padding-left:4.0pt;padding-right:4.0pt;">Erdős’ Min. Overlap (<math id="S4.T2.2.2.1.m1" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</th>
+<td id="S4.T2.2.2.2" class="ltx_td ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;">0.3808<span id="S4.T2.2.2.2.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">70</span>
+</td>
+<td id="S4.T2.2.2.3" class="ltx_td ltx_align_center ltx_border_r" style="padding-left:4.0pt;padding-right:4.0pt;">GLM-5.1</td>
+<td id="S4.T2.2.2.4" class="ltx_td ltx_nopad_l ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;">0.380876[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S4.T2.2.2.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding-left:4.0pt;padding-right:4.0pt;">gpt-oss-120b</td>
+</tr>
+<tr id="S4.T2.3.3" class="ltx_tr">
+<th id="S4.T2.3.3.1" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb ltx_border_r" style="padding-left:4.0pt;padding-right:4.0pt;">1st Autocorr. Ineq. (<math id="S4.T2.3.3.1.m1" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</th>
+<td id="S4.T2.3.3.2" class="ltx_td ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;">1.5028<span id="S4.T2.3.3.2.1" class="ltx_text ltx_font_bold ltx_framed ltx_framed_underline" style="--ltx-fg-color:#613CD3;">61</span>
+</td>
+<td id="S4.T2.3.3.3" class="ltx_td ltx_align_center ltx_border_bb ltx_border_r" style="padding-left:4.0pt;padding-right:4.0pt;">GLM-5.1</td>
+<td id="S4.T2.3.3.4" class="ltx_td ltx_nopad_l ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;">1.502863[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S4.T2.3.3.5" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_bb" style="padding-left:4.0pt;padding-right:4.0pt;">gpt-oss-120b</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 2: </span>Performance of <span id="S4.T2.6.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on three mathematical optimization problems. Previous best AI results are from test-time training systems, while <span id="S4.T2.7.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> remains training-free with only environment engineering designs.</figcaption>
+</figure>
+<div id="S4.SS1.p2" class="ltx_para ltx_noindent">
+<p id="S4.SS1.p2.1" class="ltx_p">As shown in Table <a href="#S4.T2" title="Table 2 ‣ 4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">2</span></a>, <span id="S4.SS1.p2.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> establishes new state-of-the-art results on all three mathematics tasks.
+Notably, <span id="S4.SS1.p2.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> outperforms prior test-time training systems while remaining training-free, suggesting that environment engineering alone can unlock breakthrough results
+without updating the backbone model.
+</p>
+</div>
+</section>
+<section id="S4.SS2" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.2 </span>Kernel Engineering</h3>
+
+<div id="S4.SS2.p1" class="ltx_para ltx_noindent">
+<p id="S4.SS2.p1.1" class="ltx_p">We evaluate <span id="S4.SS2.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on the GPUMODE TriMul competition, which targets optimized implementations of triangular matrix multiplication.
+Submissions are evaluated by the geometric mean runtime across benchmark cases, where lower runtime is better.
+We evaluate on the A100 setting.
+</p>
+</div>
+<div id="S4.SS2.p2" class="ltx_para ltx_noindent">
+<p id="S4.SS2.p2.1" class="ltx_p">Because the official GPUMODE leaderboard closed,
+we could not submit new solutions and get official scores.
+We therefore evaluate locally on an A100 GPU using the released TTT-Discover TriMul setting <cite class="ltx_cite ltx_citemacro_citep">(Yuksekgonul<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">2026</a>)</cite>, with only minimal format adaptation for <span id="S4.SS2.p2.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> submissions.
+For fair comparison, we download top leaderboard solution scripts from GPUMODE and regrade them under the same local protocol.
+All candidates are evaluated on the same A100 GPU with the original correctness tests, benchmark cases, scoring rule, and timing logic unchanged.
+We run three warmup rounds, followed by ten measured rounds with randomly shuffled candidate order to reduce order effects, and report both median and mean geometric-mean runtimes.
+For <span id="S4.SS2.p2.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span>, we report the four best solutions discovered throughout a single system run; hyperparameter settings are listed in Appendix <a href="#A1" title="Appendix A EurekAgent Hyperparameter Settings ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A</span></a>.</p>
+</div>
+<figure id="S4.T3" class="ltx_table">
+<table id="S4.T3.4" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T3.4.4" class="ltx_tr">
+<th id="S4.T3.4.4.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.4.5.1" class="ltx_text ltx_font_bold">Rank</span></th>
+<th id="S4.T3.4.4.6" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.4.6.1" class="ltx_text ltx_font_bold">Solution</span></th>
+<th id="S4.T3.4.4.7" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.4.7.1" class="ltx_text ltx_font_bold">LLM</span></th>
+<th id="S4.T3.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T3.2.2.2.2" class="ltx_text ltx_font_bold">Median (<math id="S4.T3.1.1.1.1.m1" class="ltx_Math" alttext="\mu\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">\mu\mathrm{s}</annotation></semantics></math>) (<math id="S4.T3.2.2.2.2.m2" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</span></th>
+<th id="S4.T3.4.4.4" class="ltx_td ltx_nopad_r ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.4.4.2" class="ltx_text ltx_font_bold">Mean (<math id="S4.T3.3.3.3.1.m1" class="ltx_Math" alttext="\mu\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">\mu\mathrm{s}</annotation></semantics></math>) (<math id="S4.T3.4.4.4.2.m2" class="ltx_Math" alttext="\downarrow" display="inline" intent=":literal"><semantics><mo stretchy="false">↓</mo><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math>)</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T3.4.5.1" class="ltx_tr">
+<td id="S4.T3.4.5.1.1" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;">1</td>
+<td id="S4.T3.4.5.1.2" class="ltx_td ltx_align_left ltx_border_t" style="padding:0.6pt 5.0pt;">
+<span id="S4.T3.4.5.1.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>-CUDA Graph</td>
+<td id="S4.T3.4.5.1.3" class="ltx_td ltx_align_left ltx_border_t" style="padding:0.6pt 5.0pt;">GLM-5.1</td>
+<td id="S4.T3.4.5.1.4" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.5.1.4.1" class="ltx_text ltx_font_bold">2005.0307</span></td>
+<td id="S4.T3.4.5.1.5" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.5.1.5.1" class="ltx_text ltx_font_bold">2014.1874</span></td>
+</tr>
+<tr id="S4.T3.4.6.2" class="ltx_tr">
+<td id="S4.T3.4.6.2.1" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">2</td>
+<td id="S4.T3.4.6.2.2" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">
+<span id="S4.T3.4.6.2.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>-INT8 BMM</td>
+<td id="S4.T3.4.6.2.3" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">GLM-5.1</td>
+<td id="S4.T3.4.6.2.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.6.2.4.1" class="ltx_text ltx_font_bold">2006.9998</span></td>
+<td id="S4.T3.4.6.2.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.6.2.5.1" class="ltx_text ltx_font_bold">2013.5141</span></td>
+</tr>
+<tr id="S4.T3.4.7.3" class="ltx_tr">
+<td id="S4.T3.4.7.3.1" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">3</td>
+<td id="S4.T3.4.7.3.2" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">
+<span id="S4.T3.4.7.3.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>-Fused Front-End</td>
+<td id="S4.T3.4.7.3.3" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">GLM-5.1</td>
+<td id="S4.T3.4.7.3.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.7.3.4.1" class="ltx_text ltx_font_bold">2016.5718</span></td>
+<td id="S4.T3.4.7.3.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.7.3.5.1" class="ltx_text ltx_font_bold">2020.2674</span></td>
+</tr>
+<tr id="S4.T3.4.8.4" class="ltx_tr">
+<td id="S4.T3.4.8.4.1" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">4</td>
+<td id="S4.T3.4.8.4.2" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">
+<span id="S4.T3.4.8.4.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>-Triton Autotune</td>
+<td id="S4.T3.4.8.4.3" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">GLM-5.1</td>
+<td id="S4.T3.4.8.4.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.8.4.4.1" class="ltx_text ltx_font_bold">2030.6877</span></td>
+<td id="S4.T3.4.8.4.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T3.4.8.4.5.1" class="ltx_text ltx_font_bold">2041.5578</span></td>
+</tr>
+<tr id="S4.T3.4.9.5" class="ltx_tr">
+<td id="S4.T3.4.9.5.1" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">5</td>
+<td id="S4.T3.4.9.5.2" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">josusamartin</td>
+<td id="S4.T3.4.9.5.3" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">N/A</td>
+<td id="S4.T3.4.9.5.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">2096.0441</td>
+<td id="S4.T3.4.9.5.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;">2105.1655</td>
+</tr>
+<tr id="S4.T3.4.10.6" class="ltx_tr">
+<td id="S4.T3.4.10.6.1" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">6</td>
+<td id="S4.T3.4.10.6.2" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">TTT-Discover[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib5" title="Learning to discover at test time" class="ltx_ref">30</a></cite>]</td>
+<td id="S4.T3.4.10.6.3" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">gpt-oss-120b</td>
+<td id="S4.T3.4.10.6.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">2247.7849</td>
+<td id="S4.T3.4.10.6.5" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;">2248.2307</td>
+</tr>
+<tr id="S4.T3.4.11.7" class="ltx_tr">
+<td id="S4.T3.4.11.7.1" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">7</td>
+<td id="S4.T3.4.11.7.2" class="ltx_td ltx_align_left ltx_border_bb" style="padding:0.6pt 5.0pt;">rd9000</td>
+<td id="S4.T3.4.11.7.3" class="ltx_td ltx_align_left ltx_border_bb" style="padding:0.6pt 5.0pt;">N/A</td>
+<td id="S4.T3.4.11.7.4" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">2300.4883</td>
+<td id="S4.T3.4.11.7.5" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">2307.5716</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 3: </span>Performance of <span id="S4.T3.6.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on the TriMul kernel engineering task.</figcaption>
+</figure>
+<div id="S4.SS2.p3" class="ltx_para ltx_noindent">
+<p id="S4.SS2.p3.3" class="ltx_p">Table <a href="#S4.T3" title="Table 3 ‣ 4.2 Kernel Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">3</span></a> shows that <span id="S4.SS2.p3.3.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> discovers multiple solutions that outperform the top leaderboard submissions under the same local evaluator.
+The top four <span id="S4.SS2.p3.3.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> solutions all achieve median runtimes below <math id="S4.SS2.p3.1.m1" class="ltx_Math" alttext="2031\,\mu\mathrm{s}" display="inline" intent=":literal"><semantics><mrow><mn>2031</mn><mo lspace="0.170em" rspace="0em">​</mo><mi>μ</mi><mo lspace="0em" rspace="0em">​</mo><mi mathvariant="normal">s</mi></mrow><annotation encoding="application/x-tex">2031\,\mu\mathrm{s}</annotation></semantics></math>, indicating stable high-quality optimization rather than a single lucky candidate.
+The best <span id="S4.SS2.p3.3.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> kernel improves over the strongest regraded leaderboard solution by about <math id="S4.SS2.p3.2.m2" class="ltx_Math" alttext="4.3\%" display="inline" intent=":literal"><semantics><mrow><mn>4.3</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">4.3\%</annotation></semantics></math> and over TTT-Discover by about <math id="S4.SS2.p3.3.m3" class="ltx_Math" alttext="10.8\%" display="inline" intent=":literal"><semantics><mrow><mn>10.8</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">10.8\%</annotation></semantics></math>.</p>
+</div>
+</section>
+<section id="S4.SS3" class="ltx_subsection">
+<h3 class="ltx_title ltx_title_subsection">
+<span class="ltx_tag ltx_tag_subsection">4.3 </span>Machine Learning Engineering</h3>
+
+<div id="S4.SS3.p1" class="ltx_para ltx_noindent">
+<p id="S4.SS3.p1.1" class="ltx_p">We evaluate <span id="S4.SS3.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> on a curated subset of seven competitions from the MLE-Bench Lite split <cite class="ltx_cite ltx_citemacro_citep">(Chan<span class="ltx_text ltx_bib_etal"> et al.</span>, <a href="#bib.bib11" title="Mle-bench: evaluating machine learning agents on machine learning engineering" class="ltx_ref">2025</a>)</cite>.
+MLE-Bench evaluates agents on real Kaggle-style machine learning competitions, where submissions are scored against held-out test sets and mapped to medal thresholds.
+To balance cost, diversity, and difficulty, we start from the 22 Lite competitions and use public MLE-Bench leaderboard results to estimate tractability.
+We divide tasks into Easy, Medium, and Hard tiers by aggregate prior-agent medal rate, then sample 2 Easy, 2 Medium, and 3 Hard competitions.
+The selected competitions span image, text, audio, and tabular prediction.
+Our selected tasks are detailed in Appendix <a href="#A2" title="Appendix B Selected MLE-Bench Lite Competitions ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">B</span></a>.</p>
+</div>
+<div id="S4.SS3.p2" class="ltx_para ltx_noindent">
+<p id="S4.SS3.p2.1" class="ltx_p">We run <span id="S4.SS3.p2.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> once per competition and report the resulting medal rates.
+Following MLE-Bench’s official 24-hour and single-GPU setting, we grant one GPU to each run and report <span id="S4.SS3.p2.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> hyperparameter settings in Appendix <a href="#A1" title="Appendix A EurekAgent Hyperparameter Settings ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">A</span></a>.
+For baselines, we use the corresponding public MLE-Bench leaderboard results on the same tasks.
+When a baseline reports the aggregated scores of multiple runs, we report the upper end of its reported score range.</p>
+</div>
+<figure id="S4.T4" class="ltx_table">
+<table id="S4.T4.1" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="S4.T4.1.1.1" class="ltx_tr">
+<th id="S4.T4.1.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_th_row ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.1.1" class="ltx_text ltx_font_bold">Rank</span></th>
+<th id="S4.T4.1.1.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.2.1" class="ltx_text ltx_font_bold">Agent</span></th>
+<th id="S4.T4.1.1.1.3" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_th_row ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.3.1" class="ltx_text ltx_font_bold">LLM</span></th>
+<th id="S4.T4.1.1.1.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.4.1" class="ltx_text ltx_font_bold">Any Medal</span></th>
+<th id="S4.T4.1.1.1.5" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.5.1" class="ltx_text ltx_font_bold">Gold</span></th>
+<th id="S4.T4.1.1.1.6" class="ltx_td ltx_nopad_r ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.1.1.6.1" class="ltx_text ltx_font_bold">Above Median</span></th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="S4.T4.1.2.1" class="ltx_tr">
+<th id="S4.T4.1.2.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_t" style="padding:0.6pt 5.0pt;">1</th>
+<th id="S4.T4.1.2.1.2" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.2.1.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span></th>
+<th id="S4.T4.1.2.1.3" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_t" style="padding:0.6pt 5.0pt;">GLM-5.1</th>
+<td id="S4.T4.1.2.1.4" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.2.1.4.1" class="ltx_text ltx_font_bold">85.71%</span></td>
+<td id="S4.T4.1.2.1.5" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.2.1.5.1" class="ltx_text ltx_font_bold">71.43%</span></td>
+<td id="S4.T4.1.2.1.6" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.2.1.6.1" class="ltx_text ltx_font_bold">100.00%</span></td>
+</tr>
+<tr id="S4.T4.1.3.2" class="ltx_tr">
+<th id="S4.T4.1.3.2.1" class="ltx_td ltx_align_center ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">2</th>
+<th id="S4.T4.1.3.2.2" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">AIBuildAI[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib6" title="AIBuildAI: an ai agent for automatically building ai models" class="ltx_ref">31</a></cite>]</th>
+<th id="S4.T4.1.3.2.3" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Claude-Opus-4.6</th>
+<td id="S4.T4.1.3.2.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.3.2.4.1" class="ltx_text ltx_framed ltx_framed_underline">71.43%</span></td>
+<td id="S4.T4.1.3.2.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">57.14%</td>
+<td id="S4.T4.1.3.2.6" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;">85.71%</td>
+</tr>
+<tr id="S4.T4.1.4.3" class="ltx_tr">
+<th id="S4.T4.1.4.3.1" class="ltx_td ltx_align_center ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">3</th>
+<th id="S4.T4.1.4.3.2" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Famou-Agent[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib20" title="The FM agent" class="ltx_ref">12</a></cite>]</th>
+<th id="S4.T4.1.4.3.3" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Gemini-2.5-Pro</th>
+<td id="S4.T4.1.4.3.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.4.3.4.1" class="ltx_text ltx_framed ltx_framed_underline">71.43%</span></td>
+<td id="S4.T4.1.4.3.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">57.14%</td>
+<td id="S4.T4.1.4.3.6" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.4.3.6.1" class="ltx_text ltx_font_bold">100.00%</span></td>
+</tr>
+<tr id="S4.T4.1.5.4" class="ltx_tr">
+<th id="S4.T4.1.5.4.1" class="ltx_td ltx_align_center ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">4</th>
+<th id="S4.T4.1.5.4.2" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Famou-Agent 2.0[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib20" title="The FM agent" class="ltx_ref">12</a></cite>]</th>
+<th id="S4.T4.1.5.4.3" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Gemini-2.5-Pro</th>
+<td id="S4.T4.1.5.4.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.5.4.4.1" class="ltx_text ltx_framed ltx_framed_underline">71.43%</span></td>
+<td id="S4.T4.1.5.4.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.5.4.5.1" class="ltx_text ltx_framed ltx_framed_underline">65.39%</span></td>
+<td id="S4.T4.1.5.4.6" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.5.4.6.1" class="ltx_text ltx_framed ltx_framed_underline">95.24%</span></td>
+</tr>
+<tr id="S4.T4.1.6.5" class="ltx_tr">
+<th id="S4.T4.1.6.5.1" class="ltx_td ltx_align_center ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">5</th>
+<th id="S4.T4.1.6.5.2" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">LoongFlow[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib39" title="Loongflow: directed evolutionary search via a cognitive plan-execute-summarize paradigm" class="ltx_ref">26</a></cite>]</th>
+<th id="S4.T4.1.6.5.3" class="ltx_td ltx_align_left ltx_th ltx_th_row" style="padding:0.6pt 5.0pt;">Gemini-3-Flash-Preview</th>
+<td id="S4.T4.1.6.5.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.6.5.4.1" class="ltx_text ltx_framed ltx_framed_underline">71.43%</span></td>
+<td id="S4.T4.1.6.5.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">57.14%</td>
+<td id="S4.T4.1.6.5.6" class="ltx_td ltx_nopad_r ltx_align_center" style="padding:0.6pt 5.0pt;">71.43%</td>
+</tr>
+<tr id="S4.T4.1.7.6" class="ltx_tr">
+<th id="S4.T4.1.7.6.1" class="ltx_td ltx_align_center ltx_th ltx_th_row ltx_border_bb" style="padding:0.6pt 5.0pt;">6</th>
+<th id="S4.T4.1.7.6.2" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb" style="padding:0.6pt 5.0pt;">CAIR MARS+[<cite class="ltx_cite ltx_citemacro_citenum"><a href="#bib.bib38" title="MARS: modular agent with reflective search for automated ai research" class="ltx_ref">4</a></cite>]</th>
+<th id="S4.T4.1.7.6.3" class="ltx_td ltx_align_left ltx_th ltx_th_row ltx_border_bb" style="padding:0.6pt 5.0pt;">Gemini-3-Pro-Preview</th>
+<td id="S4.T4.1.7.6.4" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.7.6.4.1" class="ltx_text ltx_framed ltx_framed_underline">71.43%</span></td>
+<td id="S4.T4.1.7.6.5" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.7.6.5.1" class="ltx_text ltx_font_bold">71.43%</span></td>
+<td id="S4.T4.1.7.6.6" class="ltx_td ltx_nopad_r ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;"><span id="S4.T4.1.7.6.6.1" class="ltx_text ltx_font_bold">100.00%</span></td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 4: </span>Machine learning engineering results on our seven-task MLE-Bench Lite subset. For baselines with multiple runs, we report the upper end of the reported range.</figcaption>
+</figure>
+<div id="S4.SS3.p3" class="ltx_para ltx_noindent">
+<p id="S4.SS3.p3.1" class="ltx_p">As shown in Table <a href="#S4.T4" title="Table 4 ‣ 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">4</span></a>, <span id="S4.SS3.p3.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> achieves the highest any-medal rate on the selected MLE-Bench subset, reaching <math id="S4.SS3.p3.1.m1" class="ltx_Math" alttext="85.71\%" display="inline" intent=":literal"><semantics><mrow><mn>85.71</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">85.71\%</annotation></semantics></math> with a single run per task.
+It also attains the highest gold-medal rate among methods using non-commercial open models.
+All listed baselines use closed commercial models, while <span id="S4.SS3.p3.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> runs with open-source LLM GLM-5.1, suggesting that environment-engineered autonomous iteration can be competitive even without
+relying on the strongest proprietary models.</p>
+</div>
+</section>
+</section>
+<section id="S5" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">5 </span>Conclusion and Limitations</h2>
+
+<div id="S5.p1" class="ltx_para ltx_noindent">
+<p id="S5.p1.1" class="ltx_p">We presented <span id="S5.p1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span>, an environment-engineered system for autonomous scientific discovery on metric-driven research tasks. Rather than prescribing detailed research
+workflows, <span id="S5.p1.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> coordinates off-the-shelf CLI-agent sessions through a simple prepare-propose-implement loop, while shaping the surrounding environment for reliable
+evaluation, shared progress memory, resource boundaries, and human oversight.
+Using Claude Code as the CLI agent and GLM-5.1 as the base LLM, <span id="S5.p1.1.3" class="ltx_text ltx_font_smallcaps">EurekAgent</span> achieves new state-of-the-art results on all evaluated mathematics and kernel engineering tasks, and
+ranks first on our evaluated MLE-Bench Lite subset. These results suggest that, as general-purpose CLI agents become more capable, carefully engineered scientific-discovery
+environments can turn model capability into reliable scientific progress.</p>
+</div>
+<div id="S5.p2" class="ltx_para ltx_noindent">
+<p id="S5.p2.1" class="ltx_p">Looking forward, we view environment engineering as a central layer in the next generation of autonomous research systems.
+As agents become more capable, scientific progress will depend not only on model intelligence, but also on the environments that define reliable feedback, persistent memory, resource control, evaluator integrity, human oversight, and recoverable long-running operation.
+Our current experiments focus on metric-driven tasks with executable evaluators, but the same perspective becomes even more important as autonomous research moves toward broader and more open-ended scientific settings.</p>
+</div>
+<div id="S5.p3" class="ltx_para ltx_noindent">
+<p id="S5.p3.1" class="ltx_p">We open-source <span id="S5.p3.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> as an initial step toward this direction and invite the community to build on, improve, and contribute to it.
+We will continue maintaining the project, extending it to richer research domains, and updating empirical results on its performance, capabilities, and boundaries.
+We hope <span id="S5.p3.1.2" class="ltx_text ltx_font_smallcaps">EurekAgent</span> can serve as a practical starting point for collective exploration of environment engineering as a foundation for reliable autonomous scientific discovery.</p>
+</div>
+<div class="ltx_pagination ltx_role_newpage"></div>
+</section>
+<section id="bib" class="ltx_bibliography">
+<h2 class="ltx_title ltx_title_bibliography">References</h2>
+
+<ul id="bib.L1" class="ltx_biblist">
+<li id="bib.bib23" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Anthropic (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Claude Opus 4.7 system card</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://www.anthropic.com/system-cards" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.anthropic.com/system-cards</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib41" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Cemri, S. Agrawal, A. Gupta, S. Liu, A. Cheng, Q. Mang, A. Naren, L. E. Erdogan, K. Sen, M. Zaharia, <span class="ltx_text ltx_bib_etal">et al.</span> (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Adaevolve: adaptive llm driven zeroth-order optimization</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2602.20133</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib11" class="ltx_bibitem ltx_bib_inproceedings">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. S. Chan, N. Chowdhury, O. Jaffe, J. Aung, D. Sherburn, E. Mays, G. Starace, K. Liu, L. Maksin, T. Patwardhan, <span class="ltx_text ltx_bib_etal">et al.</span> (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Mle-bench: evaluating machine learning agents on machine learning engineering</span>.
+</span>
+<span class="ltx_bibblock">In <span class="ltx_text ltx_bib_inbook">International Conference on Learning Representations</span>,
+</span>
+<span class="ltx_bibblock">Vol. <span class="ltx_text ltx_bib_volume">2025</span>, <span class="ltx_text ltx_bib_pages"> pp. 50466–50494</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S4.SS3.p1.1" title="4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.3</span></a>.
+</span>
+</li>
+<li id="bib.bib38" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Chen, B. D. Mishra, J. Nam, R. Meng, T. Pfister, and J. Yoon (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">MARS: modular agent with reflective search for automated ai research</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2602.02660</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.T4.1.7.6.2" title="In 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 4</span></a>.
+</span>
+</li>
+<li id="bib.bib3" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">E. Friedman (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Erich’s Packing Center</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://erich-friedman.github.io/packing/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://erich-friedman.github.io/packing/</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.6.6.6.1" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>.
+</span>
+</li>
+<li id="bib.bib47" class="ltx_bibitem ltx_bib_book">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. J. Gibson (1979)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The ecological approach to visual perception</span>.
+</span>
+<span class="ltx_bibblock"> <span class="ltx_text ltx_bib_publisher">Houghton Mifflin</span>, <span class="ltx_text ltx_bib_place">Boston, MA</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p4.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib1" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. K. Haugland (2016)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The minimum overlap problem revisited</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:1609.08000</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.7.7.7.4" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>.
+</span>
+</li>
+<li id="bib.bib7" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Z. Jiang, D. Schmidt, D. Srikanth, D. Xu, I. Kaplan, D. Jacenko, and Y. Wu (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Aide: ai-driven exploration in the space of code</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2502.13138</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib16" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Karpathy (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">autoresearch: AI agents running research on single-GPU nanochat training automatically</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://github.com/karpathy/autoresearch" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://github.com/karpathy/autoresearch</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib22" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">N. Kokoromyti (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Anatomy of a reward hack: a real story from the latest GPU Mode NVFP4 competition</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://www.gpumode.com/news/reward-hacking-nvfp4" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://www.gpumode.com/news/reward-hacking-nvfp4</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib9" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. T. Lange, Y. Imajuku, and E. Cetin (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Shinkaevolve: towards open-ended and sample-efficient program evolution</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2509.19349</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib20" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Li, C. Wu, Z. Ge, Y. H. Chong, Z. Hou, L. Cao, C. Ju, J. Wu, H. Li, H. Zhang, S. Feng, M. Zhao, F. Qiu, R. Yang, M. Zhang, W. Zhu, Y. Sun, Q. Sun, S. Yan, D. Liu, D. Yin, and D. Shen (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The FM agent</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2510.26144</span>,
+<a href="https://arxiv.org/abs/2510.26144" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S4.T4.1.4.3.2" title="In 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 4</span></a>,
+<a href="#S4.T4.1.5.4.2" title="In 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 4</span></a>.
+</span>
+</li>
+<li id="bib.bib17" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Liu, S. Qiu, M. Li, B. Li, H. Ji, S. Han, X. Ye, P. Xia, Z. Dong, C. Zhang, <span class="ltx_text ltx_bib_etal">et al.</span> (2026a)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">AutoResearchClaw: self-reinforcing autonomous research with human-ai collaboration</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2605.20025</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib13" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">S. Liu, S. Agarwal, M. Maheswaran, M. Cemri, Z. Li, Q. Mang, A. Naren, E. Boneh, A. Cheng, M. Z. Pan, <span class="ltx_text ltx_bib_etal">et al.</span> (2026b)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Evox: meta-evolution for automated discovery</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2602.23413</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib15" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">T. Liu, Y. Yang, X. Ye, and D. Chen (2026c)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Can coding agents optimize algorithms autonomously?</span>.
+</span>
+<span class="ltx_bibblock">Note: <span class="ltx_text ltx_bib_note"><a href="https://tengxiaoliu.github.io/autoevolver/" title="" class="ltx_ref ltx_url ltx_font_typewriter">https://tengxiaoliu.github.io/autoevolver/</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib26" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Lu, C. Lu, R. T. Lange, J. Foerster, J. Clune, and D. Ha (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The ai scientist: towards fully automated open-ended scientific discovery</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2408.06292</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib21" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Z. Luo, A. Kasirzadeh, and N. B. Shah (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">The more you automate, the less you see: hidden pitfalls of ai scientist systems</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2509.08713</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p3.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib2" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Matolcsi and C. Vinuesa (2010)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Improved bounds on the supremum of autoconvolutions</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Journal of mathematical analysis and applications</span> <span class="ltx_text ltx_bib_volume">372</span> (<span class="ltx_text ltx_bib_number">2</span>), <span class="ltx_text ltx_bib_pages"> pp. 439–447</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.7.7.7.5" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>.
+</span>
+</li>
+<li id="bib.bib36" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">J. Nam, J. Yoon, J. Chen, J. Shin, S. Arik, and T. Pfister (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Mle-star: machine learning engineering agent via search and targeted refinement</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Advances in Neural Information Processing Systems</span> <span class="ltx_text ltx_bib_volume">38</span>, <span class="ltx_text ltx_bib_pages"> pp. 116692–116712</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib8" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Novikov, N. Vũ, M. Eisenberger, E. Dupont, P. Huang, A. Z. Wagner, S. Shirobokov, B. Kozlovskii, F. J. Ruiz, A. Mehrabian, <span class="ltx_text ltx_bib_etal">et al.</span> (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Alphaevolve: a coding agent for scientific and algorithmic discovery</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2506.13131</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S4.SS1.p1.1" title="4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>.
+</span>
+</li>
+<li id="bib.bib10" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Ouyang, S. Guo, S. Arora, A. L. Zhang, W. Hu, C. Ré, and A. Mirhoseini (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Kernelbench: can llms write efficient gpu kernels?</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2502.10517</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib24" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Y. Qi, H. Peng, X. Wang, A. Xin, Y. Liu, B. Xu, L. Hou, and J. Li (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Agentif: benchmarking instruction following of large language models in agentic scenarios</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2505.16944</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib18" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Qu, H. Zheng, Z. Zhou, Y. Yan, Y. Tang, S. Y. Ong, F. Hong, K. Zhou, C. Jiang, M. Kong, <span class="ltx_text ltx_bib_etal">et al.</span> (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Coral: towards autonomous multi-agent evolution for open-ended discovery</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2604.01658</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS2.p1.1" title="2.2 Agent Environments and Research Integrity ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.2</span></a>.
+</span>
+</li>
+<li id="bib.bib25" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">B. Romera-Paredes, M. Barekatain, A. Novikov, M. Balog, M. P. Kumar, E. Dupont, F. J. Ruiz, J. S. Ellenberg, P. Wang, O. Fawzi, <span class="ltx_text ltx_bib_etal">et al.</span> (2024)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Mathematical discoveries from program search with large language models</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">Nature</span> <span class="ltx_text ltx_bib_volume">625</span> (<span class="ltx_text ltx_bib_number">7995</span>), <span class="ltx_text ltx_bib_pages"> pp. 468–475</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib42" class="ltx_bibitem ltx_bib_software">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">A. Sharma (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">OpenEvolve: an open-source evolutionary coding agent</span>
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><a href="https://github.com/algorithmicsuperintelligence/openevolve" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib39" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">C. Wan, X. Dai, Z. Wang, M. Li, Y. Wang, Y. Mao, Y. Lan, and Z. Xiao (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Loongflow: directed evolutionary search via a cognitive plan-execute-summarize paradigm</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2512.24077</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S4.T4.1.6.5.2" title="In 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 4</span></a>.
+</span>
+</li>
+<li id="bib.bib4" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">Y. Wang, S. Su, Z. Zeng, E. Xu, L. Ren, X. Yang, Z. Huang, X. He, L. Ma, B. Peng, <span class="ltx_text ltx_bib_etal">et al.</span> (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Thetaevolve: test-time learning on open problems</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2511.23473</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.8.8.8.3" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>,
+<a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S4.SS1.p1.1" title="4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>,
+<a href="#S4.T2.1.1.4" title="In 4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 2</span></a>.
+</span>
+</li>
+<li id="bib.bib19" class="ltx_bibitem ltx_bib_misc">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">W. Xu, S. Li, T. Ye, Q. Cao, Y. Chen, H. Gao, Y. Wang, Q. Li, K. Li, S. Xu, S. Chai, F. Yu, X. Zhao, Z. Zhao, W. Ma, Z. Guo, H. Zhou, H. Yin, L. Cheng, C. Hu, H. Li, L. Mi, X. Xie, Y. Zhou, R. Chen, Z. Zhou, X. Guo, Y. Zhou, X. He, S. Xu, X. Gu, J. Wu, M. Liu, C. Song, F. Ling, D. Zhou, S. Tang, Y. Li, M. Su, P. Ye, S. Sun, B. Wang, X. Yang, Z. Yin, T. Fu, G. Zhai, W. Ouyang, B. Zhang, L. Bai, and W. Zhang (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">ResearchClawBench: a benchmark for end-to-end autonomous scientific research</span>.
+</span>
+<span class="ltx_bibblock">External Links: <span class="ltx_text ltx_bib_links"><span class="ltx_text ltx_bib_external">2606.07591</span>,
+<a href="https://arxiv.org/abs/2606.07591" title="" class="ltx_ref ltx_bib_external">Link</a></span>
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>.
+</span>
+</li>
+<li id="bib.bib12" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">X. Yang, X. Yang, S. Fang, B. Xian, Y. Li, J. Wang, M. Xu, H. Pan, X. Hong, W. Liu, <span class="ltx_text ltx_bib_etal">et al.</span> (2025)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">R&amp;d-agent: automating data-driven ai solution building through llm-powered automated research, development, and evolution</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv e-prints</span>, <span class="ltx_text ltx_bib_pages"> pp. arXiv–2505</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S1.p2.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+<li id="bib.bib5" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">M. Yuksekgonul, D. Koceja, X. Li, F. Bianchi, J. McCaleb, X. Wang, J. Kautz, Y. Choi, J. Zou, C. Guestrin, <span class="ltx_text ltx_bib_etal">et al.</span> (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Learning to discover at test time</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2601.16175</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.8.8.8.1" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>,
+<a href="#S0.T1.8.8.8.4" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>,
+<a href="#S0.T1.8.8.8.5" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>,
+<a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S4.SS1.p1.1" title="4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.1</span></a>,
+<a href="#S4.SS2.p2.1" title="4.2 Kernel Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§4.2</span></a>,
+<a href="#S4.T2.2.2.4" title="In 4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 2</span></a>,
+<a href="#S4.T2.3.3.4" title="In 4.1 Mathematics ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 2</span></a>,
+<a href="#S4.T3.4.10.6.2" title="In 4.2 Kernel Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 3</span></a>.
+</span>
+</li>
+<li id="bib.bib6" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">R. Zhang, P. Qin, Q. Cao, L. Zhang, and P. Xie (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">AIBuildAI: an ai agent for automatically building ai models</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2604.14455</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S0.T1.8.8.8.6" title="In EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 1</span></a>,
+<a href="#S1.p1.1" title="1 Introduction ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1</span></a>,
+<a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>,
+<a href="#S4.T4.1.3.2.2" title="In 4.3 Machine Learning Engineering ‣ 4 Experiments ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Table 4</span></a>.
+</span>
+</li>
+<li id="bib.bib37" class="ltx_bibitem ltx_bib_article">
+<span class="ltx_tag ltx_bib_author-year ltx_role_refnum ltx_tag_bibitem">X. Zhu, Y. Cai, Z. Liu, B. Zheng, C. Wang, R. Ye, J. Chen, H. Wang, W. Wang, Y. Zhang, <span class="ltx_text ltx_bib_etal">et al.</span> (2026)</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_title">Toward ultra-long-horizon agentic science: cognitive accumulation for machine learning engineering</span>.
+</span>
+<span class="ltx_bibblock"><span class="ltx_text ltx_bib_journal">arXiv preprint arXiv:2601.10402</span>.
+</span>
+<span class="ltx_bibblock ltx_bib_cited">Cited by: <a href="#S2.SS1.p1.1" title="2.1 Agents for Scientific Discovery ‣ 2 Related Work ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§2.1</span></a>.
+</span>
+</li>
+</ul>
+</section>
+<div class="ltx_pagination ltx_role_newpage"></div>
+<section id="A1" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix A </span><span id="A1.1.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> Hyperparameter Settings</h2>
+
+<div id="A1.p1" class="ltx_para ltx_noindent">
+<p id="A1.p1.2" class="ltx_p">Table <a href="#A1.T5" title="Table 5 ‣ Appendix A EurekAgent Hyperparameter Settings ‣ EurekAgent: Agent Environment Engineering is All You Need for Autonomous Scientific Discovery" class="ltx_ref"><span class="ltx_text ltx_ref_tag">5</span></a> summarizes the <span id="A1.p1.2.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> hyperparameters used in our experiments.
+Here, <math id="A1.p1.1.m1" class="ltx_Math" alttext="R" display="inline" intent=":literal"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> denotes the maximum number of propose–implement iteration rounds, and <math id="A1.p1.2.m2" class="ltx_Math" alttext="P" display="inline" intent=":literal"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> denotes the maximum number of parallel implementation sessions spawned in each implement stage.</p>
+</div>
+<figure id="A1.T5" class="ltx_table">
+<table id="A1.T5.4" class="ltx_tabular ltx_centering ltx_guessed_headers ltx_align_middle">
+<thead class="ltx_thead">
+<tr id="A1.T5.4.4" class="ltx_tr">
+<th id="A1.T5.4.4.5" class="ltx_td ltx_align_left ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><span id="A1.T5.4.4.5.1" class="ltx_text ltx_font_bold">Task</span></th>
+<th id="A1.T5.1.1.1" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><math id="A1.T5.1.1.1.m1" class="ltx_Math" alttext="\bm{R}" display="inline" intent=":literal"><semantics><mi>𝑹</mi><annotation encoding="application/x-tex">\bm{R}</annotation></semantics></math></th>
+<th id="A1.T5.2.2.2" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><math id="A1.T5.2.2.2.m1" class="ltx_Math" alttext="\bm{P}" display="inline" intent=":literal"><semantics><mi>𝑷</mi><annotation encoding="application/x-tex">\bm{P}</annotation></semantics></math></th>
+<th id="A1.T5.3.3.3" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><math id="A1.T5.3.3.3.m1" class="ltx_Math" alttext="\bm{t_{propose}}" display="inline" intent=":literal"><semantics><msub><mi>𝒕</mi><mrow><mi>𝒑</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒓</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒐</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒑</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒐</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒔</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒆</mi></mrow></msub><annotation encoding="application/x-tex">\bm{t_{propose}}</annotation></semantics></math></th>
+<th id="A1.T5.4.4.4" class="ltx_td ltx_align_center ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;"><math id="A1.T5.4.4.4.m1" class="ltx_Math" alttext="\bm{t_{implement}}" display="inline" intent=":literal"><semantics><msub><mi>𝒕</mi><mrow><mi>𝒊</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒎</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒑</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒍</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒆</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒎</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒆</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒏</mi><mo lspace="0em" rspace="0em">​</mo><mi>𝒕</mi></mrow></msub><annotation encoding="application/x-tex">\bm{t_{implement}}</annotation></semantics></math></th>
+<th id="A1.T5.4.4.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_th ltx_th_column ltx_border_tt" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.4.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.4.6.1.1" class="ltx_p" style="width:104.1pt;"><span id="A1.T5.4.4.6.1.1.1" class="ltx_text ltx_font_bold">Notes</span></span>
+</span>
+</th>
+</tr>
+</thead>
+<tbody class="ltx_tbody">
+<tr id="A1.T5.4.5.1" class="ltx_tr">
+<td id="A1.T5.4.5.1.1" class="ltx_td ltx_align_left ltx_border_t" style="padding:0.6pt 5.0pt;">Circle Packing</td>
+<td id="A1.T5.4.5.1.2" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;">5</td>
+<td id="A1.T5.4.5.1.3" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;">3</td>
+<td id="A1.T5.4.5.1.4" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;">20 min</td>
+<td id="A1.T5.4.5.1.5" class="ltx_td ltx_align_center ltx_border_t" style="padding:0.6pt 5.0pt;">120 min</td>
+<td id="A1.T5.4.5.1.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_t" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.5.1.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.5.1.6.1.1" class="ltx_p" style="width:104.1pt;">–</span>
+</span>
+</td>
+</tr>
+<tr id="A1.T5.4.6.2" class="ltx_tr">
+<td id="A1.T5.4.6.2.1" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">Erdős’ Min. Overlap</td>
+<td id="A1.T5.4.6.2.2" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">8</td>
+<td id="A1.T5.4.6.2.3" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">3</td>
+<td id="A1.T5.4.6.2.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">20 min</td>
+<td id="A1.T5.4.6.2.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">120 min</td>
+<td id="A1.T5.4.6.2.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.6.2.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.6.2.6.1.1" class="ltx_p" style="width:104.1pt;">–</span>
+</span>
+</td>
+</tr>
+<tr id="A1.T5.4.7.3" class="ltx_tr">
+<td id="A1.T5.4.7.3.1" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">1st Autocorr. Ineq.</td>
+<td id="A1.T5.4.7.3.2" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">8</td>
+<td id="A1.T5.4.7.3.3" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">3</td>
+<td id="A1.T5.4.7.3.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">20 min</td>
+<td id="A1.T5.4.7.3.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">120 min</td>
+<td id="A1.T5.4.7.3.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.7.3.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.7.3.6.1.1" class="ltx_p" style="width:104.1pt;">–</span>
+</span>
+</td>
+</tr>
+<tr id="A1.T5.4.8.4" class="ltx_tr">
+<td id="A1.T5.4.8.4.1" class="ltx_td ltx_align_left" style="padding:0.6pt 5.0pt;">TriMul</td>
+<td id="A1.T5.4.8.4.2" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">13</td>
+<td id="A1.T5.4.8.4.3" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">3</td>
+<td id="A1.T5.4.8.4.4" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">20 min</td>
+<td id="A1.T5.4.8.4.5" class="ltx_td ltx_align_center" style="padding:0.6pt 5.0pt;">160 min</td>
+<td id="A1.T5.4.8.4.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.8.4.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.8.4.6.1.1" class="ltx_p" style="width:104.1pt;">A100 evaluation setting.</span>
+</span>
+</td>
+</tr>
+<tr id="A1.T5.4.9.5" class="ltx_tr">
+<td id="A1.T5.4.9.5.1" class="ltx_td ltx_align_left ltx_border_bb" style="padding:0.6pt 5.0pt;">MLE-Bench Lite</td>
+<td id="A1.T5.4.9.5.2" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">12</td>
+<td id="A1.T5.4.9.5.3" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">3</td>
+<td id="A1.T5.4.9.5.4" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">20 min</td>
+<td id="A1.T5.4.9.5.5" class="ltx_td ltx_align_center ltx_border_bb" style="padding:0.6pt 5.0pt;">100 min</td>
+<td id="A1.T5.4.9.5.6" class="ltx_td ltx_nopad_r ltx_align_justify ltx_align_top ltx_border_bb" style="padding:0.6pt 5.0pt;">
+<span id="A1.T5.4.9.5.6.1" class="ltx_inline-block ltx_align_top">
+<span id="A1.T5.4.9.5.6.1.1" class="ltx_p" style="width:104.1pt;">One GPU per run.</span>
+</span>
+</td>
+</tr>
+</tbody>
+</table>
+<figcaption class="ltx_caption ltx_centering"><span class="ltx_tag ltx_tag_table">Table 5: </span><span id="A1.T5.6.1" class="ltx_text ltx_font_smallcaps">EurekAgent</span> hyperparameter settings used in our experiments.</figcaption>
+</figure>
+</section>
+<section id="A2" class="ltx_appendix">
+<h2 class="ltx_title ltx_title_appendix">
+<span class="ltx_tag ltx_tag_appendix">Appendix B </span>Selected MLE-Bench Lite Competitions</h2>
+
+<div id="A2.p1" class="ltx_para ltx_noindent">
+<p id="A2.p1.1" class="ltx_p">We select seven MLE-Bench Lite competitions across three difficulty tiers, using aggregate medal rates of prior public leaderboard agents as a proxy for task difficulty:</p>
+<ul id="A2.I1" class="ltx_itemize">
+<li id="A2.I1.i1" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="A2.I1.i1.p1" class="ltx_para">
+<p id="A2.I1.i1.p1.1" class="ltx_p"><span id="A2.I1.i1.p1.1.1" class="ltx_text ltx_font_bold">Easy</span> (<math id="A2.I1.i1.p1.1.m1" class="ltx_Math" alttext="&gt;40\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&gt;</mo><mrow><mn>40</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">&gt;40\%</annotation></semantics></math>): histopathologic-cancer-detection (57.0%) and plant-pathology-2020-fgvc7 (49.7%).</p>
+</div>
+</li>
+<li id="A2.I1.i2" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="A2.I1.i2.p1" class="ltx_para">
+<p id="A2.I1.i2.p1.2" class="ltx_p"><span id="A2.I1.i2.p1.2.1" class="ltx_text ltx_font_bold">Medium</span> (<math id="A2.I1.i2.p1.1.m1" class="ltx_Math" alttext="15\%" display="inline" intent=":literal"><semantics><mrow><mn>15</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">15\%</annotation></semantics></math>–<math id="A2.I1.i2.p1.2.m2" class="ltx_Math" alttext="40\%" display="inline" intent=":literal"><semantics><mrow><mn>40</mn><mo>%</mo></mrow><annotation encoding="application/x-tex">40\%</annotation></semantics></math>): aerial-cactus-identification (26.2%) and the-icml-2013-whale-redux (23.5%).</p>
+</div>
+</li>
+<li id="A2.I1.i3" class="ltx_item" style="list-style-type:none;">
+<span class="ltx_tag ltx_tag_item">•</span> 
+<div id="A2.I1.i3.p1" class="ltx_para">
+<p id="A2.I1.i3.p1.1" class="ltx_p"><span id="A2.I1.i3.p1.1.1" class="ltx_text ltx_font_bold">Hard</span> (<math id="A2.I1.i3.p1.1.m1" class="ltx_Math" alttext="&lt;10\%" display="inline" intent=":literal"><semantics><mrow><mi></mi><mo>&lt;</mo><mrow><mn>10</mn><mo>%</mo></mrow></mrow><annotation encoding="application/x-tex">&lt;10\%</annotation></semantics></math>): jigsaw-toxic-comment (9.1%), dog-breed-identification (0.4%), and tabular-playground-may-2022 (0.4%).</p>
+</div>
+</li>
+</ul>
+</div>
+</section>
+</article>
+</div>
+</div>
+<footer class="arxiv-html-footer">
+  <div class="ltx_page_logo">
+    Experimental support, please
+    <a href="./2606.13662v1/__stdout.txt" class="ltx_ref"
+    target="_blank" rel="nofollow">view the build logs</a>
+    for errors. Generated by
+    <a href="https://math.nist.gov/~BMiller/LaTeXML/" target="_blank" class="ltx_ref ltx_LaTeXML_logo">
+      <span style="letter-spacing: -0.2em; margin-right: 0.1em;">
+        L
+        <span style="font-size: 70%; position: relative; bottom: 2.2pt;">A</span>
+        T
+        <span style="position: relative; bottom: -0.4ex;">E</span>
+      </span>
+      <span class="ltx_font_smallcaps">xml</span>
+      <img alt="[LOGO]"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==">
+    </a>.
+  </div>
+  <div class="keyboard-glossary">
+    <h2>Instructions for reporting errors</h2>
+    <p>We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+      support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+      methods listed below:</p>
+    <ul>
+      <li>Click the "Report Issue" <span class="mobile-only">(<svg role="presentation"
+            style="display: inline-block; vertical-align: middle; fill: var(--text-color);" aria-hidden="true"
+            height="1em" viewBox="0 0 640 640">
+            <path
+              d="M224 160C224 107 267 64 320 64C373 64 416 107 416 160L416 163.6C416 179.3 403.3 192 387.6 192L252.5 192C236.8 192 224.1 179.3 224.1 163.6L224.1 160zM569.6 172.8C580.2 186.9 577.3 207 563.2 217.6L465.4 290.9C470.7 299.8 474.7 309.6 477.2 320L576 320C593.7 320 608 334.3 608 352C608 369.7 593.7 384 576 384L480 384L480 416C480 418.6 479.9 421.3 479.8 423.9L563.2 486.4C577.3 497 580.2 517.1 569.6 531.2C559 545.3 538.9 548.2 524.8 537.6L461.7 490.3C438.5 534.5 395.2 566.5 344 574.2L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 574.2C244.8 566.5 201.5 534.5 178.3 490.3L115.2 537.6C101.1 548.2 81 545.3 70.4 531.2C59.8 517.1 62.7 497 76.8 486.4L160.2 423.9C160.1 421.3 160 418.7 160 416L160 384L64 384C46.3 384 32 369.7 32 352C32 334.3 46.3 320 64 320L162.8 320C165.3 309.6 169.3 299.8 174.6 290.9L76.8 217.6C62.7 207 59.8 186.9 70.4 172.8C81 158.7 101.1 155.8 115.2 166.4L224 248C236.3 242.9 249.8 240 264 240L376 240C390.2 240 403.7 242.8 416 248L524.8 166.4C538.9 155.8 559 158.7 569.6 172.8z" />
+          </svg>)</span> button, located in the page header.</li>
+    </ul>
+    <p><strong>Tip:</strong> You can select the relevant text first, to include it in your report.</p>
+    <p>Our team has already identified <a class="ltx_ref" href="https://github.com/arXiv/html_feedback/issues"
+        target="_blank">the following issues</a>. We appreciate your time reviewing and reporting rendering errors we
+      may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+      should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+      all.</p>
+    <p>Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a <a
+        class="ltx_ref" href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML"
+        target="_blank">list of packages that need conversion</a>, and welcome <a class="ltx_ref"
+        href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">developer contributions</a>.</p>
+  </div>
+</footer>
+<div id="fixed-buttons-container">
+  <div id="beta-badge" aria-hidden="true">BETA</div>
+  <a id="disable-reading-mode-btn" class="header-button" href="javascript:toggleReadingMode();"
+    title="Disable reading mode, show header and footer">
+    <svg role="presentation" height="1.25rem"
+      viewBox="0 0 448 512"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+      <path
+        d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z" />
+    </svg>
+  </a>
+</div></body>
+</html>
