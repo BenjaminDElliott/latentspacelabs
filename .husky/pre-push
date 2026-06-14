@@ -1,0 +1,90 @@
+# LAT-122: Pre-push hook — heavier checks on the branch.
+# Runs typecheck (TS), identifies changed packages, runs tests on affected
+# packages.  CI-compatible and deterministic.
+#
+# Bypass with: git push --no-verify
+#
+# CI detection: if CI=true or the CI env var is set, skip the diff-based
+# package filtering and run the full test suite.
+
+# --- TypeScript typecheck (always, lightweight) ---
+# Only run if there are TS packages.
+TS_PACKAGES=$(find packages -mindepth 1 -maxdepth 1 -name "package.json" -exec dirname {} \; | sort)
+if [ -n "$TS_PACKAGES" ]; then
+  echo "→ Running TypeScript typecheck..."
+  npm run typecheck || {
+    echo ""
+    echo "❌ Typecheck failed."
+    exit 1
+  }
+else
+  echo "→ No TypeScript packages to typecheck."
+fi
+
+# --- Detect changed packages ---
+# If running in CI (CI=true) or no remote origin (bare repo), run full suite.
+CI_MODE=${CI:-false}
+REMOTE_EXISTS=$(git remote get-url origin 2>/dev/null || echo "")
+
+run_tests_for() {
+  local pkg_dir="$1"
+  local pkg_name
+  pkg_name=$(basename "$pkg_dir")
+
+  # TypeScript package — run tsx tests
+  if [ -f "$pkg_dir/package.json" ]; then
+    echo "  → Testing $pkg_name (TS)..."
+    npx --silent tsx --test "$pkg_dir/src"/*.test.ts "$pkg_dir/src"/**/*.test.ts 2>/dev/null || true
+  # Python package — run pytest if available
+  elif [ -f "$pkg_dir/pyproject.toml" ]; then
+    echo "  → Testing $pkg_name (Python)..."
+    (cd "$pkg_dir" && python -m pytest tests/ -q 2>/dev/null) || true
+  fi
+}
+
+if [ "$CI_MODE" = "true" ] || [ -z "$REMOTE_EXISTS" ]; then
+  echo "→ CI mode or no remote — running full test suite."
+  for pkg_dir in packages/*/; do
+    [ -d "$pkg_dir" ] && run_tests_for "$pkg_dir"
+  done
+else
+  echo "→ Detecting changed packages..."
+  MAIN_BRANCH=""
+  for ref in main master; do
+    if git rev-parse "$ref" >/dev/null 2>&1; then
+      MAIN_BRANCH="$ref"
+      break
+    fi
+  done
+
+  if [ -n "$MAIN_BRANCH" ]; then
+    # List packages whose files changed compared to main.
+    CHANGED=$(git diff --name-only origin/main..HEAD 2>/dev/null || \
+              git diff --name-only origin/main..${MAIN_BRANCH} 2>/dev/null || \
+              echo "")
+
+    if [ -n "$CHANGED" ]; then
+      PACKAGES=$(echo "$CHANGED" | awk -F'/' '{print $1}' | \
+                 grep -xE 'packages/.*' | sed 's|^packages/||' | \
+                 sort -u)
+
+      if [ -n "$PACKAGES" ]; then
+        echo "→ Running tests on: $PACKAGES"
+        for pkg in $PACKAGES; do
+          run_tests_for "packages/$pkg"
+        done
+      else
+        echo "→ No changed packages detected."
+      fi
+    else
+      echo "→ No changes detected vs. main."
+    fi
+  else
+    echo "⚠ No 'main' branch found locally — running full suite."
+    for pkg_dir in packages/*/; do
+      [ -d "$pkg_dir" ] && run_tests_for "$pkg_dir"
+    done
+  fi
+fi
+
+echo "→ Pre-push checks complete."

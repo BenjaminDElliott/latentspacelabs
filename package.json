@@ -25,11 +25,26 @@
     "secret-guard:tracked": "node packages/secret-guard/dist/cli.js --tracked",
     "secret-guard:install-hook": "node packages/secret-guard/dist/install-hook.js",
     "dispatch:next": "node packages/icp/dist/dispatcher/cli.js",
-    "check": "npm run lint && npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run secret-guard:tracked && npm run coverage"
+    "check": "npm run lint && npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run secret-guard:tracked && npm run coverage",
+    "format": "prettier --write \"packages/**/*.{ts,js,md}\"",
+    "format:check": "prettier --check \"packages/**/*.{ts,js,md}\"",
+    "lint:staged": "eslint $(git diff --cached --name-only --diff-filter=d | grep -E '\\.(ts|js|tsx|jsx)$' | tr '\\n' ' ')",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.61.0",
     "@typescript-eslint/parser": "^8.61.0",
-    "eslint": "^10.5.0"
+    "eslint": "^10.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2"
+  },
+  "lint-staged": {
+    "packages/**/*.{ts,js,md}": [
+      "prettier --check --cache"
+    ],
+    "packages/**/*.{ts,js,tsx,jsx}": [
+      "npx eslint"
+    ]
   }
 }

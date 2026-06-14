@@ -1,0 +1,28 @@
+# LAT-122: Pre-commit hook — fast checks on staged files only.
+# Runs Prettier formatting, ESLint on staged files, and secret-guard.
+# Bypass with: git commit --no-verify or git commit -nm
+
+# 1. Prettier — check formatting on staged TS/JS/MD files (fail on mismatch)
+npx --yes prettier --check --cache \
+  'packages/**/*.{ts,js,md}' \
+  --ignore-path .prettierignore || {
+  echo ""
+  echo "❌ Prettier formatting check failed."
+  echo "   Fix with: npx prettier --write packages/"
+  exit 1
+}
+
+# 2. ESLint — lint staged files only (fast)
+npx --yes eslint \
+  $(git diff --cached --name-only --diff-filter=d | grep -E '\.(ts|js|tsx|jsx)$' | tr '\n' ' ') || {
+  echo ""
+  echo "❌ ESLint failed on staged files."
+  exit 1
+}
+
+# 3. Secret guard on staged files
+npm run secret-guard:staged || {
+  echo ""
+  echo "❌ Secret guard found issues in staged files."
+  exit 1
+}
