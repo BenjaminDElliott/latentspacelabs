@@ -61,7 +61,7 @@ const TRIGGERED_BY: ReadonlyArray<TriggeredBy> = [
 
 export interface ReaderResult {
   runs: ReadonlyArray<CockpitRunRecord>;
-  rejected: ReadonlyArray<{ path: string; reason: string }>;
+  rejected: ReadonlyArray<{ _path: string; reason: string }>;
 }
 
 /**
@@ -82,7 +82,7 @@ export async function readRunsDir(runsDir: string): Promise<ReaderResult> {
 
   const jsonFiles = entries.filter((e) => e.endsWith(".json"));
   const runs: CockpitRunRecord[] = [];
-  const rejected: { path: string; reason: string }[] = [];
+  const rejected: { _path: string; reason: string }[] = [];
 
   for (const name of jsonFiles) {
     const path = join(runsDir, name);
