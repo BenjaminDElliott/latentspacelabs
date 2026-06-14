@@ -39,6 +39,29 @@ export type {
 } from "./runtime/contract.js";
 export { RUN_REPORT_SCHEMA_VERSION, toRunStatus } from "./runtime/contract.js";
 
+export type {
+  GateVerdict,
+  AdapterAction,
+  ActionScope,
+  IsolationRule,
+  ForbiddenActions,
+  PreRunGateInput,
+  PreRunGateResult,
+  PostRunGateInput,
+  PostRunGateResult,
+  PolicyEvaluationContext,
+  PolicyGateEvaluator,
+  PreRunGate,
+  PostRunGate,
+  AdapterRunnerGate,
+  AdapterGateOutcome,
+} from "./runtime/contract.js";
+
+export {
+  getDefaultIsolationRules,
+  getDefaultForbiddenActions,
+} from "./runtime/contract.js";
+
 export { SkillRegistry, SkillRegistryError } from "./runtime/registry.js";
 export type { RegistryOptions, RegisteredSkill } from "./runtime/registry.js";
 
@@ -47,6 +70,15 @@ export type {
   RunnerOptions,
   RunInvocation,
   RunResult,
+  GateRunnerOptions,
+  GateRunInvocation,
+  GateRunResult,
+} from "./runtime/runner.js";
+
+export { createGateRunner } from "./runtime/runner.js";
+export {
+  skillDefinitionToPreRunInput,
+  runOutputToPostRunInput,
 } from "./runtime/runner.js";
 
 export { createPolicyEvaluator } from "./adapters/policy-evaluator.js";
@@ -91,6 +123,18 @@ export type {
   SpawnLike,
   SpawnedLike,
 } from "./adapters/agent-invocation-adapter.js";
+
+/* LAT-166: adapter runner gate with policy enforcement */
+export {
+  createGatePolicyEvaluator,
+  createPreRunGate as createPreRunGateFromPolicies,
+  type GatePolicyOptions,
+} from "./adapters/gate-policies.js";
+export {
+  createPreRunGate,
+  createPostRunGate,
+  createAdapterRunnerGate,
+} from "./adapters/gates.js";
 
 export {
   dispatchTicketSkill,
