@@ -23,6 +23,7 @@
     "secret-guard:tracked": "node packages/secret-guard/dist/cli.js --tracked",
     "secret-guard:install-hook": "node packages/secret-guard/dist/install-hook.js",
     "dispatch:next": "node packages/icp/dist/dispatcher/cli.js",
-    "check": "npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run secret-guard:tracked && npm run test"
+    "check": "npm run typecheck && npm run build && npm run validate:adrs && npm run validate:prds && npm run policy-scan && npm run secret-guard:tracked && npm run test && npm run validate:contract",
+    "validate:contract": "node packages/ticket-contract/dist/cli.js"
   }
 }
