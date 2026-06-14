@@ -1,8 +1,6 @@
 # Approval requirements for risky actions
 
-## Approval requirements for risky actions by agent type
-
-## Approval requirements for risky actions by agent type
+## Overview
 
 This document defines approval requirements for each risky action that agents of each type may perform. Every risky action is mapped to one of three approval gates: **human** (Ben Elliott), **automated** (ICP-enforced without human input), or **none** (agent may proceed autonomously).
 
