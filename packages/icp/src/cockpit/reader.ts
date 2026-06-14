@@ -110,7 +110,7 @@ export async function readRunsDir(runsDir: string): Promise<ReaderResult> {
  */
 export function parseRunJson(
   raw: string,
-  path: string,
+  _path: string,
 ): { ok: true; record: CockpitRunRecord } | { ok: false; reason: string } {
   let obj: unknown;
   try {

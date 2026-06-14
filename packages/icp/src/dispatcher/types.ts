@@ -14,6 +14,8 @@
  * not require real Linear/RunPod/opencode credentials).
  */
 
+import type { RunArtefact } from "../observability/run-artifact.js";
+
 /** Eligibility outcome for one Linear issue against the MVP rules. */
 export type EligibilityOutcome =
   | { eligible: true; reason: string }
@@ -107,7 +109,7 @@ export interface DispatchReport {
    * Carries sanitised fields only; never raw stdout/stderr. Useful for
    * tests asserting on the emission shape without reading the JSON.
    */
-  artefact: import("../observability/run-artifact.js").RunArtefact | null;
+  artefact: RunArtefact | null;
   /** Exit code of the control-loop child process when invoked, else null. */
   controlLoopExitCode: number | null;
   /** One-line, secret-safe explanation suitable for stdout / Linear. */
