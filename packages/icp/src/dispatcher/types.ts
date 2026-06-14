@@ -14,6 +14,8 @@
  * not require real Linear/RunPod/opencode credentials).
  */
 
+import type { RunArtefact } from "../observability/run-artifact.js";
+
 /** Eligibility outcome for one Linear issue against the MVP rules. */
 export type EligibilityOutcome =
   | { eligible: true; reason: string }
@@ -52,21 +54,7 @@ export type DispatchOutcome =
    */
   | "no_review_artifact"
   /** LAT-138: same ticket already in flight in this process. */
-  | "duplicate_in_flight"
-  /**
-   * LAT-136: the agent produced output that is too shallow — only doc/README
-   * edits when the ticket asked for code changes, or the implementation plan
-   * was missing. The dispatcher refuses to promote and posts a refusal on the
-   * Linear issue. The operator may re-dispatch with a tighter pack.
-   */
-  | "insufficient_change"
-  /**
-   * LAT-136: the ticket pack lacked concrete scope (target files, non-churn
-   * expectations, implementation plan requirement) and the agent could not
-   * produce deterministic output. The dispatcher refuses to promote and
-   * posts a refinement request on the Linear issue.
-   */
-  | "needs_better_pack";
+  | "duplicate_in_flight";
 
 /** Sanitised summary the dispatcher prints / persists. */
 export interface DispatchReport {
@@ -91,7 +79,7 @@ export interface DispatchReport {
    * Carries sanitised fields only; never raw stdout/stderr. Useful for
    * tests asserting on the emission shape without reading the JSON.
    */
-  artefact: import("../observability/run-artifact.js").RunArtefact | null;
+  artefact: RunArtefact | null;
   /** Exit code of the control-loop child process when invoked, else null. */
   controlLoopExitCode: number | null;
   /** One-line, secret-safe explanation suitable for stdout / Linear. */
@@ -124,20 +112,6 @@ export interface ControlLoopRunResult {
  * The dispatcher uses an intentionally narrow view so a backwards-
  * compatible schema bump there does not silently change behaviour here.
  */
-/**
- * LAT-136: output-quality gate verdict. The quality gate runs on the final
- * diff / evidence and produces a structured verdict. The dispatcher reads
- * this to decide whether `ready_for_review` is truly actionable.
- */
-export interface QualityGateVerdict {
-  /** Whether the gate passed or failed. */
-  passed: boolean;
-  /** Gate code for the outcome. */
-  code: string;
-  /** Human-readable explanation. */
-  message: string;
-}
-
 export interface ControlLoopJsonSummary {
   schemaVersion: string;
   evidence: {
@@ -161,40 +135,6 @@ export interface ControlLoopJsonSummary {
       /** Optional explicit local diff path the adapter recorded. */
       diffPath?: string | null;
     } | null;
-    /**
-     * LAT-136: optional quality-gate verdict attached to the evidence.
-     * Populated by the control loop adapter or a post-run gate checker.
-     */
-    qualityGate?: QualityGateVerdict | null;
-    /**
-     * LAT-136: acceptance-criteria-to-change mapping. Each criterion from
-     * the ticket pack is mapped to at least one file or diff section that
-     * addresses it.
-     */
-    acToChangeMapping?: ReadonlyArray<{
-      /** Index or label of the acceptance criterion. */
-      acIndex: number;
-      /** The criterion text (truncated for brevity). */
-      acText: string;
-      /** File(s) or diff section(s) that satisfy this criterion. */
-      changedFiles: string[];
-      /** Whether the criterion is satisfied. */
-      satisfied: boolean;
-    }> | null;
-    /**
-     * LAT-136: whether the agent produced an implementation plan before
-     * making changes. The pack requires this; the adapter verifies it.
-     */
-    implementationPlan?: {
-      produced: boolean;
-      /** Path or content excerpt of the plan. */
-      path?: string;
-    } | null;
-    /**
-     * LAT-136: whether the ticket pack was judged to have sufficient
-     * concrete scope (target files, non-churn expectations).
-     */
-    packSufficientScope?: boolean;
   };
 }
 

@@ -30,6 +30,7 @@
     "typecheck": "tsc --noEmit",
     "prebuild": "npm run build --workspace=@latentspacelabs/opencode-harness",
     "test": "tsx --test src/*.test.ts",
+    "coverage": "tsx --experimental-test-coverage --test src/*.test.ts",
     "run-loop": "tsx src/cli.ts"
   },
   "dependencies": {

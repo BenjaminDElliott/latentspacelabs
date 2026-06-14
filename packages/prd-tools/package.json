@@ -28,6 +28,7 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/*.test.ts",
+    "coverage": "tsx --experimental-test-coverage --test src/*.test.ts",
     "validate": "tsx src/cli.ts"
   },
   "devDependencies": {

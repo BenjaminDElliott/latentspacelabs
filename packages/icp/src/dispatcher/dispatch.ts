@@ -52,7 +52,6 @@ import type {
   DispatcherSpawn,
   ReviewArtifact,
 } from "./types.js";
-import { runQualityGate } from "../evaluation/output-quality-gate.js";
 
 export interface DispatcherConfig {
   /** Linear personal API key. Never logged. */
@@ -263,50 +262,20 @@ async function runDispatcherInner(
       mappedOutcome === "ready_for_review" && reviewArtifact === null
         ? "no_review_artifact"
         : mappedOutcome;
-
-    // LAT-136: run the output-quality gate on ready_for_review runs.
-    // Catches shallow output (README-only changes, missing impl plan,
-    // missing AC-to-change mapping) before PR creation or promotion.
-    const qualityGate =
-      outcome === "ready_for_review"
-        ? runQualityGate({
-            ticketId: issue.identifier,
-            acceptanceCriteria: extractAcceptanceCriteria(pack.content),
-            changedFiles: extractChangedFiles(runResult.jsonSummary),
-            hasImplementationPlan:
-              runResult.jsonSummary?.evidence?.implementationPlan?.produced ??
-              false,
-            hasAcToChangeMapping:
-              Array.isArray(runResult.jsonSummary?.evidence?.acToChangeMapping) &&
-              runResult.jsonSummary.evidence.acToChangeMapping.length > 0,
-            asksForCrossDocChanges:
-              /cross-doc|cross doc/i.test(pack.content) ||
-              /cross-file|cross file/i.test(pack.content),
-            asksForCrossFileChanges: /cross-file|cross file/i.test(pack.content),
-            reportedState: outcome,
-            declaredTargetFiles: extractTargetFiles(pack.content),
-          })
-        : null;
-
-    // If the quality gate failed, downgrade the outcome.
-    const finalOutcome: DispatchOutcome =
-      qualityGate && !qualityGate.passed
-        ? (qualityGate.code as DispatchOutcome)
-        : outcome;
     const endedAt = (deps.now ?? (() => new Date()))();
 
     const artefact = buildRunArtefact({
       invocation_id: invocationId,
       surface: "dispatcher",
       producer: "lat129-dispatcher",
-      outcome: outcomeToArtefactOutcome(finalOutcome),
+      outcome: outcomeToArtefactOutcome(outcome),
       started_at: startedAt,
       ended_at: endedAt,
       ticket_id: issue.identifier,
       pack_path: packPath,
       pack_content: pack.content,
-      refusal_code: refusalCodeForOutcome(finalOutcome, runResult),
-      refusal_message: refusalMessageForOutcome(finalOutcome, runResult),
+      refusal_code: refusalCodeForOutcome(outcome, runResult),
+      refusal_message: refusalMessageForOutcome(outcome, runResult),
       raw_stdout: runResult.stdout,
       raw_stderr: runResult.stderr,
       log_stdout_redacted: runResult.stdout,
@@ -322,14 +291,13 @@ async function runDispatcherInner(
       issueIdentifier: issue.identifier,
       packPath,
       runResult,
-      outcome: finalOutcome,
+      outcome,
       mode: config.mode,
       reviewArtifact,
       now: deps.now ?? (() => new Date()),
       artefact,
       artefactPath,
       worktreeBranch: allocation.branch,
-      qualityGate,
     });
 
     let commented = false;
@@ -351,13 +319,13 @@ async function runDispatcherInner(
     }
 
     let promoted = false;
-    if (finalOutcome === "ready_for_review") {
+    if (outcome === "ready_for_review") {
       try {
         await linear.setIssueState(issue.uuid, config.inReviewStateId);
         promoted = true;
       } catch (err) {
         return makeReport({
-          outcome: finalOutcome,
+          outcome,
           issueIdentifier: issue.identifier,
           packPath,
           artefactPath,
@@ -373,7 +341,7 @@ async function runDispatcherInner(
     }
 
     return makeReport({
-      outcome: finalOutcome,
+      outcome,
       issueIdentifier: issue.identifier,
       packPath,
       artefactPath,
@@ -384,15 +352,11 @@ async function runDispatcherInner(
       worktreeBranch: allocation.branch,
       worktreePath: allocation.worktreePath,
       message:
-        finalOutcome === "ready_for_review"
+        outcome === "ready_for_review"
           ? `Promoted ${issue.identifier} to In Review (${describeArtifact(reviewArtifact)}).`
-          : finalOutcome === "no_review_artifact"
+          : outcome === "no_review_artifact"
             ? `Control loop reported READY_FOR_REVIEW but produced no actionable review artifact (no branch, PR, patch, or diff path); ${issue.identifier} left unpromoted.`
-            : finalOutcome === "insufficient_change"
-              ? `Quality gate (LAT-136) flagged shallow output for ${issue.identifier}; outcome=insufficient_change. ${qualityGate?.message ?? ""}`
-              : finalOutcome === "needs_better_pack"
-                ? `Quality gate (LAT-136) found missing scope/plan for ${issue.identifier}; outcome=needs_better_pack. ${qualityGate?.message ?? ""}`
-                : `Run terminated as ${finalOutcome}; issue left unpromoted.`,
+            : `Run terminated as ${outcome}; issue left unpromoted.`,
     });
   } finally {
     // LAT-138: best-effort cleanup. We swallow cleanup errors; the
