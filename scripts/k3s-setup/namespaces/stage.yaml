@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stage
+  labels:
+    env: stage
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: stage-quota
+  namespace: stage
+spec:
+  hard:
+    requests.cpu: "16"
+    requests.memory: 32Gi
+    limits.cpu: "32"
+    limits.memory: 64Gi
+    pods: "100"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stage-isolation
+  namespace: stage
+spec:
+  podSelector: {}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              env: stage
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              env: stage
