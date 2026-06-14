@@ -457,7 +457,10 @@ export function evaluate(
 
   // Apply optional override (context-sensitive rules).
   if (rule.override) {
-    const overrideResult = rule.override({ agentType, action, autonomyLevel, context: agentContext as Record<string, unknown> });
+    const overrideInput: ActionPolicyInput = { agentType, action };
+    if (autonomyLevel !== undefined) overrideInput.autonomyLevel = autonomyLevel;
+    overrideInput.context = agentContext as Record<string, unknown>;
+    const overrideResult = rule.override(overrideInput);
     if (overrideResult) return overrideResult;
   }
 
