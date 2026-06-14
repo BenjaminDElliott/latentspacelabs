@@ -192,6 +192,23 @@ export type {
   FromOpencodeDryRunArgs,
 } from "./observability/from-summaries.js";
 
+/* LAT-179 agent isolation matrix (per-type secrets, filesystem, network boundaries). */
+export {
+  ISOLATION_MATRIX,
+  getBoundary,
+  canWrite,
+  canRead,
+  hasNetworkAccess,
+} from "./eval/isolation-matrix.js";
+export type {
+  IsolationBoundary,
+  FsAccessMode,
+  FsScope,
+  NetworkDirection,
+  NetworkTarget,
+  SecretInjection,
+} from "./eval/isolation-matrix.js";
+
 /* ICP observability cockpit (LAT-55, PRD docs/prds/LAT-28). Read-through
  * projection of the ADR-0006 envelope onto the seven MVP views. */
 export { readRunsDir, parseRunJson } from "./cockpit/reader.js";

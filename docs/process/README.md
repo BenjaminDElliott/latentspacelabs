@@ -25,6 +25,7 @@ Docs are canonical; skills and commands are downstream operational adapters. A s
 - `thread-approved-merge-authority.md` — When an agent may mechanically execute a PR merge under Ben's explicit in-thread approval, the pre-merge ready-to-merge gate, refusal cases, the terse approval packet, and the post-merge Linear write-back.
 - `retrospective-learning-loop.md` — Bounded retro step: how evidence from run reports, QA/review, intake, and dispatch becomes prompt/template/backlog/ADR changes.
 - `research-spike-lifecycle.md` — Lifecycle for bounded research spikes from triage intake through findings to graduation (PRD / ADR / backlog / archive), with stop conditions, escalation, and Linear state model.
+- `agent-isolation-matrix.md` — Per-agent-type isolation boundaries: secrets, filesystem, and network. The single source of truth consumed by the dispatcher (credential injection, worktree layout, env scrub), the policy evaluator (pre-run checks), and the runtime (post-run evidence validation). Related: LAT-179.
 
 ## What does not live here
 
