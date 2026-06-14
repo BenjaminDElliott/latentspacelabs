@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { SkillRegistry } from "./registry.js";
 import { SkillRunner } from "./runner.js";
 import type {
+  AutonomyLevel,
+  PolicyEvaluator,
   ResolvedTools,
   SkillDefinition,
 } from "./contract.js";
@@ -27,6 +29,19 @@ function tools(): ResolvedTools {
   };
 }
 
+function makeRunner(
+  reg: SkillRegistry,
+  autonomyCap: AutonomyLevel = "L2-propose",
+  policyEvaluator: PolicyEvaluator | null = null,
+): SkillRunner {
+  return new SkillRunner({
+    registry: reg,
+    tools: tools(),
+    autonomyCap,
+    policyEvaluator,
+  });
+}
+
 function minimalL3Skill(): SkillDefinition {
   return {
     name: "gate-test",
@@ -47,11 +62,7 @@ function minimalL3Skill(): SkillDefinition {
 test("runner refuses L3 skill without approval", async () => {
   const reg = new SkillRegistry({ repoRoot: REPO_ROOT, availableTools: [] });
   await reg.register(minimalL3Skill());
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L2-propose",
-  });
+  const runner = makeRunner(reg, "L2-propose");
   const result = await runner.run({
     skill: "gate-test",
     inputs: { x: "y" },
@@ -64,11 +75,7 @@ test("runner refuses L3 skill without approval", async () => {
 test("runner allows dry_run without approval", async () => {
   const reg = new SkillRegistry({ repoRoot: REPO_ROOT, availableTools: [] });
   await reg.register(minimalL3Skill());
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L2-propose",
-  });
+  const runner = makeRunner(reg, "L2-propose");
   const result = await runner.run({
     skill: "gate-test",
     inputs: { x: "y" },
@@ -81,11 +88,7 @@ test("runner allows dry_run without approval", async () => {
 test("runner fails when required inputs are missing", async () => {
   const reg = new SkillRegistry({ repoRoot: REPO_ROOT, availableTools: [] });
   await reg.register(minimalL3Skill());
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "gate-test",
     inputs: {},
@@ -110,11 +113,7 @@ test("runner enforces evidence contract", async () => {
   };
   const reg = new SkillRegistry({ repoRoot: REPO_ROOT, availableTools: [] });
   await reg.register(skill);
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "evidence-test",
     inputs: {},
@@ -153,11 +152,7 @@ test("LAT-66: runner refuses side-effecting success with no cost_band evidence",
   await reg.register(
     costBandSkill(async () => ({ status: "succeeded" })),
   );
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "cost-band-test",
     inputs: {},
@@ -176,11 +171,7 @@ test("LAT-66: runner refuses cost_band=unknown without an unavailable reason", a
       cost_band: "unknown",
     })),
   );
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "cost-band-test",
     inputs: {},
@@ -203,11 +194,7 @@ test("LAT-66: runner accepts cost_band=unknown paired with an explicit reason", 
       cost_band_unavailable_reason: "command provider returned no spend",
     })),
   );
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "cost-band-test",
     inputs: {},
@@ -226,11 +213,7 @@ test("LAT-66: runner accepts a concrete cost band on success", async () => {
       cost_band_unavailable_reason: null,
     })),
   );
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "cost-band-test",
     inputs: {},
@@ -245,11 +228,7 @@ test("LAT-66: cost-band gate does not fire for dry-run evaluations", async () =>
   await reg.register(
     costBandSkill(async () => ({ status: "succeeded" })),
   );
-  const runner = new SkillRunner({
-    registry: reg,
-    tools: tools(),
-    autonomyCap: "L4-autonomous",
-  });
+  const runner = makeRunner(reg, "L4-autonomous");
   const result = await runner.run({
     skill: "cost-band-test",
     inputs: {},
