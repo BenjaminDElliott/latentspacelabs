@@ -130,6 +130,37 @@ Verification runs are themselves agent runs and are dispatched the same way:
 - **Unmet criteria laundered as nits.** An unmet acceptance criterion is at minimum `medium`, never `nit`, regardless of how small the gap looks.
 - **Silent combined-agent scope creep.** A combined QA+review agent on a medium-risk or security-sensitive ticket is a policy violation and itself a `critical` finding on the next dispatch.
 
+## QA ↔ rework iteration bounds
+
+From APEX lessons (LAT-123): QA and rework should iterate **inside the story loop**, not spin the agent endlessly. The loop is bounded by explicit stop conditions and evidence requirements.
+
+**The loop:** coding agent opens PR → QA/review agent evaluates → recommendation is `request-changes` or `block-merge` → coding agent reworks → QA/review re-evaluates → repeat until approval or stop.
+
+**Stop conditions (any one stops the loop):**
+
+1. **`approve` or `approve-with-nits`** — all acceptance criteria met, no blocking findings. Loop exits with promotion (merge).
+2. **3 rework cycles** — if the ticket has been through ≥ 3 QA→rework→QA cycles without landing, stop and promote the top finding (or group of related findings) to a new `LAT-*` issue for the retro loop (ADR-0010). This is the *unbounded-churn guard*.
+3. **`block-merge` with `critical` finding** — active breakage (exposed secret, broken migration, cost runaway). Stop and route to Ben; rework may happen on the next dispatch iteration, not in-PR.
+4. **Rework agent cannot produce evidence** — if the rework agent's run report shows no file changes or no test results relative to the prior run, stop with `needs-human`.
+
+**Evidence requirements per cycle:**
+
+| Cycle | Required evidence from coding agent | Required evidence from QA agent |
+|---|---|---|
+| 1st (initial) | PR link, run report, test results, files changed | Full report per section above |
+| 2nd–3rd (rework) | PR update (same branch), run report, test results, **diff summary** (what changed from prior rework) | Report focusing on **regression check** — what did the rework fix, what did it not touch |
+| 3rd (final) | Same as 2nd, plus a one-line note: "3rd cycle — top finding: {{finding}}" | Same as 2nd, plus a note on whether the finding group is trending toward resolution |
+
+**Evidence that must survive rework cycles:**
+
+- Every `high` or `critical` finding from any cycle must appear in the final recommendation, even if the specific finding was resolved (mark it "resolved" with evidence).
+- Unmet acceptance criteria from the initial run must remain listed through all rework cycles, updated to `met` / `unmet` / `n/a` as rework progresses.
+- The cost band of each cycle must be reported; if any cycle is `elevated` or `runaway_risk`, the next cycle's run report must cite the prior cost band and whether spend decreased.
+
+**Rework evidence must be diff-able.** The coding agent must produce a one-line summary of what changed since the last rework (e.g., "changed error handling in `foo.ts:45-67`, added unit test"). Without this, QA cannot distinguish new issues from pre-existing ones.
+
+**No shared markdown index or ToC.** Each cycle's evidence is self-contained in its own report. Do not maintain a running index across cycles.
+
 ## Related
 
 - ADR-0007 (authoritative policy): `docs/decisions/0007-qa-review-evidence-workflow.md`

@@ -54,6 +54,8 @@ The Agentic Development Flywheel MVP is organized around four clearly separated 
 | Change autonomy rules | **Yes** — requires an ADR (ADR-0008 and ADR-0009 are the canonical locations) |
 | Resume a ticket whose last run halted for runaway-cost | **Yes** — requires an explicit Ben unblock comment on the Linear issue (cap raise, re-scope, or cancel). See `cost-controls.md`. |
 
+**Draft vs promotion gates:** Drafting (creating, editing, discarding) is free at L0–L2. The gates above apply to *promotion* — transitioning a draft into governing state (marking a ticket `agent-ready`, merging a PRD into `docs/prds/`, merging a PR to `main`, deploying). The full rule matrix is in [`approval-gates-and-autonomy-rules.md`](approval-gates-and-autonomy-rules.md) → *Draft creation vs promotion gates*.
+
 Runaway-cost risk is always a stop-and-ask event, even when product risk is otherwise low. The three cost bands (`normal`, `elevated`, `runaway_risk`), the concrete triggers, and the interrupt protocol live in `cost-controls.md` (architecture: ADR-0009).
 
 The full category-by-action rule matrix — including Perplexity-direct vs Integration Control Plane (ICP) routing, autonomy levels L0–L5, and the failure posture by severity — lives in `approval-gates-and-autonomy-rules.md` (architecture: ADR-0008, renamed to ICP by ADR-0012).
