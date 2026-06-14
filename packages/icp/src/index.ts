@@ -235,3 +235,33 @@ export type {
   RecentCompletionRow,
   ViewName,
 } from "./cockpit/types.js";
+
+/* Cost-class provider router (LAT-58). ADR-0020 lane selection,
+ * refusal-on-missing-config, and run-evidence emission. */
+export {
+  createCostClassProviderRouter,
+  route,
+  classifyCostClass,
+  mapCostClassToLane,
+  deriveLaneReason,
+  createAnthropicProvider,
+  createMockAnthropicProvider,
+} from "./cost-class-provider/index.js";
+export type {
+  CostClass,
+  Lane,
+  LaneReason,
+  ExpectedCostBand,
+  RoutingInputs,
+  RoutingDecision,
+  ProviderConfig,
+  ProviderInvocationRequest,
+  ProviderRunEvidence,
+  ProviderRefusal,
+  ProviderRefusalReason,
+  CostClassProviderRouter,
+  ProviderRunResult,
+  ProviderRouterError,
+  AnthropicProviderOptions,
+  MockAnthropicProviderOptions,
+} from "./cost-class-provider/index.js";
