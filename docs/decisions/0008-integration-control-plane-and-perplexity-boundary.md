@@ -12,10 +12,11 @@ supersedes:
 superseded_by:
 revisit_trigger: Revisit when Perplexity's connectors expose first-class create/read for Linear native relations and reliable dispatch semantics; when the first owned adapter ships; or when a Perplexity-direct action causes a production incident.
 ---
+---
 
-# ADR-0008: Agent Control Layer and Perplexity boundary
+# ADR-0008: Integration Control Plane and Perplexity boundary
 
-> **Terminology note (added by LAT-22):** this ADR uses the original working name **"Agent Control Layer / ACL"** throughout. That concept was renamed to **"Integration Control Plane / ICP"** by [ADR-0012](0012-integration-control-plane-software-architecture.md) to avoid collision with the common infrastructure meaning of ACL (Access Control List). The substantive decisions in this ADR — the Perplexity / owned-substrate boundary, the four action categories, the pilot autonomy levels, and the first implementation implication — remain in force. Where later documents speak in the new voice, the equivalent category label is `ICP-Routed` (semantically identical to this ADR's `ACL-Routed`). The original wording is preserved below as historical context. See also [ADR-0011](0011-integration-control-plane-language-and-runtime.md) (language and runtime) and [ADR-0012](0012-integration-control-plane-software-architecture.md) (software architecture).
+> **Note:** This ADR was written under the original working name **"Agent Control Layer / ACL"**. [ADR-0012](0012-integration-control-plane-software-architecture.md) renamed the concept to **"Integration Control Plane / ICP"** (this ADR has been updated to use ICP terminology throughout). The substantive decisions — the Perplexity / owned-substrate boundary, the four action categories, the pilot autonomy levels, and the first implementation implication — remain in force. See also [ADR-0011](0011-integration-control-plane-language-and-runtime.md) (language and runtime) and [ADR-0012](0012-integration-control-plane-software-architecture.md) (software architecture).
 
 ## Context
 
@@ -23,20 +24,20 @@ ADR-0001 chose Perplexity as the intake, reasoning, and control interface; Linea
 
 As the pilot has exercised Perplexity end-to-end, a pattern has emerged: **Perplexity's connectors are useful as convenience tools for read-heavy intake, triage, and drafting, but are not reliable as the long-term operational substrate when first-class APIs, native relations, deterministic dispatch semantics, or structured telemetry are required.** Perplexity is excellent at cognition — ruthless triage, draft generation, synthesis across threads. It is weaker at the parts of the workflow that must be deterministic, auditable, and repeatable: reading/writing Linear native relations, selecting the next dispatchable issue, starting coding or QA agents, opening PRs with the correct conventions, recording high-fidelity run reports, and enforcing cost/autonomy gates.
 
-Research into the Linear API (recorded during LAT-16) confirms the other side of that boundary is directly available to us: the **Linear GraphQL API exposes first-class CRUD for native issue relations** via `issueRelationCreate`, inline `issue.relations`, and `issueRelationDelete`. `IssueRelationType` carries `blocks`, `related`, and `duplicate`; `blocked` is the inferred inverse of `blocks`. Issue status fields, parent/child links, labels, and pagination are also first-class through the same API. This means an owned ACL adapter talking to the Linear GraphQL endpoint can implement the ADR-0005 dispatch algorithm — including native-relation reads, hard-blocker verification, and next-dispatchable selection — deterministically, without waiting on Perplexity's connector to improve. The ACL is therefore **not speculative for dependency and dispatch handling**; it is the reliable operational substrate we already have a clear path to build.
+Research into the Linear API (recorded during LAT-16) confirms the other side of that boundary is directly available to us: the **Linear GraphQL API exposes first-class CRUD for native issue relations** via `issueRelationCreate`, inline `issue.relations`, and `issueRelationDelete`. `IssueRelationType` carries `blocks`, `related`, and `duplicate`; `blocked` is the inferred inverse of `blocks`. Issue status fields, parent/child links, labels, and pagination are also first-class through the same API. This means an owned ICP adapter talking to the Linear GraphQL endpoint can implement the ADR-0005 dispatch algorithm — including native-relation reads, hard-blocker verification, and next-dispatchable selection — deterministically, without waiting on Perplexity's connector to improve. The ICP is therefore **not speculative for dependency and dispatch handling**; it is the reliable operational substrate we already have a clear path to build.
 
 Without an explicit boundary, two failure modes are likely:
 
 1. **Silent capability drift.** Perplexity gains or loses connector features unpredictably. Processes built on those features silently break (e.g. an agent that depended on reading `blocks` relations stops working when the connector changes shape).
 2. **Astronautics creep.** We build a full agent orchestrator before the workflow needs it.
 
-We need to name, now, what belongs on Perplexity's side of the line and what belongs on an **owned Agent Control Layer (ACL)** — even if the ACL is, for the pilot, *just a thin collection of deterministic skills and adapters rather than a standalone service*.
+We need to name, now, what belongs on Perplexity's side of the line and what belongs on an **owned Integration Control Plane (ICP)** — even if the ICP is, for the pilot, *just a thin collection of deterministic skills and adapters rather than a standalone service*.
 
 ## Decision Drivers
 
 - Perplexity is the cognitive front door; it must not also be the operational substrate for actions that require determinism, auditability, or relation-level Linear semantics.
 - First-class Linear features (native relations, projects, dispatch queries) must be reachable through an owned adapter that we can evolve independently of Perplexity's connector roadmap. The Linear GraphQL API exposes `issueRelationCreate`, inline `issue.relations`, `issueRelationDelete`, status / parent / child / label fields, and pagination, so this is a concrete adapter path, not a speculative one.
-- The pilot must not block on building a full orchestrator. The ACL can start as a set of deterministic skills / adapters in this repo, not a service.
+- The pilot must not block on building a full orchestrator. The ICP can start as a set of deterministic skills / adapters in this repo, not a service.
 - Every action with blast radius beyond the current workspace needs a defined autonomy level and a failure posture.
 - Approval gates must be legible to both humans and agents without reading prose — they need a rule matrix.
 - Runaway cost is always a stop-and-ask event, independent of product risk (ADR-0001, intake-triage.md).
@@ -45,15 +46,15 @@ We need to name, now, what belongs on Perplexity's side of the line and what bel
 ## Considered Options
 
 1. **Perplexity-only: let Perplexity invoke everything directly via whatever connectors it has.** Rejected: unbounded blast radius, silent capability drift, no deterministic dispatch, no auditable run record.
-2. **Build a full Agent Control Layer service now** (orchestrator, worker queue, telemetry store, UI). Rejected: premature; violates the anti-astronautics guardrail; nothing in the pilot justifies it yet.
-3. **Define an explicit boundary, implement the ACL as deterministic skills/adapters in this repo, and route any action that needs first-class APIs or deterministic semantics through the ACL. Perplexity keeps cognition (triage, drafting, read-heavy analysis) and the cheapest reversible Linear writes.** Accepted.
+2. **Build a full Integration Control Plane service now** (orchestrator, worker queue, telemetry store, UI). Rejected: premature; violates the anti-astronautics guardrail; nothing in the pilot justifies it yet.
+3. **Define an explicit boundary, implement the ICP as deterministic skills/adapters in this repo, and route any action that needs first-class APIs or deterministic semantics through the ICP. Perplexity keeps cognition (triage, drafting, read-heavy analysis) and the cheapest reversible Linear writes.** Accepted.
 4. **Forbid Perplexity from all write actions; require a human to mirror every decision.** Rejected: destroys the flywheel; the whole point of Perplexity is low-friction intake and triage.
 
 ## Decision
 
-**Accepted: Option 3. Perplexity is the cognitive front door; an owned Agent Control Layer is the operational substrate for anything that requires first-class APIs, native-relation semantics, dispatch determinism, or high-fidelity telemetry.**
+**Accepted: Option 3. Perplexity is the cognitive front door; an owned Integration Control Plane is the operational substrate for anything that requires first-class APIs, native-relation semantics, dispatch determinism, or high-fidelity telemetry.**
 
-### What the Agent Control Layer is (for the pilot)
+### What the Integration Control Plane is (for the pilot)
 
 - A set of **deterministic skills and adapters**, committed to this repo, that encode exactly how we talk to Linear, GitHub, agent runners, and (later) the telemetry substrate.
 - Not a standalone service. Not a UI. No worker queue. No orchestrator binary.
@@ -63,11 +64,11 @@ We need to name, now, what belongs on Perplexity's side of the line and what bel
 - Owns the cost-band check before any action that has non-trivial spend risk.
 - May be invoked by Perplexity (as a skill call) or by a human directly, but the rule matrix is the same in either case.
 
-The ACL can grow into a service later — when a real need forces it (e.g. a shared queue, cross-run coordination, or a telemetry ingest). Until then, it's skills and adapters only.
+The ICP can grow into a service later — when a real need forces it (e.g. a shared queue, cross-run coordination, or a telemetry ingest). Until then, it's skills and adapters only.
 
 ### First implementation implication
 
-Because the Linear GraphQL API already exposes first-class CRUD for native issue relations (see Context), **the first concrete capability of the ACL should be a direct Linear GraphQL adapter** that implements:
+Because the Linear GraphQL API already exposes first-class CRUD for native issue relations (see Context), **the first concrete capability of the ICP should be a direct Linear GraphQL adapter** that implements:
 
 - Create / read / delete of native issue relations (`blocks`, `related`, `duplicate`; `blocked` inferred from `blocks`) via `issueRelationCreate`, inline `issue.relations`, and `issueRelationDelete`.
 - Next-dispatchable issue selection per the ADR-0005 dispatch algorithm, using native relations + issue status + parent/child + labels + pagination rather than the `## Sequencing` block.
@@ -81,7 +82,7 @@ Every action an agent (or Perplexity) might take falls into exactly one of four 
 
 1. **Perplexity-direct (P-Direct).** Cheap, reversible, cognitive, or read-heavy actions where connector drift is tolerable. Perplexity invokes the connector directly.
 2. **Perplexity-propose, human-approve (P-Propose).** Perplexity drafts the action or artifact but must not execute it without explicit human confirmation in-thread.
-3. **Agent Control Layer (ACL-Routed).** Anything that needs first-class API semantics, Linear native relations, deterministic dispatch, or a recorded run. Perplexity may trigger, but the action executes through the owned ACL skill/adapter.
+3. **Integration Control Plane (ICP-Routed).** Anything that needs first-class API semantics, Linear native relations, deterministic dispatch, or a recorded run. Perplexity may trigger, but the action executes through the owned ICP skill/adapter.
 4. **Forbidden / stop-and-ask (Stop).** Always halts. Includes high-risk, destructive, security-sensitive, or runaway-cost actions. No autonomy level above L0 touches these without an explicit human instruction.
 
 ### Autonomy levels (pilot)
@@ -89,7 +90,7 @@ Every action an agent (or Perplexity) might take falls into exactly one of four 
 - **L0 — Observe / draft only.** Perplexity reads and drafts. No external writes.
 - **L1 — Reversible workspace/docs draft.** Perplexity may write drafts in its own workspace, propose PR changes, or generate ticket/ADR drafts.
 - **L2 — Bounded Linear/GitHub write-backs.** Perplexity may create/update Linear issues and add comments, and may open PRs that follow the PR ↔ Linear linking convention. Project creation and native-relation writes are NOT in L2.
-- **L3 — Agent dispatch with human approval.** The ACL selects a dispatchable `LAT-*` issue (per ADR-0005) and starts a coding/QA/review agent only after a human says go.
+- **L3 — Agent dispatch with human approval.** The ICP selects a dispatchable `LAT-*` issue (per ADR-0005) and starts a coding/QA/review agent only after a human says go.
 - **L4 — Autonomous implementation with review gates.** An agent may execute a dispatched ticket end-to-end, open the PR, and request review. Merge still requires human approval.
 - **L5 — Autonomous merge/deploy.** **Out of scope for the pilot.** Explicitly not accepted. Will require a separate ADR.
 
