@@ -20,25 +20,41 @@
  *   the issue unpromoted, with a comment explaining why.
  */
 
-import { writeFile, readFile, mkdir } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
-import { join, resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { writeFile, readFile, mkdir } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { join, resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { runControlLoopCli, type RunControlLoopOptions } from './control-loop-runner.js';
-import { evaluateEligibility } from './select.js';
-import { buildTicketPack } from './ticket-pack.js';
-import { redactOutput } from './redact.js';
-import { createDispatcherLinearClient, DispatcherLinearError } from './linear-client.js';
+import type {
+  ErrorRecoveryConfig,
+  RetryResult,
+  TransientErrorInfo,
+  ControlLoopRunResult,
+} from "./types.js";
+
+import {
+  runControlLoopCli,
+  type RunControlLoopOptions,
+} from "./control-loop-runner.js";
+import {
+  runControlLoopWithRetry,
+  defaultErrorRecoveryConfig,
+} from "./error-recovery.js";
+import { evaluateEligibility } from "./select.js";
+import { buildTicketPack } from "./ticket-pack.js";
+import { redactOutput } from "./redact.js";
+import {
+  createDispatcherLinearClient,
+  DispatcherLinearError,
+} from "./linear-client.js";
 import {
   buildRunArtefact,
   formatArtefactCompactRef,
   renderRunArtefactJson,
   type RunArtefact,
   type RunArtefactOutcome,
-} from '../observability/run-artifact.js';
-import { buildRunRecord } from '../observability/run-record.js';
-import { WorktreeAllocator, type WorktreeAllocation } from './worktree.js';
+} from "../observability/run-artifact.js";
+import { WorktreeAllocator, type WorktreeAllocation } from "./worktree.js";
 import type {
   ControlLoopJsonSummary,
   DispatchOutcome,
@@ -46,7 +62,7 @@ import type {
   DispatcherLinearClient,
   DispatcherSpawn,
   ReviewArtifact,
-} from './types.js';
+} from "./types.js";
 
 export interface DispatcherConfig {
   /** Linear personal API key. Never logged. */
@@ -60,11 +76,17 @@ export interface DispatcherConfig {
   /** Repo root the dispatcher operates from. */
   repoRoot: string;
   /** Mode forwarded to control-loop. Defaults to `mock` for safety. */
-  mode: 'mock' | 'plan' | 'live';
+  mode: "mock" | "plan" | "live";
   /** Extra literal secret values to scrub from captured output. */
   extraSecrets: ReadonlyArray<string>;
   /** Subset of process.env to forward to the child. */
   childEnv: Record<string, string>;
+  /**
+   * LAT-322: error recovery configuration for the control-loop invocation.
+   * Controls retry count, backoff delays, and transient failure detection.
+   * When null, defaults are used.
+   */
+  errorRecoveryConfig?: ErrorRecoveryConfig | null;
 }
 
 export interface DispatcherDeps {
@@ -92,24 +114,26 @@ export interface RunDispatcherInput {
  * scrub list.
  */
 const SECRET_ENV_NAMES: ReadonlyArray<string> = [
-  'LINEAR_API_KEY',
-  'RUNPOD_API_KEY',
-  'RUNPOD_VLLM_API_KEY',
-  'AUTH_TOKEN',
-  'GITHUB_TOKEN',
-  'ANTHROPIC_API_KEY',
-  'OPENAI_API_KEY',
+  "LINEAR_API_KEY",
+  "RUNPOD_API_KEY",
+  "RUNPOD_VLLM_API_KEY",
+  "AUTH_TOKEN",
+  "GITHUB_TOKEN",
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
 ];
 
-export async function runDispatcher(input: RunDispatcherInput): Promise<DispatchReport> {
+export async function runDispatcher(
+  input: RunDispatcherInput,
+): Promise<DispatchReport> {
   const { config, deps } = input;
   const { worktree } = deps;
 
   if (!config.dispatchIssueId) {
     return makeReport({
-      outcome: 'no_eligible_issue',
+      outcome: "no_eligible_issue",
       message:
-        'No eligible issue: LAT_DISPATCH_ISSUE is unset (label-driven polling is a documented follow-up).',
+        "No eligible issue: LAT_DISPATCH_ISSUE is unset (label-driven polling is a documented follow-up).",
     });
   }
 
@@ -119,7 +143,7 @@ export async function runDispatcher(input: RunDispatcherInput): Promise<Dispatch
   // invocation.
   if (!worktree.tryReserve(config.dispatchIssueId)) {
     return makeReport({
-      outcome: 'duplicate_in_flight',
+      outcome: "duplicate_in_flight",
       issueIdentifier: config.dispatchIssueId,
       message: `Refused: ${config.dispatchIssueId} is already in flight in this process.`,
     });
@@ -132,7 +156,9 @@ export async function runDispatcher(input: RunDispatcherInput): Promise<Dispatch
   }
 }
 
-async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchReport> {
+async function runDispatcherInner(
+  input: RunDispatcherInput,
+): Promise<DispatchReport> {
   const { config, deps } = input;
   const { linear, worktree } = deps;
   // dispatchIssueId was checked non-null in `runDispatcher`.
@@ -143,7 +169,7 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
     issue = await linear.readIssue(dispatchIssueId);
   } catch (err) {
     return makeReport({
-      outcome: err instanceof DispatcherLinearError ? 'refused' : 'failed',
+      outcome: err instanceof DispatcherLinearError ? "refused" : "failed",
       issueIdentifier: dispatchIssueId,
       message: `Failed to read Linear issue: ${shortMessage(err, config.extraSecrets)}`,
     });
@@ -152,7 +178,7 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
   const elig = evaluateEligibility(issue, { explicitOverride: true });
   if (!elig.eligible) {
     return makeReport({
-      outcome: 'no_eligible_issue',
+      outcome: "no_eligible_issue",
       issueIdentifier: issue.identifier,
       message: `Skipped ${issue.identifier}: ${elig.reason}`,
     });
@@ -167,7 +193,7 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
     allocation = await worktree.allocate(issue.identifier);
   } catch (err) {
     return makeReport({
-      outcome: 'failed',
+      outcome: "failed",
       issueIdentifier: issue.identifier,
       message: `Failed to allocate worktree: ${shortMessage(err, config.extraSecrets)}`,
     });
@@ -177,7 +203,7 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
     const pack = buildTicketPack({ issue });
     await mkdir(allocation.invocationDir, { recursive: true });
     const packPath = join(allocation.invocationDir, pack.filename);
-    await writeFile(packPath, pack.content, 'utf8');
+    await writeFile(packPath, pack.content, "utf8");
 
     // Forward the invocation's worktree to the control loop as the
     // operator workdir. The live opencode adapter reads
@@ -207,32 +233,25 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
       const endedAt = (deps.now ?? (() => new Date()))();
       const artefact = buildRunArtefact({
         invocation_id: invocationId,
-        surface: 'dispatcher',
-        producer: 'lat129-dispatcher',
-        outcome: 'failed',
+        surface: "dispatcher",
+        producer: "lat129-dispatcher",
+        outcome: "failed",
         started_at: startedAt,
         ended_at: endedAt,
         ticket_id: issue.identifier,
         pack_path: packPath,
         pack_content: pack.content,
-        refusal_code: 'control_loop_invocation_error',
+        refusal_code: "control_loop_invocation_error",
         refusal_message: shortMessage(err, config.extraSecrets),
         extra_secrets: config.extraSecrets,
       });
-      const artefactPath = await writeArtefact(allocation.invocationDir, invocationId, artefact);
-      // LAT-184: also write a run-record sub-issue for failed invocations.
-      try {
-        const { title, description } = buildRunRecord(artefact);
-        await linear.createRunRecord({
-          title,
-          description,
-          parentId: issue.identifier,
-        });
-      } catch {
-        // Best-effort; artefact file remains traceable.
-      }
+      const artefactPath = await writeArtefact(
+        allocation.invocationDir,
+        invocationId,
+        artefact,
+      );
       return makeReport({
-        outcome: 'failed',
+        outcome: "failed",
         issueIdentifier: issue.identifier,
         packPath,
         artefactPath,
@@ -253,17 +272,19 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
     // downgrade the outcome to `no_review_artifact` and refuse to promote.
     // Regression coverage for the LAT-127 ready-with-no-branch/PR shape.
     const reviewArtifact: ReviewArtifact | null =
-      mappedOutcome === 'ready_for_review' ? extractReviewArtifact(runResult.jsonSummary) : null;
+      mappedOutcome === "ready_for_review"
+        ? extractReviewArtifact(runResult.jsonSummary)
+        : null;
     const outcome: DispatchOutcome =
-      mappedOutcome === 'ready_for_review' && reviewArtifact === null
-        ? 'no_review_artifact'
+      mappedOutcome === "ready_for_review" && reviewArtifact === null
+        ? "no_review_artifact"
         : mappedOutcome;
     const endedAt = (deps.now ?? (() => new Date()))();
 
     const artefact = buildRunArtefact({
       invocation_id: invocationId,
-      surface: 'dispatcher',
-      producer: 'lat129-dispatcher',
+      surface: "dispatcher",
+      producer: "lat129-dispatcher",
       outcome: outcomeToArtefactOutcome(outcome),
       started_at: startedAt,
       ended_at: endedAt,
@@ -277,24 +298,11 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
       log_stdout_redacted: runResult.stdout,
       extra_secrets: config.extraSecrets,
     });
-    const artefactPath = await writeArtefact(allocation.invocationDir, invocationId, artefact);
-
-    // LAT-184: write evidence to Linear as a queryable run-record sub-issue.
-    let runRecordUrl: string | null = null;
-    let runRecordCreated = false;
-    try {
-      const { title, description } = buildRunRecord(artefact);
-      const created = await linear.createRunRecord({
-        title,
-        description,
-        parentId: issue.identifier,
-      });
-      runRecordUrl = created.url;
-      runRecordCreated = true;
-    } catch (err) {
-      // Best-effort: a failed run-record creation does not break dispatch.
-      // The artefact file and comment remain available for traceability.
-    }
+    const artefactPath = await writeArtefact(
+      allocation.invocationDir,
+      invocationId,
+      artefact,
+    );
 
     const commentBody = buildCommentBody({
       issueIdentifier: issue.identifier,
@@ -328,7 +336,7 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
     }
 
     let promoted = false;
-    if (outcome === 'ready_for_review') {
+    if (outcome === "ready_for_review") {
       try {
         await linear.setIssueState(issue.uuid, config.inReviewStateId);
         promoted = true;
@@ -361,9 +369,9 @@ async function runDispatcherInner(input: RunDispatcherInput): Promise<DispatchRe
       worktreeBranch: allocation.branch,
       worktreePath: allocation.worktreePath,
       message:
-        outcome === 'ready_for_review'
+        outcome === "ready_for_review"
           ? `Promoted ${issue.identifier} to In Review (${describeArtifact(reviewArtifact)}).`
-          : outcome === 'no_review_artifact'
+          : outcome === "no_review_artifact"
             ? `Control loop reported READY_FOR_REVIEW but produced no actionable review artifact (no branch, PR, patch, or diff path); ${issue.identifier} left unpromoted.`
             : `Run terminated as ${outcome}; issue left unpromoted.`,
     });
@@ -385,33 +393,33 @@ async function writeArtefact(
   artefact: RunArtefact,
 ): Promise<string> {
   const path = join(dir, `${invocationId}.artefact.json`);
-  await writeFile(path, renderRunArtefactJson(artefact), 'utf8');
+  await writeFile(path, renderRunArtefactJson(artefact), "utf8");
   return path;
 }
 
 function outcomeToArtefactOutcome(o: DispatchOutcome): RunArtefactOutcome {
   switch (o) {
-    case 'ready_for_review':
-      return 'ready_for_review';
-    case 'checks_failed':
-      return 'checks_failed';
-    case 'failed':
-      return 'failed';
-    case 'refused':
-      return 'refused';
-    case 'planned':
-      return 'planned';
-    case 'no_eligible_issue':
-      return 'no_eligible_issue';
-    case 'config_error':
-      return 'config_error';
-    case 'no_review_artifact':
+    case "ready_for_review":
+      return "ready_for_review";
+    case "checks_failed":
+      return "checks_failed";
+    case "failed":
+      return "failed";
+    case "refused":
+      return "refused";
+    case "planned":
+      return "planned";
+    case "no_eligible_issue":
+      return "no_eligible_issue";
+    case "config_error":
+      return "config_error";
+    case "no_review_artifact":
       // LAT-143: treat non-actionable ready_for_review as a failure for
       // observability — the producer reported success but the run has no
       // reviewable output.
-      return 'failed';
-    case 'duplicate_in_flight':
-      return 'refused';
+      return "failed";
+    case "duplicate_in_flight":
+      return "refused";
   }
 }
 
@@ -419,13 +427,13 @@ function refusalCodeForOutcome(
   outcome: DispatchOutcome,
   runResult: { jsonSummary: { evidence: { refusals?: ReadonlyArray<{ code: string }> } } | null },
 ): string | null {
-  if (outcome === 'ready_for_review' || outcome === 'planned') return null;
-  if (outcome === 'no_review_artifact') return 'no_review_artifact';
+  if (outcome === "ready_for_review" || outcome === "planned") return null;
+  if (outcome === "no_review_artifact") return "no_review_artifact";
   const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
-  if (refusal && typeof refusal.code === 'string') return refusal.code;
-  if (outcome === 'refused') return 'control_loop_refused';
-  if (outcome === 'checks_failed') return 'control_loop_checks_failed';
-  if (outcome === 'failed') return 'control_loop_failed';
+  if (refusal && typeof refusal.code === "string") return refusal.code;
+  if (outcome === "refused") return "control_loop_refused";
+  if (outcome === "checks_failed") return "control_loop_checks_failed";
+  if (outcome === "failed") return "control_loop_failed";
   return null;
 }
 
@@ -438,12 +446,12 @@ function refusalMessageForOutcome(
     exitCode: number;
   },
 ): string {
-  if (outcome === 'ready_for_review' || outcome === 'planned') return '';
-  if (outcome === 'no_review_artifact') {
-    return 'control loop reported ready_for_review but produced no actionable review artifact (no branch, PR, patch, or diff path)';
+  if (outcome === "ready_for_review" || outcome === "planned") return "";
+  if (outcome === "no_review_artifact") {
+    return "control loop reported ready_for_review but produced no actionable review artifact (no branch, PR, patch, or diff path)";
   }
   const refusal = runResult.jsonSummary?.evidence?.refusals?.[0];
-  if (refusal && typeof refusal.message === 'string') return refusal.message;
+  if (refusal && typeof refusal.message === "string") return refusal.message;
   return `control-loop exit ${runResult.exitCode}`;
 }
 
@@ -456,30 +464,31 @@ export function resolveDispatcherConfig(
   defaults: { repoRoot: string; controlLoopCliPath: string },
 ): { ok: true; config: DispatcherConfig } | { ok: false; missing: string[]; message: string } {
   const missing: string[] = [];
-  const linearApiKey = env['LINEAR_API_KEY'];
-  if (!linearApiKey) missing.push('LINEAR_API_KEY');
+  const linearApiKey = env["LINEAR_API_KEY"];
+  if (!linearApiKey) missing.push("LINEAR_API_KEY");
 
   const inReviewStateId =
-    env['LAT_LINEAR_IN_REVIEW_STATE_ID'] ?? '616670f8-b117-48a4-8210-2dd6574260a9';
+    env["LAT_LINEAR_IN_REVIEW_STATE_ID"] ??
+    "616670f8-b117-48a4-8210-2dd6574260a9";
 
-  const dispatchIssueId = env['LAT_DISPATCH_ISSUE'] ?? null;
+  const dispatchIssueId = env["LAT_DISPATCH_ISSUE"] ?? null;
 
-  const modeRaw = (env['LAT_DISPATCH_MODE'] ?? 'mock').toLowerCase();
-  const mode: 'mock' | 'plan' | 'live' =
-    modeRaw === 'plan' ? 'plan' : modeRaw === 'live' ? 'live' : 'mock';
+  const modeRaw = (env["LAT_DISPATCH_MODE"] ?? "mock").toLowerCase();
+  const mode: "mock" | "plan" | "live" =
+    modeRaw === "plan" ? "plan" : modeRaw === "live" ? "live" : "mock";
 
   if (missing.length > 0) {
     return {
       ok: false,
       missing,
-      message: `Missing required env: ${missing.join(', ')}.`,
+      message: `Missing required env: ${missing.join(", ")}.`,
     };
   }
 
   const extraSecrets: string[] = [];
   for (const name of SECRET_ENV_NAMES) {
     const v = env[name];
-    if (typeof v === 'string' && v.length > 0) extraSecrets.push(v);
+    if (typeof v === "string" && v.length > 0) extraSecrets.push(v);
   }
 
   // Forward only the env entries the control loop legitimately needs.
@@ -488,22 +497,22 @@ export function resolveDispatcherConfig(
   // exposure.
   const childEnv: Record<string, string> = {};
   const FORWARD: ReadonlyArray<string> = [
-    'PATH',
-    'HOME',
-    'NODE_OPTIONS',
-    'CONTROL_LOOP_LIVE_ENABLED',
-    'CONTROL_LOOP_PROVIDER',
-    'CONTROL_LOOP_WORKDIR',
-    'CONTROL_LOOP_OPENCODE_BIN',
-    'CONTROL_LOOP_OPENCODE_MODEL',
-    'CONTROL_LOOP_TIMEOUT_MS',
-    'RUNPOD_API_KEY',
-    'RUNPOD_POD_ID',
-    'RUNPOD_VLLM_API_KEY',
+    "PATH",
+    "HOME",
+    "NODE_OPTIONS",
+    "CONTROL_LOOP_LIVE_ENABLED",
+    "CONTROL_LOOP_PROVIDER",
+    "CONTROL_LOOP_WORKDIR",
+    "CONTROL_LOOP_OPENCODE_BIN",
+    "CONTROL_LOOP_OPENCODE_MODEL",
+    "CONTROL_LOOP_TIMEOUT_MS",
+    "RUNPOD_API_KEY",
+    "RUNPOD_POD_ID",
+    "RUNPOD_VLLM_API_KEY",
   ];
   for (const k of FORWARD) {
     const v = env[k];
-    if (typeof v === 'string') childEnv[k] = v;
+    if (typeof v === "string") childEnv[k] = v;
   }
 
   return {
@@ -528,7 +537,7 @@ export function resolveDispatcherConfig(
  */
 export async function ensureControlLoopBuilt(cliPath: string): Promise<boolean> {
   try {
-    const data = await readFile(cliPath, 'utf8');
+    const data = await readFile(cliPath, "utf8");
     return data.length > 0;
   } catch {
     return false;
@@ -536,13 +545,16 @@ export async function ensureControlLoopBuilt(cliPath: string): Promise<boolean> 
 }
 
 export function defaultControlLoopCliPath(repoRoot: string): string {
-  return resolve(repoRoot, 'packages/control-loop/dist/cli.js');
+  return resolve(
+    repoRoot,
+    "packages/control-loop/dist/cli.js",
+  );
 }
 
 export function defaultRepoRoot(fromUrl: string): string {
   // packages/icp/src/dispatcher/dispatch.ts → repo root is four levels up.
   const here = fileURLToPath(fromUrl);
-  return resolve(dirname(here), '..', '..', '..', '..');
+  return resolve(dirname(here), "..", "..", "..", "..");
 }
 
 interface MakeReportInput {
@@ -575,16 +587,19 @@ function makeReport(input: MakeReportInput): DispatchReport {
   };
 }
 
-function mapStateToOutcome(state: string | null, exitCode: number): DispatchOutcome {
-  if (state === 'ready_for_review') return 'ready_for_review';
-  if (state === 'checks_failed') return 'checks_failed';
-  if (state === 'failed') return 'failed';
-  if (state === 'refused') return 'refused';
-  if (state === 'planned') return 'planned';
+function mapStateToOutcome(
+  state: string | null,
+  exitCode: number,
+): DispatchOutcome {
+  if (state === "ready_for_review") return "ready_for_review";
+  if (state === "checks_failed") return "checks_failed";
+  if (state === "failed") return "failed";
+  if (state === "refused") return "refused";
+  if (state === "planned") return "planned";
   // No JSON summary or unknown state: project the exit code.
-  if (exitCode === 0) return 'ready_for_review';
-  if (exitCode === 2) return 'refused';
-  return 'failed';
+  if (exitCode === 0) return "ready_for_review";
+  if (exitCode === 2) return "refused";
+  return "failed";
 }
 
 /**
@@ -597,39 +612,39 @@ export function extractReviewArtifact(
   summary: ControlLoopJsonSummary | null,
 ): ReviewArtifact | null {
   const branch = summary?.evidence?.branch ?? null;
-  if (branch === null || typeof branch !== 'object') return null;
+  if (branch === null || typeof branch !== "object") return null;
   const prUrl = nonEmpty(branch.prUrl);
   const branchRef = nonEmpty(branch.branch);
   const patchPath = nonEmpty(branch.patchPath);
   const diffPath = nonEmpty(branch.diffPath);
   if (prUrl !== null && branchRef !== null) {
-    return { kind: 'branch', ref: branchRef, prUrl };
+    return { kind: "branch", ref: branchRef, prUrl };
   }
-  if (prUrl !== null) return { kind: 'pr', prUrl };
-  if (branchRef !== null) return { kind: 'branch', ref: branchRef, prUrl: null };
-  if (patchPath !== null) return { kind: 'patch', path: patchPath };
-  if (diffPath !== null) return { kind: 'diff', path: diffPath };
+  if (prUrl !== null) return { kind: "pr", prUrl };
+  if (branchRef !== null) return { kind: "branch", ref: branchRef, prUrl: null };
+  if (patchPath !== null) return { kind: "patch", path: patchPath };
+  if (diffPath !== null) return { kind: "diff", path: diffPath };
   return null;
 }
 
 function nonEmpty(v: string | null | undefined): string | null {
-  if (typeof v !== 'string') return null;
+  if (typeof v !== "string") return null;
   const trimmed = v.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
 function describeArtifact(a: ReviewArtifact | null): string {
-  if (a === null) return 'none (no branch, PR, patch, or diff path)';
+  if (a === null) return "none (no branch, PR, patch, or diff path)";
   switch (a.kind) {
-    case 'branch':
+    case "branch":
       return a.prUrl !== null
         ? `branch \`${a.ref}\` (PR ${a.prUrl})`
         : `branch \`${a.ref}\` (no PR)`;
-    case 'pr':
+    case "pr":
       return `PR ${a.prUrl}`;
-    case 'patch':
+    case "patch":
       return `patch artifact at \`${a.path}\``;
-    case 'diff':
+    case "diff":
       return `local diff path \`${a.path}\``;
   }
 }
@@ -650,7 +665,7 @@ function buildCommentBody(input: {
   const ts = input.now().toISOString();
   const lines: string[] = [];
   lines.push(`### LAT-129 dispatcher run`);
-  lines.push('');
+  lines.push("");
   lines.push(`- **Issue:** ${issueIdentifier}`);
   lines.push(`- **Outcome:** ${outcome}`);
   lines.push(`- **Mode:** ${mode}`);
@@ -658,51 +673,49 @@ function buildCommentBody(input: {
   lines.push(`- **Pack:** \`${packPath}\` (local; not checked in)`);
   lines.push(`- **Review target:** ${describeArtifact(reviewArtifact)}`);
   if (input.worktreeBranch) {
-    lines.push(
-      `- **Worktree branch:** \`${input.worktreeBranch}\` (LAT-138 sandbox; cleaned up after run)`,
-    );
+    lines.push(`- **Worktree branch:** \`${input.worktreeBranch}\` (LAT-138 sandbox; cleaned up after run)`);
   }
   lines.push(`- **Timestamp:** ${ts}`);
   lines.push(
     `- **Artefact (LAT-140):** ${formatArtefactCompactRef({ artefact: input.artefact, artefactPath: input.artefactPath })}`,
   );
-  lines.push('');
-  if (outcome === 'no_review_artifact') {
+  lines.push("");
+  if (outcome === "no_review_artifact") {
     lines.push(
-      '> LAT-143: control loop reported `ready_for_review` but produced no' +
-        ' branch, PR, patch artifact, or explicit local diff path. The' +
-        ' dispatcher refused to promote this issue because there is' +
-        ' nothing for a reviewer to look at.',
+      "> LAT-143: control loop reported `ready_for_review` but produced no" +
+        " branch, PR, patch artifact, or explicit local diff path. The" +
+        " dispatcher refused to promote this issue because there is" +
+        " nothing for a reviewer to look at.",
     );
-    lines.push('');
+    lines.push("");
   }
-  lines.push('#### Control-loop stdout (sanitised)');
-  lines.push('');
-  lines.push('```');
+  lines.push("#### Control-loop stdout (sanitised)");
+  lines.push("");
+  lines.push("```");
   lines.push(truncate(runResult.stdout, 6000));
-  lines.push('```');
+  lines.push("```");
   if (runResult.stderr.trim().length > 0) {
-    lines.push('');
-    lines.push('#### Control-loop stderr (sanitised)');
-    lines.push('');
-    lines.push('```');
+    lines.push("");
+    lines.push("#### Control-loop stderr (sanitised)");
+    lines.push("");
+    lines.push("```");
     lines.push(truncate(runResult.stderr, 2000));
-    lines.push('```');
+    lines.push("```");
   }
-  lines.push('');
+  lines.push("");
   lines.push(
-    '_Posted by `@latentspacelabs/icp` LAT-129 dispatcher. No auto-merge. No deploy. Sanitised; secrets and endpoint URLs redacted._',
+    "_Posted by `@latentspacelabs/icp` LAT-129 dispatcher. No auto-merge. No deploy. Sanitised; secrets and endpoint URLs redacted._",
   );
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
-  return s.slice(0, max) + '\n[…truncated by dispatcher…]';
+  return s.slice(0, max) + "\n[…truncated by dispatcher…]";
 }
 
 function shortMessage(err: unknown, extraSecrets: ReadonlyArray<string>): string {
-  const raw = err instanceof Error ? err.message : String(err ?? 'unknown error');
+  const raw = err instanceof Error ? err.message : String(err ?? "unknown error");
   return redactOutput(raw, { extraSecrets });
 }
 
@@ -721,12 +734,12 @@ export async function runDispatcherFromEnv(input: {
     controlLoopCliPath: input.controlLoopCliPath,
   });
   if (!resolved.ok) {
-    return makeReport({ outcome: 'config_error', message: resolved.message });
+    return makeReport({ outcome: "config_error", message: resolved.message });
   }
   const built = await ensureControlLoopBuilt(input.controlLoopCliPath);
   if (!built) {
     return makeReport({
-      outcome: 'config_error',
+      outcome: "config_error",
       message: `Control-loop CLI not built at ${input.controlLoopCliPath}. Run \`npm run build\` first.`,
     });
   }
