@@ -1,5 +1,5 @@
 /**
- * LAT-131 dispatch eligibility classifier.
+ * LAT-131 / LAT-134 dispatch eligibility classifier.
  *
  * Distinguishes *risky scope* (the issue is asking the agent to do
  * something dangerous) from *risk context* (the issue mentions risky
@@ -19,9 +19,22 @@
  * Hard safety gates are unchanged: anything that names actually-risky
  * scope (rotate/revoke creds, deploy/release, auto-merge, primary-work
  * ADR, vague spike) still blocks dispatch.
+ *
+ * LAT-134 adds:
+ * - `complexity_tag` and `reasoning_tag` parsed from Linear labels.
+ * - `local_agent_eligible` — whether a local/RunPod implementation agent
+ *   may handle this ticket without escalation.
+ * - Tag-driven routing: `reasoning: synthesis|architecture` tickets are
+ *   routed to frontier/human review even if no hard blocker fires.
+ * - Missing-tag default: when tags are unknown, the ticket requires human
+ *   approval and is NOT silently dispatched to local agents.
  */
 
-import type { DispatchIssue } from "./types.js";
+import type {
+  DispatchIssue,
+  ComplexityTag,
+  ReasoningTag,
+} from "./types.js";
 
 /** Coarse risk class assigned by the classifier. */
 export type RiskClass = "low" | "medium" | "high";
@@ -78,6 +91,26 @@ export interface ClassifierOutput {
   required_human_approval: boolean;
   /** Ordered list of hard blockers; empty when dispatchable. */
   hard_blockers: ReadonlyArray<HardBlocker>;
+  /**
+   * LAT-134: whether a local/RunPod implementation agent may handle this
+   * ticket. Factors in complexity + reasoning tags and hard blockers:
+   *  - `complexity: small|medium` + `reasoning: implementation` → true
+   *  - `complexity: large` → false (escapes to reasoning/human)
+   *  - `reasoning: synthesis|architecture` → false (escapes to reasoning/human)
+   *  - tags absent (unknown) → false (requires human approval gate)
+   *  - hard blockers present → false
+   */
+  local_agent_eligible: boolean;
+  /**
+   * LAT-134: the complexity tag parsed from this issue's labels.
+   * `unknown` when no `complexity/*` label is present.
+   */
+  complexity_tag: ComplexityTag;
+  /**
+   * LAT-134: the reasoning tag parsed from this issue's labels.
+   * `unknown` when no `reasoning/*` label is present.
+   */
+  reasoning_tag: ReasoningTag;
   /**
    * Optional pack-builder overrides the classifier wants to suggest.
    * The dispatcher MAY honour these; today it just records them.
@@ -244,6 +277,41 @@ function inferWorkType(title: string, description: string): WorkType {
 }
 
 /**
+ * Determine whether a local/RunPod implementation agent may handle this
+ * ticket based on complexity + reasoning tags and hard blockers.
+ *
+ * LAT-134 routing policy:
+ * - `complexity: large` → escape to reasoning/human (local agent not eligible)
+ * - `reasoning: synthesis|architecture` → escape to reasoning/human
+ * - `reasoning: implementation` + `complexity: small|medium` → local eligible
+ * - Tags unknown → not local eligible (requires human approval gate)
+ */
+function determineLocalAgentEligibility(
+  complexity: ComplexityTag,
+  reasoning: ReasoningTag,
+  hasHardBlockers: boolean,
+): boolean {
+  if (hasHardBlockers) return false;
+
+  // Complexity: large always escapes to reasoning/human.
+  if (complexity === "large") return false;
+
+  // Reasoning: synthesis or architecture always escape to reasoning/human.
+  if (reasoning === "synthesis" || reasoning === "architecture") return false;
+
+  // Reasoning: implementation with bounded complexity → local eligible.
+  if (reasoning === "implementation" && (complexity === "small" || complexity === "medium")) {
+    return true;
+  }
+
+  // Tags unknown (no classification present) → not silently dispatched.
+  if (complexity === "unknown" || reasoning === "unknown") return false;
+
+  // Default fallback: if we somehow got here, refuse.
+  return false;
+}
+
+/**
  * Classify a Linear issue for dispatch eligibility.
  *
  * Pure function. Deterministic. No I/O.
@@ -260,7 +328,7 @@ export function classifyIssue(
       message:
         "no explicit dispatch target. Set LAT_DISPATCH_ISSUE=LAT-NN to opt in (label-driven polling is a documented follow-up).",
     });
-    return refused(blockers, "unknown", "low");
+    return refused(blockers, "unknown", "low", issue.complexityTag, issue.reasoningTag);
   }
 
   if (typeof issue.identifier !== "string" || issue.identifier.length === 0) {
@@ -331,11 +399,28 @@ export function classifyIssue(
   }
 
   const workType = inferWorkType(title, description);
+  const complexity = issue.complexityTag;
+  const reasoning = issue.reasoningTag;
 
   if (blockers.length > 0) {
     const risk: RiskClass = riskFromBlockers(blockers);
-    return refused(blockers, workType, risk);
+    const localEligible = determineLocalAgentEligibility(
+      complexity,
+      reasoning,
+      true,
+    );
+    return refused(blockers, workType, risk, complexity, reasoning, localEligible);
   }
+
+  // No hard blockers — dispatchable regardless of tag status.
+  // local_agent_eligible captures whether a local agent may handle it.
+  // required_human_approval is false when no hard blockers fire; the
+  // dispatcher checks local_agent_eligible separately.
+  const localEligible = determineLocalAgentEligibility(
+    complexity,
+    reasoning,
+    false,
+  );
 
   return {
     dispatchable: true,
@@ -344,6 +429,9 @@ export function classifyIssue(
     reason: `explicit override accepted for ${issue.identifier}`,
     required_human_approval: false,
     hard_blockers: [],
+    local_agent_eligible: localEligible,
+    complexity_tag: complexity,
+    reasoning_tag: reasoning,
   };
 }
 
@@ -358,6 +446,9 @@ function refused(
   blockers: ReadonlyArray<HardBlocker>,
   workType: WorkType,
   risk: RiskClass,
+  complexity: ComplexityTag,
+  reasoning: ReasoningTag,
+  localEligible: boolean = false,
 ): ClassifierOutput {
   const reason =
     blockers.length === 0
@@ -370,6 +461,9 @@ function refused(
     reason,
     required_human_approval: true,
     hard_blockers: blockers,
+    local_agent_eligible: localEligible,
+    complexity_tag: complexity,
+    reasoning_tag: reasoning,
   };
 }
 
@@ -414,6 +508,17 @@ export function validateClassifierOutput(
     });
   }
 
+  // LAT-134: new required fields
+  if (typeof o["local_agent_eligible"] !== "boolean") {
+    errors.push("local_agent_eligible: not a boolean");
+  }
+  if (!isComplexityTag(o["complexity_tag"])) {
+    errors.push("complexity_tag: not a valid ComplexityTag");
+  }
+  if (!isReasoningTag(o["reasoning_tag"])) {
+    errors.push("reasoning_tag: not a valid ReasoningTag");
+  }
+
   // Cross-field invariant: dispatchable=true must have no hard blockers.
   if (o["dispatchable"] === true && Array.isArray(blockersRaw) && blockersRaw.length > 0) {
     errors.push("dispatchable=true but hard_blockers is non-empty");
@@ -439,6 +544,24 @@ function isWorkType(v: unknown): v is WorkType {
     v === "research_spike" ||
     v === "decision" ||
     v === "ops" ||
+    v === "unknown"
+  );
+}
+
+function isComplexityTag(v: unknown): v is ComplexityTag {
+  return (
+    v === "small" ||
+    v === "medium" ||
+    v === "large" ||
+    v === "unknown"
+  );
+}
+
+function isReasoningTag(v: unknown): v is ReasoningTag {
+  return (
+    v === "implementation" ||
+    v === "synthesis" ||
+    v === "architecture" ||
     v === "unknown"
   );
 }

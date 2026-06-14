@@ -13,6 +13,8 @@ function makeIssue(overrides: Partial<DispatchIssue> = {}): DispatchIssue {
     stateName: "Backlog",
     stateId: "state-backlog",
     labels: [],
+    complexityTag: "unknown",
+    reasoningTag: "unknown",
     ...overrides,
   };
 }
@@ -25,6 +27,28 @@ test("buildTicketPack: includes header, identifier, branch, prefix", () => {
   assert.equal(r.prTitlePrefix, "LAT-200:");
   assert.match(r.branch, /^lat-200-/);
   assert.equal(r.filename, "lat-200.pack.md");
+});
+
+test("buildTicketPack: includes complexity and reasoning tags in header", () => {
+  const r = buildTicketPack({
+    issue: makeIssue({
+      complexityTag: "small",
+      reasoningTag: "implementation",
+    }),
+  });
+  assert.match(r.content, /- \*\*Complexity:\*\* complexity:small/);
+  assert.match(r.content, /- \*\*Reasoning:\*\* reasoning:implementation/);
+});
+
+test("buildTicketPack: shows TBD when tags are unknown", () => {
+  const r = buildTicketPack({
+    issue: makeIssue({
+      complexityTag: "unknown",
+      reasoningTag: "unknown",
+    }),
+  });
+  assert.match(r.content, /- \*\*Complexity:\*\* TBD/);
+  assert.match(r.content, /- \*\*Reasoning:\*\* TBD/);
 });
 
 test("buildTicketPack: truncates oversized descriptions", () => {

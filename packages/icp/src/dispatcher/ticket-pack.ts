@@ -6,6 +6,9 @@
  * minimal: just enough header / goal / acceptance / branch metadata for
  * the control loop's pre-flight harness to judge readiness.
  *
+ * LAT-134: the pack now includes the issue's complexity and reasoning
+ * tags in its header so the implementer knows which lane it belongs to.
+ *
  * The generator is pure — it does not write files. The caller (the
  * dispatcher orchestration) writes the result to a temp directory that
  * is git-ignored, never to the repo tree.
@@ -51,6 +54,16 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
       ? description.slice(0, maxChars) + "\n\n_[truncated by dispatcher]_"
       : description;
 
+  // LAT-134: complexity and reasoning tags for the pack header.
+  const complexityLabel =
+    issue.complexityTag === "unknown"
+      ? "TBD"
+      : `complexity:${issue.complexityTag}`;
+  const reasoningLabel =
+    issue.reasoningTag === "unknown"
+      ? "TBD"
+      : `reasoning:${issue.reasoningTag}`;
+
   const lines: string[] = [];
   lines.push(`# opencode Ticket Pack: ${issue.title}`);
   lines.push("");
@@ -59,6 +72,8 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
   lines.push(`- **Linear ID:** ${identifier}`);
   lines.push(`- **Pack version:** 1`);
   lines.push(`- **Source:** LAT-129 polling dispatcher (auto-generated)`);
+  lines.push(`- **Complexity:** ${complexityLabel}`);
+  lines.push(`- **Reasoning:** ${reasoningLabel}`);
   lines.push(`- **Cost band:** low`);
   lines.push(`- **Risk level:** low`);
   lines.push(`- **Readiness status:** ready`);
@@ -112,8 +127,8 @@ export function buildTicketPack(input: BuildPackInput): BuildPackResult {
   lines.push("");
   lines.push("## Branch / PR rules");
   lines.push("");
-  lines.push(`- **Branch:** \`${branch}\``);
-  lines.push(`- **PR title prefix:** \`${prTitlePrefix}\``);
+  lines.push(`- **Branch:** \\`${branch}\\``);
+  lines.push(`- **PR title prefix:** \\`${prTitlePrefix}\\``);
   lines.push("- **PR base:** `main`");
   lines.push("- One PR. No batching. No auto-merge.");
   lines.push("");
