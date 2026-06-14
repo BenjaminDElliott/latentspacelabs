@@ -182,4 +182,3 @@ export interface MapArgs {
 /* ------------------------------------------------------------------ */
 
 export { mapProviderOutput } from "./mapper.js";
-export type { MapArgs, MapResult, MappedRunArtefact, FailedMap, PartialEvidence, ValidationWarning, ProviderOutput } from "./contract.js";
