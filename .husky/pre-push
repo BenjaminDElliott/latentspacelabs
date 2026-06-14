@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # LAT-122: Pre-push hook — heavier checks on the branch.
 # Runs typecheck (TS), identifies changed packages, runs tests on affected
 # packages.  CI-compatible and deterministic.

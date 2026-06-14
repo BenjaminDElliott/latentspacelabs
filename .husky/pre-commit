@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # LAT-122: Pre-commit hook — fast checks on staged files only.
 # Runs Prettier formatting, ESLint on staged files, and secret-guard.
 # Bypass with: git commit --no-verify or git commit -nm
