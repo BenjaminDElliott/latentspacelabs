@@ -79,6 +79,10 @@ export interface ProviderOutput {
   raw_stderr?: string;
   /** Extra secret values the caller wants redacted. */
   extra_secrets?: ReadonlyArray<string>;
+  /** Prompt template version used by the provider (may be absent). */
+  prompt_version?: string;
+  /** Skill version used by the provider (may be absent). */
+  skill_version?: string;
   /** Arbitrary provider metadata the mapper forwards verbatim. */
   [key: string]: unknown;
 }

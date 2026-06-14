@@ -298,22 +298,22 @@ export function mapProviderOutput(args: MapArgs): MapResult {
     classifier: null, // Not set by the mapper
     pack_path: providerOutput.pack_path ?? null,
     pack_content: providerOutput.pack_sha256 ?? null,
-    prompt_version: providerOutput.prompt_version ?? "unset",
-    skill_version: providerOutput.skill_version ?? "unset",
     refusal_code: refusal?.code ?? null,
     refusal_message: refusal?.message ?? "",
     pr_url: providerOutput.pr_url ?? null,
     checks,
     changed_files: null,
     acceptance_criteria_coverage: acCoverage,
-    ...(providerOutput.raw_stdout !== undefined ? { raw_stdout: providerOutput.raw_stdout } : {}),
-    ...(providerOutput.raw_stderr !== undefined ? { raw_stderr: providerOutput.raw_stderr } : {}),
-    ...(providerOutput.extra_secrets !== undefined ? { extra_secrets: providerOutput.extra_secrets } : {}),
-    artefact_class: args.artefact_class,
-    training_eligibility: args.training_eligibility,
-    quality_label: args.quality_label,
   };
-
+  // Apply optional fields that are only set when the provider provides them
+  if (providerOutput.prompt_version) artefactInput.prompt_version = providerOutput.prompt_version;
+  if (providerOutput.skill_version) artefactInput.skill_version = providerOutput.skill_version;
+  if (providerOutput.raw_stdout !== undefined) artefactInput.raw_stdout = providerOutput.raw_stdout;
+  if (providerOutput.raw_stderr !== undefined) artefactInput.raw_stderr = providerOutput.raw_stderr;
+  if (providerOutput.extra_secrets !== undefined) artefactInput.extra_secrets = providerOutput.extra_secrets;
+  if (args.artefact_class !== undefined) artefactInput.artefact_class = args.artefact_class;
+  if (args.training_eligibility !== undefined) artefactInput.training_eligibility = args.training_eligibility;
+  if (args.quality_label !== undefined) artefactInput.quality_label = args.quality_label;
   // Build the artefact
   const artefact = buildRunArtefact(artefactInput);
 
