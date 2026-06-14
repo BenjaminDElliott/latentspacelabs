@@ -1,0 +1,15 @@
+# Sample Hermes Hook Configuration
+# This file demonstrates the YAML format for hook event registration.
+# Handlers can be specified as strings or dicts with 'handler' key.
+#
+# To activate hooks, copy this file to hooks.yaml and update handler paths.
+
+hooks:
+  PreToolUse:
+    - handler: hermes_hooks.handlers.create_logging_handler
+  PostToolUse:
+    - handler: hermes_hooks.handlers.create_logging_handler
+  SessionStart:
+    - handler: hermes_hooks.handlers.create_logging_handler
+  SessionEnd:
+    - handler: hermes_hooks.handlers.create_logging_handler
