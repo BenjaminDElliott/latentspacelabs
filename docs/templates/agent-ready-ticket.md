@@ -2,6 +2,8 @@
 
 > An agent-ready ticket has passed the pre-flight checks below and can be dispatched to a coding, QA, review, or research agent without further clarification. A ticket that cannot pass pre-flight **must not** be labeled `agent-ready` — send it back to refinement. See the *Pre-flight refusal policy* at the bottom of this file.
 >
+> **Draft lifecycle:** This ticket may exist as a draft at any autonomy level (L0–L2) without a gate. The promotion gate fires when marking it `agent-ready` (see the pre-flight checks below). If pre-flight fails, the ticket moves back to `needs-refinement` — this is a rework iteration, not a new artifact. See [`approval-gates-and-autonomy-rules.md`](../process/approval-gates-and-autonomy-rules.md) → *Draft creation vs promotion gates*.
+>
 > This pre-flight runs on the *dispatcher* side before the ticket is labelled `agent-ready`. A second, complementary pre-flight runs on the *agent* side **after dispatch and before the first file edit**: see [`../process/coding-agent-preflight.md`](../process/coding-agent-preflight.md). Both must pass.
 
 - **Linear ID:** LAT-XX

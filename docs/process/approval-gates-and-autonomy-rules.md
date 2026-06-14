@@ -148,16 +148,24 @@ The ICP's canonical responsibilities during the pilot:
 
 The ICP is, for now, deterministic skills and adapters committed to this repo — not a standalone service. It graduates to a service only when a real need forces it.
 
-## How to classify a new action
+## Draft creation vs promotion gates
 
-When Perplexity or a human agent encounters an action not listed above:
+A key design principle (from APEX lessons: LAT-123) is that **gates should govern *promotion*, not prevent drafts from existing.** Any artifact — ticket, PRD, ADR, process doc, QA report — may be drafted at the lowest autonomy levels without a gate. A gate fires only when the artifact transitions between *working state* and *governing state*.
 
-1. Is it destructive, security-sensitive, runaway-cost, merges, deploys, or external communication? → **Stop** by default. Require an explicit rule change to enable.
-2. Does it need first-class Linear API semantics, native relations, dispatch determinism, or a recorded run? → **ICP-Routed.**
-3. Is it asymmetric (project creation, owner changes, anything Ben would want to see before it happens)? → **P-Propose.**
-4. Otherwise, cheap and reversible? → **P-Direct.**
+| Phase | What it is | Gate required? | Min autonomy | Example |
+|---|---|---|---|---|
+| **Draft** | Artifact exists but is not yet governing. Can be edited, discarded, or superseded freely. | No | L0–L2 | A PRD drafted in Perplexity or as a `.md` file. A ticket in `needs-refinement`. A PR with CI green but not yet merged. |
+| **Promotion** | Draft → governing. The artifact now constrains future work. | Yes (per row below) | Varies | Merging a PRD into `docs/prds/`. Marking a ticket `agent-ready`. Merging an ADR or process doc. |
+| **Merge / deploy** | Code/docs promoted to a protected branch or live environment. | Yes — always **Stop** | Human | Merge PR to `main`. Deploy to staging/production. |
 
-If none of these fit cleanly, treat the action as **P-Propose** and ask. Over-acting is a worse failure mode than over-asking for actions outside the matrix; for actions inside the matrix, the opposite holds.
+**Rules:**
+
+- **Drafting is cheap.** An agent at L1 can draft PRDs, ADRs, tickets, and process docs. Drafts do not block dispatch or require approval.
+- **Promotion is the gate.** The rows in the rule matrix above govern *promotion* — not initial creation. A ticket may be created (P-Direct, L2) without approval; marking it `agent-ready` is the promotion gate. A PRD may be drafted (P-Direct, L1); merging it into `docs/prds/` is the promotion gate.
+- **A draft may be "promoted" then demoted.** If a `needs-refinement` ticket fails pre-flight, it moves back. This is a rework iteration, not a new artifact.
+- **No unbounded churn.** If a ticket cycles through ≥ 3 draft → review → rework cycles on the same issue without landing, flag it as a repeated failure pattern for the retro loop (ADR-0010). See `qa-review-evidence.md` → *QA ↔ rework iteration bounds*.
+
+When in doubt: can this artifact be discarded without consequence? If yes, it is a draft. If no — it is governing or will become governing — a gate applies.
 
 ## Sequencing
 
