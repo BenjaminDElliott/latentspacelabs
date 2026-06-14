@@ -28,7 +28,8 @@
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/*.test.ts",
-    "dry-run": "tsx src/cli.ts"
+    "dry-run": "tsx src/cli.ts",
+    "coverage": "tsx --experimental-test-coverage --test 'src/**/*.test.ts'"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
