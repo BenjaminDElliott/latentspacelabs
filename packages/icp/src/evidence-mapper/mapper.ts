@@ -298,10 +298,10 @@ export function mapProviderOutput(args: MapArgs): MapResult {
     classifier: null, // Not set by the mapper
     pack_path: providerOutput.pack_path ?? null,
     pack_content: providerOutput.pack_sha256 ?? null,
-    ...(providerOutput.prompt_version !== undefined
+    ...(providerOutput.prompt_version != null
       ? { prompt_version: providerOutput.prompt_version }
       : {}),
-    ...(providerOutput.skill_version !== undefined
+    ...(providerOutput.skill_version != null
       ? { skill_version: providerOutput.skill_version }
       : {}),
     refusal_code: refusal?.code ?? null,
