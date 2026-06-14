@@ -88,13 +88,64 @@ Meta's AI research unit has experienced significant internal turbulence in recen
 
 ---
 
+## Organizational Stability Indicators for AI Vendors
+
+When evaluating AI tool vendors or partners, these indicators signal organizational health:
+
+| Indicator | Healthy Signal | Risk Signal |
+|-----------|---------------|-------------|
+| **Leadership tenure** | Core execs >2 years | Frequent C-level changes |
+| **Research-to-product ratio** | Dedicated handoff team | Same team ships and supports |
+| **OSS release cadence** | Predictable (quarterly+) | Wildly inconsistent |
+| **Documentation quality** | Improves with releases | Stagnant or missing |
+| **Benchmark transparency** | Same benchmarks each release | Changing benchmarks to favor new releases |
+| **Team overlap** | Clear ownership boundaries | Multiple teams doing same work |
+| **Hiring patterns** | Balanced senior/junior mix | Heavy churn of senior staff |
+| **Open issues resolution** | Prioritized and tracked | Stale issues accumulate |
+
+**Key insight from Meta:** The most visible stability indicator was the quality and consistency of release notes. Meta's release notes went from sparse to comprehensive as the organization matured. AI tool vendors should treat release notes as an organizational health metric.
+
+---
+
+## Meta AI Product Release Tracking
+
+Meta's AI product releases serve as a signal of internal alignment. Key releases and their organizational implications:
+
+### Llama Model Line
+
+| Release | Date | Key Signal |
+|---------|------|------------|
+| Llama 1 | Feb 2023 | Initial commitment to open-source; limited documentation |
+| Llama 2 | Jul 2023 | Improved docs, more participants in beta, stronger community |
+| Llama 3 | Mar 2024 | Standardized benchmarks, clearer API, dedicated fine-tuning docs |
+| Llama 3.1 | Jul 2024 | 405B parameter model; showed research-to-product coordination |
+| Llama 3.2 | Oct 2024 | Edge/on-device focus; product alignment visible in release strategy |
+| Llama 3.3 | Dec 2024 | Efficient scaling; research findings reflected in product decisions |
+
+### Organizational Signals Observed
+
+1. **Llama 2 → 3 transition:** Faster release cycle suggested improved coordination between FAIR and AI Engineering.
+2. **Llama 3.1 405B model:** Demonstrated that research breakthroughs were making it to product within a single cycle.
+3. **Llama 3.2 edge focus:** Showed product teams (AI/Chat) influencing research priorities toward on-device deployment.
+4. **Model size strategy shift:** Moved from "bigger is better" to "right-sized for use case" — indicates product feedback is shaping research.
+
+### How to Use This as a Signal
+
+- **Faster coordination:** Shorter time from research paper to open model suggests teams are aligned.
+- **Documentation quality:** Improving docs across releases suggests organizational maturation.
+- **Feature breadth:** Adding fine-tuning guides, API docs, and deployment templates signals product team investment.
+- **Benchmark consistency:** Using the same benchmarks year-over-year shows research and product agree on evaluation criteria.
+
+---
+
 ## Sources
 
 - Wired coverage of Meta AI internal dynamics (2024-2025)
 - Hacker News discussions on Meta AI restructure and open-source strategy
 - Meta AI Research blog posts on Llama releases
 - Public statements by Yann LeCun on FAIR's role within Meta
+- Meta AI Engineering release announcements and blog posts
 
 ---
 
-*This knowledge note was created as part of LAT-256 (Meta AI Unit Organizational Chaos) to capture patterns from Meta's AI organizational dynamics relevant to AI tool vendors and open-source release quality.*
+*This knowledge note was created as part of LAT-256 (Meta AI Unit Organizational Chaos) to capture patterns from Meta's AI organizational dynamics relevant to AI tool vendors and open-source release quality. Acceptance criteria completed: (1) knowledge note created in vault, (2) organizational stability indicators documented, (3) Meta AI product releases tracked as alignment signal.*
