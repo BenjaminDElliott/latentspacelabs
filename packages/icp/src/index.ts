@@ -156,6 +156,23 @@ export type {
   EligibilityOutcome,
 } from "./dispatcher/types.js";
 
+/* LAT-186 pre-run invocation gate. Validates AgentInvocationRequest
+ * parameters against isolation rules before a run proceeds. Blocks if
+ * any forbidden action is detected, and logs the gate decision with
+ * evidence. LAT-187 adds the corresponding post-run gate. */
+export {
+  runPreRunGate,
+  buildDefaultRules,
+  buildPermissiveRules,
+} from "./runtime/gates.js";
+export type {
+  GateOutcome,
+  GateEvidence,
+  InvocationGateInput,
+  IsolationRules,
+  ForbiddenAction,
+} from "./runtime/gates.js";
+
 /* LAT-140 structured run artefact (sanitised observability record).
  * Pure module: produces the JSON / compact comment-ready summary; the
  * caller decides where to persist it. Never uploads or externalises. */
