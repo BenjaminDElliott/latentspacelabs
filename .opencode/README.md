@@ -7,6 +7,8 @@ purpose: Project-local opencode configuration for bounded ticket implementation 
 
 These assets configure the opencode + local-Qwen implementation runtime for this repo, per ADR-0019. They are project-local: opencode discovers them when run from the repo root.
 
+**Orientation entry point:** Open [`../README.md`](../README.md) first — it links to every canonical doc (root PRD, ADR policy, PRD governance, approval gates, cost controls, preflight rules, secret guardrails).
+
 ## Layout
 
 - `skills/` — reusable instruction modules the agents load. One directory per skill, each with a `SKILL.md`.
