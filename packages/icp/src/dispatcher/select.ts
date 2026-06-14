@@ -19,8 +19,8 @@ import {
   validateClassifierOutput,
   type ClassifierOptions,
   type ClassifierOutput,
-} from "./classifier.js";
-import type { DispatchIssue, EligibilityOutcome } from "./types.js";
+} from './classifier.js';
+import type { DispatchIssue, EligibilityOutcome } from './types.js';
 
 export type EligibilityOptions = ClassifierOptions;
 
@@ -36,7 +36,7 @@ export function evaluateEligibility(
     // operator so the bug is visible.
     return {
       eligible: false,
-      reason: `classifier output failed schema validation: ${validated.errors.join("; ")}`,
+      reason: `classifier output failed schema validation: ${validated.errors.join('; ')}`,
     };
   }
   return classifierToEligibility(validated.value);
@@ -47,9 +47,7 @@ export function evaluateEligibility(
  * the dispatcher orchestration. Exported so callers (and tests) that
  * already have a ClassifierOutput can avoid re-running the classifier.
  */
-export function classifierToEligibility(
-  output: ClassifierOutput,
-): EligibilityOutcome {
+export function classifierToEligibility(output: ClassifierOutput): EligibilityOutcome {
   if (output.dispatchable) {
     return { eligible: true, reason: output.reason };
   }

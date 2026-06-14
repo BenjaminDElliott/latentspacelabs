@@ -17,16 +17,13 @@
  * sole reader of LINEAR_API_KEY.
  */
 
-import type {
-  FetchLike,
-  FetchLikeResponse,
-} from "../adapters/linear-adapter.js";
+import type { FetchLike, FetchLikeResponse } from '../adapters/linear-adapter.js';
 import type {
   DispatcherLinearClient,
   DispatchIssue,
   ComplexityTag,
   ReasoningTag,
-} from "./types.js";
+} from './types.js';
 
 /** Parameters for creating a run-record sub-issue. */
 export interface RunRecordIssue {
@@ -38,7 +35,7 @@ export interface RunRecordIssue {
   parentId: string;
 }
 
-const DEFAULT_ENDPOINT = "https://api.linear.app/graphql";
+const DEFAULT_ENDPOINT = 'https://api.linear.app/graphql';
 
 export interface DispatcherLinearClientOptions {
   apiKey: string;
@@ -48,20 +45,16 @@ export interface DispatcherLinearClientOptions {
 
 export class DispatcherLinearError extends Error {
   readonly kind:
-    | "missing_credentials"
-    | "issue_not_found"
-    | "unauthorized"
-    | "rate_limited"
-    | "api_error"
-    | "network_error";
+    | 'missing_credentials'
+    | 'issue_not_found'
+    | 'unauthorized'
+    | 'rate_limited'
+    | 'api_error'
+    | 'network_error';
   readonly status: number | null;
-  constructor(
-    kind: DispatcherLinearError["kind"],
-    message: string,
-    status: number | null = null,
-  ) {
+  constructor(kind: DispatcherLinearError['kind'], message: string, status: number | null = null) {
     super(message);
-    this.name = "DispatcherLinearError";
+    this.name = 'DispatcherLinearError';
     this.kind = kind;
     this.status = status;
   }
@@ -70,25 +63,24 @@ export class DispatcherLinearError extends Error {
 export function createDispatcherLinearClient(
   opts: DispatcherLinearClientOptions,
 ): DispatcherLinearClient {
-  if (typeof opts.apiKey !== "string" || opts.apiKey.length === 0) {
+  if (typeof opts.apiKey !== 'string' || opts.apiKey.length === 0) {
     throw new DispatcherLinearError(
-      "missing_credentials",
-      "Linear API key was not provided. Load LINEAR_API_KEY at the dispatcher boundary; do not read process.env from a client module.",
+      'missing_credentials',
+      'Linear API key was not provided. Load LINEAR_API_KEY at the dispatcher boundary; do not read process.env from a client module.',
     );
   }
   const apiKey = opts.apiKey;
   const endpoint = opts.endpoint ?? DEFAULT_ENDPOINT;
-  const doFetch: FetchLike =
-    opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
-  if (typeof doFetch !== "function") {
+  const doFetch: FetchLike = opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
+  if (typeof doFetch !== 'function') {
     throw new DispatcherLinearError(
-      "network_error",
-      "No fetch implementation available. Run on Node 20+ or inject a fetch.",
+      'network_error',
+      'No fetch implementation available. Run on Node 20+ or inject a fetch.',
     );
   }
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     Authorization: apiKey,
   };
 
@@ -96,33 +88,33 @@ export function createDispatcherLinearClient(
     let res: FetchLikeResponse;
     try {
       res = await doFetch(endpoint, {
-        method: "POST",
+        method: 'POST',
         headers,
         body: JSON.stringify({ query, variables }),
       });
     } catch (err) {
       throw new DispatcherLinearError(
-        "network_error",
+        'network_error',
         `Linear request failed: ${stripSecret(asMessage(err), apiKey)}`,
       );
     }
     if (res.status === 401 || res.status === 403) {
       throw new DispatcherLinearError(
-        "unauthorized",
+        'unauthorized',
         `Linear rejected the credential (HTTP ${res.status}). Rotate LINEAR_API_KEY and confirm scope.`,
         res.status,
       );
     }
     if (res.status === 429) {
       throw new DispatcherLinearError(
-        "rate_limited",
-        "Linear rate-limited the dispatcher (HTTP 429); abort cleanly and retry later.",
+        'rate_limited',
+        'Linear rate-limited the dispatcher (HTTP 429); abort cleanly and retry later.',
         429,
       );
     }
     if (!res.ok) {
       throw new DispatcherLinearError(
-        "api_error",
+        'api_error',
         `Linear returned HTTP ${res.status}.`,
         res.status,
       );
@@ -132,7 +124,7 @@ export function createDispatcherLinearClient(
       body = await res.json();
     } catch (err) {
       throw new DispatcherLinearError(
-        "api_error",
+        'api_error',
         `Linear returned unparseable JSON: ${stripSecret(asMessage(err), apiKey)}`,
       );
     }
@@ -142,12 +134,14 @@ export function createDispatcherLinearClient(
     };
     if (obj.errors && obj.errors.length > 0) {
       const messages = obj.errors
-        .map((e) => stripSecret(typeof e.message === "string" ? e.message : "GraphQL error", apiKey))
-        .join("; ");
-      throw new DispatcherLinearError("api_error", `Linear GraphQL errors: ${messages}`);
+        .map((e) =>
+          stripSecret(typeof e.message === 'string' ? e.message : 'GraphQL error', apiKey),
+        )
+        .join('; ');
+      throw new DispatcherLinearError('api_error', `Linear GraphQL errors: ${messages}`);
     }
     if (!obj.data) {
-      throw new DispatcherLinearError("api_error", "Linear GraphQL response had no data field.");
+      throw new DispatcherLinearError('api_error', 'Linear GraphQL response had no data field.');
     }
     return obj.data;
   }
@@ -156,14 +150,14 @@ export function createDispatcherLinearClient(
     async readIssue(identifier: string): Promise<DispatchIssue> {
       const id = identifier.trim();
       if (id.length === 0) {
-        throw new DispatcherLinearError("issue_not_found", "readIssue called with empty identifier.");
+        throw new DispatcherLinearError(
+          'issue_not_found',
+          'readIssue called with empty identifier.',
+        );
       }
       const data = await gql<{ issue: RawIssue | null }>(READ_ISSUE_QUERY, { id });
       if (!data.issue) {
-        throw new DispatcherLinearError(
-          "issue_not_found",
-          `Linear has no issue matching ${id}.`,
-        );
+        throw new DispatcherLinearError('issue_not_found', `Linear has no issue matching ${id}.`);
       }
       return mapIssue(data.issue);
     },
@@ -176,10 +170,7 @@ export function createDispatcherLinearClient(
         };
       }>(POST_COMMENT_MUTATION, { issueId: uuid, body });
       if (!data.commentCreate?.success || !data.commentCreate.comment) {
-        throw new DispatcherLinearError(
-          "api_error",
-          `Linear refused commentCreate for ${uuid}.`,
-        );
+        throw new DispatcherLinearError('api_error', `Linear refused commentCreate for ${uuid}.`);
       }
       const c = data.commentCreate.comment;
       return { url: c.url ?? `https://linear.app/issue/${uuid}/comment/${c.id}` };
@@ -188,33 +179,29 @@ export function createDispatcherLinearClient(
     async setIssueState(uuid: string, stateId: string): Promise<void> {
       const data = await gql<{
         issueUpdate: { success: boolean };
-      }>(
-        ISSUE_UPDATE_STATE_MUTATION,
-        { id: uuid, stateId },
-      );
+      }>(ISSUE_UPDATE_STATE_MUTATION, { id: uuid, stateId });
       if (!data.issueUpdate?.success) {
-        throw new DispatcherLinearError(
-          "api_error",
-          `Linear refused issueUpdate for ${uuid}.`,
-        );
+        throw new DispatcherLinearError('api_error', `Linear refused issueUpdate for ${uuid}.`);
       }
     },
 
     async createRunRecord(issue: RunRecordIssue): Promise<{ id: string; url: string }> {
       // Resolve parent identifier → UUID first.
-      const parentData = await gql<{ issue: RawIssue | null }>(
-        READ_ISSUE_ID_ONLY_QUERY,
-        { id: issue.parentId },
-      );
+      const parentData = await gql<{ issue: RawIssue | null }>(READ_ISSUE_ID_ONLY_QUERY, {
+        id: issue.parentId,
+      });
       if (!parentData.issue) {
         throw new DispatcherLinearError(
-          "issue_not_found",
+          'issue_not_found',
           `Parent issue ${issue.parentId} not found; cannot create run-record sub-issue.`,
         );
       }
 
       const data = await gql<{
-        issueCreate: { success: boolean; issue: { id: string; identifier: string; url: string | null } | null };
+        issueCreate: {
+          success: boolean;
+          issue: { id: string; identifier: string; url: string | null } | null;
+        };
       }>(CREATE_RUN_RECORD_MUTATION, {
         teamId: parentData.issue.id, // inherit team from parent
         parentId: parentData.issue.id,
@@ -225,7 +212,7 @@ export function createDispatcherLinearClient(
 
       if (!data.issueCreate?.success || !data.issueCreate.issue) {
         throw new DispatcherLinearError(
-          "api_error",
+          'api_error',
           `Linear refused issueCreate for run-record of ${issue.parentId}.`,
         );
       }
@@ -257,11 +244,11 @@ interface RawIssue {
  */
 export function parseComplexityTag(labels: ReadonlyArray<string>): ComplexityTag {
   for (const label of labels) {
-    if (label === "complexity/small" || label === "complexity-small") return "small";
-    if (label === "complexity/medium" || label === "complexity-medium") return "medium";
-    if (label === "complexity/large" || label === "complexity-large") return "large";
+    if (label === 'complexity/small' || label === 'complexity-small') return 'small';
+    if (label === 'complexity/medium' || label === 'complexity-medium') return 'medium';
+    if (label === 'complexity/large' || label === 'complexity-large') return 'large';
   }
-  return "unknown";
+  return 'unknown';
 }
 
 /**
@@ -273,24 +260,26 @@ export function parseComplexityTag(labels: ReadonlyArray<string>): ComplexityTag
  */
 export function parseReasoningTag(labels: ReadonlyArray<string>): ReasoningTag {
   for (const label of labels) {
-    if (label === "reasoning/implementation" || label === "reasoning-implementation") return "implementation";
-    if (label === "reasoning/synthesis" || label === "reasoning-synthesis") return "synthesis";
-    if (label === "reasoning/architecture" || label === "reasoning-architecture") return "architecture";
+    if (label === 'reasoning/implementation' || label === 'reasoning-implementation')
+      return 'implementation';
+    if (label === 'reasoning/synthesis' || label === 'reasoning-synthesis') return 'synthesis';
+    if (label === 'reasoning/architecture' || label === 'reasoning-architecture')
+      return 'architecture';
   }
-  return "unknown";
+  return 'unknown';
 }
 
 function mapIssue(raw: RawIssue): DispatchIssue {
   const labels = (raw.labels?.nodes ?? [])
-    .map((n) => (typeof n.name === "string" ? n.name.toLowerCase() : ""))
+    .map((n) => (typeof n.name === 'string' ? n.name.toLowerCase() : ''))
     .filter((s) => s.length > 0);
   return {
     identifier: raw.identifier,
     uuid: raw.id,
-    title: raw.title ?? "",
-    description: raw.description ?? "",
-    stateName: raw.state?.name ?? "unknown",
-    stateId: raw.state?.id ?? "",
+    title: raw.title ?? '',
+    description: raw.description ?? '',
+    stateName: raw.state?.name ?? 'unknown',
+    stateId: raw.state?.id ?? '',
     labels,
     complexityTag: parseComplexityTag(labels),
     reasoningTag: parseReasoningTag(labels),
@@ -363,12 +352,7 @@ const CREATE_RUN_RECORD_MUTATION = /* GraphQL */ `
     $parentId: String!
   ) {
     issueCreate(
-      input: {
-        title: $title
-        description: $description
-        teamId: $teamId
-        parentId: $parentId
-      }
+      input: { title: $title, description: $description, teamId: $teamId, parentId: $parentId }
     ) {
       success
       issue {
@@ -382,13 +366,13 @@ const CREATE_RUN_RECORD_MUTATION = /* GraphQL */ `
 
 function asMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
-  if (typeof err === "string") return err;
-  return "unknown error";
+  if (typeof err === 'string') return err;
+  return 'unknown error';
 }
 
 function stripSecret(message: string, apiKey: string): string {
   if (!apiKey) return message;
-  let out = message.split(apiKey).join("<redacted>");
-  out = out.replace(/lin_api_[A-Za-z0-9_\-]+/g, "<redacted>");
+  let out = message.split(apiKey).join('<redacted>');
+  out = out.replace(/lin_api_[A-Za-z0-9_\-]+/g, '<redacted>');
   return out;
 }

@@ -1,6 +1,6 @@
 /**
  * Core type definitions for the memory layer.
- * 
+ *
  * Defines Smart Frames, memory types, entity structures, and search results
  * based on the cognitive architecture taxonomy from the agent memory research.
  */
@@ -23,7 +23,7 @@ export enum MemoryType {
 /**
  * Immutable memory unit with timestamp, checksum, and metadata.
  * Inspired by memvid's Smart Frames — append-only, never overwritten.
- * 
+ *
  * Each frame has a unique ID, content hash for change detection,
  * and a creation timestamp for temporal reasoning.
  */

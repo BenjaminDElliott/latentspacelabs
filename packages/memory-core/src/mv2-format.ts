@@ -22,14 +22,7 @@
  */
 /// <reference types="node" />
 
-import {
-  SmartFrame,
-  Entity,
-  MemoryStoreConfig,
-  Mv2Header,
-  Mv2Flags,
-  Mv2Footer,
-} from './types.js';
+import { SmartFrame, Entity, MemoryStoreConfig, Mv2Header, Mv2Flags, Mv2Footer } from './types.js';
 import { createHash } from 'crypto';
 
 // ─── Types ───
@@ -175,7 +168,7 @@ export function deserializeEntities(json: string): Entity[] {
 export function buildMv2File(
   frames: SmartFrame[],
   entities: Entity[],
-  config: MemoryStoreConfig
+  config: MemoryStoreConfig,
 ): Buffer {
   const now = new Date().toISOString();
   const header: Mv2Header = {
@@ -198,14 +191,8 @@ export function buildMv2File(
   const content = `${entityJson}\n${framesJsonl}`;
 
   // Compute checksum over header + content
-  const checksumInput = Buffer.concat([
-    headerBuf,
-    Buffer.from(content, 'utf-8'),
-  ]);
-  const checksum = createHash('sha256')
-    .update(checksumInput)
-    .digest('hex')
-    .slice(0, 64);
+  const checksumInput = Buffer.concat([headerBuf, Buffer.from(content, 'utf-8')]);
+  const checksum = createHash('sha256').update(checksumInput).digest('hex').slice(0, 64);
 
   const footer: Mv2Footer = {
     checksum,
@@ -226,9 +213,7 @@ export function buildMv2File(
 /**
  * Parse a .mv2 file buffer into frames and entities.
  */
-export function parseMv2File(
-  buf: Buffer
-): {
+export function parseMv2File(buf: Buffer): {
   header: Mv2Header;
   frames: SmartFrame[];
   entities: Entity[];
@@ -257,9 +242,7 @@ export function parseMv2File(
   const header = parseHeader(buf);
 
   // Parse content (between header and footer)
-  const content = buf
-    .slice(HEADER_SIZE, buf.length - FOOTER_SIZE)
-    .toString('utf-8');
+  const content = buf.slice(HEADER_SIZE, buf.length - FOOTER_SIZE).toString('utf-8');
 
   // Split into entity index and frame records
   const newlineIdx = content.indexOf('\n');

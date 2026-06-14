@@ -1,6 +1,6 @@
 /**
  * Smart Frame — the immutable memory unit.
- * 
+ *
  * Inspired by memvid's Smart Frames (video encoding metaphor).
  * Frames are append-only: never overwritten, never mutated in place.
  * Each frame has a content hash for integrity verification.
@@ -19,7 +19,7 @@ function hashContent(content: string): string {
 
 /**
  * Create a new SmartFrame instance.
- * 
+ *
  * @param params - Frame parameters
  * @returns A new immutable SmartFrame
  */

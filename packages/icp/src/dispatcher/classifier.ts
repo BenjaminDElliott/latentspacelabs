@@ -30,40 +30,36 @@
  *   approval and is NOT silently dispatched to local agents.
  */
 
-import type {
-  DispatchIssue,
-  ComplexityTag,
-  ReasoningTag,
-} from "./types.js";
+import type { DispatchIssue, ComplexityTag, ReasoningTag } from './types.js';
 
 /** Coarse risk class assigned by the classifier. */
-export type RiskClass = "low" | "medium" | "high";
+export type RiskClass = 'low' | 'medium' | 'high';
 
 /** Coarse work-type bucket. Used for downstream routing decisions. */
 export type WorkType =
-  | "code_change"
-  | "docs_change"
-  | "test_change"
-  | "research_spike"
-  | "decision"
-  | "ops"
-  | "unknown";
+  | 'code_change'
+  | 'docs_change'
+  | 'test_change'
+  | 'research_spike'
+  | 'decision'
+  | 'ops'
+  | 'unknown';
 
 /** Hard-blocker codes the classifier emits. Stable strings for tests. */
 export type HardBlockerCode =
-  | "no_explicit_dispatch_target"
-  | "missing_identifier"
-  | "missing_uuid"
-  | "empty_title"
-  | "vague_planning_title"
-  | "missing_acceptance_criteria"
-  | "description_too_short"
-  | "risky_scope_secret_rotation"
-  | "risky_scope_credential_handling"
-  | "risky_scope_deploy_release"
-  | "risky_scope_auto_merge"
-  | "risky_scope_primary_decision"
-  | "risky_scope_vague_spike";
+  | 'no_explicit_dispatch_target'
+  | 'missing_identifier'
+  | 'missing_uuid'
+  | 'empty_title'
+  | 'vague_planning_title'
+  | 'missing_acceptance_criteria'
+  | 'description_too_short'
+  | 'risky_scope_secret_rotation'
+  | 'risky_scope_credential_handling'
+  | 'risky_scope_deploy_release'
+  | 'risky_scope_auto_merge'
+  | 'risky_scope_primary_decision'
+  | 'risky_scope_vague_spike';
 
 export interface HardBlocker {
   code: HardBlockerCode;
@@ -119,7 +115,7 @@ export interface ClassifierOutput {
     /** Cap turns/iterations for this dispatch. */
     max_turns?: number;
     /** Force a specific cost class regardless of routing defaults. */
-    cost_class?: "small" | "medium" | "large";
+    cost_class?: 'small' | 'medium' | 'large';
     /** Extra deny-listed paths to forbid the agent from touching. */
     extra_path_denies?: ReadonlyArray<string>;
   };
@@ -189,50 +185,49 @@ interface ScopeDetector {
  * like "rotate the production credential", "revoke our prod api keys",
  * "introduce new leaked credentials".
  */
-const SECRET_NOUN = "(?:secrets?|credentials?|tokens?|api\\s+keys?|passwords?)";
-const ADJ_STACK =
-  "(?:(?:the|our|new|leaked|production|prod|stale|old|expired)\\s+){0,3}";
+const SECRET_NOUN = '(?:secrets?|credentials?|tokens?|api\\s+keys?|passwords?)';
+const ADJ_STACK = '(?:(?:the|our|new|leaked|production|prod|stale|old|expired)\\s+){0,3}';
 
 const SECRET_ROTATION: ScopeDetector = {
-  code: "risky_scope_secret_rotation",
+  code: 'risky_scope_secret_rotation',
   pattern: new RegExp(
     `\\b(?:rotate|revoke|reset|regenerate|reissue|replace|cycle)\\s+${ADJ_STACK}${SECRET_NOUN}`,
-    "i",
+    'i',
   ),
-  message: "issue scope includes rotating or changing secrets/credentials/tokens",
+  message: 'issue scope includes rotating or changing secrets/credentials/tokens',
 };
 
 const CREDENTIAL_HANDLING: ScopeDetector = {
-  code: "risky_scope_credential_handling",
+  code: 'risky_scope_credential_handling',
   pattern: new RegExp(
     `\\b(?:handle|store|persist|write|introduce|add|copy|move|migrate)\\s+${ADJ_STACK}${SECRET_NOUN}`,
-    "i",
+    'i',
   ),
-  message: "issue scope includes handling production credentials",
+  message: 'issue scope includes handling production credentials',
 };
 
 const DEPLOY_RELEASE: ScopeDetector = {
-  code: "risky_scope_deploy_release",
+  code: 'risky_scope_deploy_release',
   pattern:
     /\b(?:deploy(?:ing)?|release(?:ing)?|publish(?:ing)?|ship(?:ping)?|roll\s*out|cut\s+a\s+release)\b/i,
-  message: "issue scope includes deploy/release/publish actions",
+  message: 'issue scope includes deploy/release/publish actions',
 };
 
 const AUTO_MERGE: ScopeDetector = {
-  code: "risky_scope_auto_merge",
+  code: 'risky_scope_auto_merge',
   pattern:
     /\b(?:auto[-\s]?merge|automerge|merge\s+(?:the\s+)?(?:pr|pull\s+request|to\s+main|to\s+master|into\s+main|into\s+master)|merging\s+prs?)\b/i,
-  message: "issue scope includes merging PRs or auto-merge",
+  message: 'issue scope includes merging PRs or auto-merge',
 };
 
 const PRIMARY_DECISION: ScopeDetector = {
-  code: "risky_scope_primary_decision",
+  code: 'risky_scope_primary_decision',
   // Matches "write/draft/author/decide/make a (new) ADR / architecture decision"
   // but NOT "see ADR-0001" or "per architecture decision" (handled by safe context).
   pattern:
     /\b(?:write|draft|author|propose|decide|make|create|new)\s+(?:an?\s+|the\s+)?(?:new\s+)?(?:adr|architecture\s+decision)\b/i,
   message:
-    "issue primary work is making a new ADR / architecture decision; that decision must be human-owned",
+    'issue primary work is making a new ADR / architecture decision; that decision must be human-owned',
 };
 
 const RISKY_DETECTORS: ReadonlyArray<ScopeDetector> = [
@@ -260,20 +255,23 @@ function sentenceIsSafeContext(sentence: string): boolean {
 }
 
 function inferWorkType(title: string, description: string): WorkType {
-  const t = (title + "\n" + description).toLowerCase();
-  if (/\b(spike|investigate|explore|research)\b/.test(t)) return "research_spike";
-  if (/\bdeploy|release|rollout|publish\b/.test(t)) return "ops";
-  if (/\bauto[-\s]?merge|merge\s+the\s+pr\b/.test(t)) return "ops";
-  if (/\bdocs?|readme|adr-\d+|architecture decision\b/.test(t) && !/\b(implement|fix|refactor|add)\b/.test(t)) {
-    return "docs_change";
+  const t = (title + '\n' + description).toLowerCase();
+  if (/\b(spike|investigate|explore|research)\b/.test(t)) return 'research_spike';
+  if (/\bdeploy|release|rollout|publish\b/.test(t)) return 'ops';
+  if (/\bauto[-\s]?merge|merge\s+the\s+pr\b/.test(t)) return 'ops';
+  if (
+    /\bdocs?|readme|adr-\d+|architecture decision\b/.test(t) &&
+    !/\b(implement|fix|refactor|add)\b/.test(t)
+  ) {
+    return 'docs_change';
   }
   if (/\b(test|spec|coverage)\b/.test(t) && !/\b(implement|fix|add)\b/.test(t)) {
-    return "test_change";
+    return 'test_change';
   }
   if (/\b(implement|fix|refactor|add|wire|extract|extend|update)\b/.test(t)) {
-    return "code_change";
+    return 'code_change';
   }
-  return "unknown";
+  return 'unknown';
 }
 
 /**
@@ -294,18 +292,18 @@ function determineLocalAgentEligibility(
   if (hasHardBlockers) return false;
 
   // Complexity: large always escapes to reasoning/human.
-  if (complexity === "large") return false;
+  if (complexity === 'large') return false;
 
   // Reasoning: synthesis or architecture always escape to reasoning/human.
-  if (reasoning === "synthesis" || reasoning === "architecture") return false;
+  if (reasoning === 'synthesis' || reasoning === 'architecture') return false;
 
   // Reasoning: implementation with bounded complexity → local eligible.
-  if (reasoning === "implementation" && (complexity === "small" || complexity === "medium")) {
+  if (reasoning === 'implementation' && (complexity === 'small' || complexity === 'medium')) {
     return true;
   }
 
   // Tags unknown (no classification present) → not silently dispatched.
-  if (complexity === "unknown" || reasoning === "unknown") return false;
+  if (complexity === 'unknown' || reasoning === 'unknown') return false;
 
   // Default fallback: if we somehow got here, refuse.
   return false;
@@ -316,39 +314,36 @@ function determineLocalAgentEligibility(
  *
  * Pure function. Deterministic. No I/O.
  */
-export function classifyIssue(
-  issue: DispatchIssue,
-  opts: ClassifierOptions,
-): ClassifierOutput {
+export function classifyIssue(issue: DispatchIssue, opts: ClassifierOptions): ClassifierOutput {
   const blockers: HardBlocker[] = [];
 
   if (!opts.explicitOverride) {
     blockers.push({
-      code: "no_explicit_dispatch_target",
+      code: 'no_explicit_dispatch_target',
       message:
-        "no explicit dispatch target. Set LAT_DISPATCH_ISSUE=LAT-NN to opt in (label-driven polling is a documented follow-up).",
+        'no explicit dispatch target. Set LAT_DISPATCH_ISSUE=LAT-NN to opt in (label-driven polling is a documented follow-up).',
     });
-    return refused(blockers, "unknown", "low", issue.complexityTag, issue.reasoningTag);
+    return refused(blockers, 'unknown', 'low', issue.complexityTag, issue.reasoningTag);
   }
 
-  if (typeof issue.identifier !== "string" || issue.identifier.length === 0) {
-    blockers.push({ code: "missing_identifier", message: "issue has no identifier" });
+  if (typeof issue.identifier !== 'string' || issue.identifier.length === 0) {
+    blockers.push({ code: 'missing_identifier', message: 'issue has no identifier' });
   }
-  if (typeof issue.uuid !== "string" || issue.uuid.length === 0) {
-    blockers.push({ code: "missing_uuid", message: "issue has no internal UUID" });
+  if (typeof issue.uuid !== 'string' || issue.uuid.length === 0) {
+    blockers.push({ code: 'missing_uuid', message: 'issue has no internal UUID' });
   }
 
-  const title = issue.title ?? "";
-  const description = issue.description ?? "";
+  const title = issue.title ?? '';
+  const description = issue.description ?? '';
 
   if (title.trim().length === 0) {
-    blockers.push({ code: "empty_title", message: "issue title is empty" });
+    blockers.push({ code: 'empty_title', message: 'issue title is empty' });
   }
 
   for (const pat of VAGUE_TITLE_PATTERNS) {
     if (pat.test(title)) {
       blockers.push({
-        code: "vague_planning_title",
+        code: 'vague_planning_title',
         message: `title looks like a vague planning task: ${title.slice(0, 80)}`,
       });
       break;
@@ -357,7 +352,7 @@ export function classifyIssue(
 
   // Risky-scope detection runs per sentence, with safe-context phrasings
   // downgrading risky keywords inside the same sentence.
-  const sentences = splitSentences(title + "\n" + description);
+  const sentences = splitSentences(title + '\n' + description);
   for (const detector of RISKY_DETECTORS) {
     let matched = false;
     for (const sentence of sentences) {
@@ -378,23 +373,23 @@ export function classifyIssue(
   if (!hasAcceptance) {
     if (titleLooksVague) {
       blockers.push({
-        code: "risky_scope_vague_spike",
+        code: 'risky_scope_vague_spike',
         message:
-          "vague investigate/spike with no Acceptance Criteria: refuse rather than guess scope",
+          'vague investigate/spike with no Acceptance Criteria: refuse rather than guess scope',
       });
     } else {
       blockers.push({
-        code: "missing_acceptance_criteria",
+        code: 'missing_acceptance_criteria',
         message:
-          "issue description has no Acceptance Criteria section; refuse rather than guess scope",
+          'issue description has no Acceptance Criteria section; refuse rather than guess scope',
       });
     }
   }
 
   if (description.trim().length < 80) {
     blockers.push({
-      code: "description_too_short",
-      message: "issue description is too short to bound dispatch scope safely",
+      code: 'description_too_short',
+      message: 'issue description is too short to bound dispatch scope safely',
     });
   }
 
@@ -404,11 +399,7 @@ export function classifyIssue(
 
   if (blockers.length > 0) {
     const risk: RiskClass = riskFromBlockers(blockers);
-    const localEligible = determineLocalAgentEligibility(
-      complexity,
-      reasoning,
-      true,
-    );
+    const localEligible = determineLocalAgentEligibility(complexity, reasoning, true);
     return refused(blockers, workType, risk, complexity, reasoning, localEligible);
   }
 
@@ -416,15 +407,11 @@ export function classifyIssue(
   // local_agent_eligible captures whether a local agent may handle it.
   // required_human_approval is false when no hard blockers fire; the
   // dispatcher checks local_agent_eligible separately.
-  const localEligible = determineLocalAgentEligibility(
-    complexity,
-    reasoning,
-    false,
-  );
+  const localEligible = determineLocalAgentEligibility(complexity, reasoning, false);
 
   return {
     dispatchable: true,
-    risk_class: "low",
+    risk_class: 'low',
     work_type: workType,
     reason: `explicit override accepted for ${issue.identifier}`,
     required_human_approval: false,
@@ -437,9 +424,9 @@ export function classifyIssue(
 
 function riskFromBlockers(blockers: ReadonlyArray<HardBlocker>): RiskClass {
   for (const b of blockers) {
-    if (b.code.startsWith("risky_scope_")) return "high";
+    if (b.code.startsWith('risky_scope_')) return 'high';
   }
-  return "medium";
+  return 'medium';
 }
 
 function refused(
@@ -450,10 +437,7 @@ function refused(
   reasoning: ReasoningTag,
   localEligible: boolean = false,
 ): ClassifierOutput {
-  const reason =
-    blockers.length === 0
-      ? "refused"
-      : (blockers[0]?.message ?? "refused");
+  const reason = blockers.length === 0 ? 'refused' : (blockers[0]?.message ?? 'refused');
   return {
     dispatchable: false,
     risk_class: risk,
@@ -479,53 +463,54 @@ export function validateClassifierOutput(
   raw: unknown,
 ): { ok: true; value: ClassifierOutput } | { ok: false; errors: ReadonlyArray<string> } {
   const errors: string[] = [];
-  if (raw === null || typeof raw !== "object") {
-    return { ok: false, errors: ["classifier output is not an object"] };
+  if (raw === null || typeof raw !== 'object') {
+    return { ok: false, errors: ['classifier output is not an object'] };
   }
   const o = raw as Record<string, unknown>;
 
-  if (typeof o["dispatchable"] !== "boolean") errors.push("dispatchable: not a boolean");
-  if (!isRiskClass(o["risk_class"])) errors.push("risk_class: not a valid RiskClass");
-  if (!isWorkType(o["work_type"])) errors.push("work_type: not a valid WorkType");
-  if (typeof o["reason"] !== "string" || (o["reason"] as string).length === 0) {
-    errors.push("reason: must be a non-empty string");
+  if (typeof o['dispatchable'] !== 'boolean') errors.push('dispatchable: not a boolean');
+  if (!isRiskClass(o['risk_class'])) errors.push('risk_class: not a valid RiskClass');
+  if (!isWorkType(o['work_type'])) errors.push('work_type: not a valid WorkType');
+  if (typeof o['reason'] !== 'string' || (o['reason'] as string).length === 0) {
+    errors.push('reason: must be a non-empty string');
   }
-  if (typeof o["required_human_approval"] !== "boolean") {
-    errors.push("required_human_approval: not a boolean");
+  if (typeof o['required_human_approval'] !== 'boolean') {
+    errors.push('required_human_approval: not a boolean');
   }
-  const blockersRaw = o["hard_blockers"];
+  const blockersRaw = o['hard_blockers'];
   if (!Array.isArray(blockersRaw)) {
-    errors.push("hard_blockers: not an array");
+    errors.push('hard_blockers: not an array');
   } else {
     blockersRaw.forEach((b, i) => {
-      if (b === null || typeof b !== "object") {
+      if (b === null || typeof b !== 'object') {
         errors.push(`hard_blockers[${i}]: not an object`);
         return;
       }
       const br = b as Record<string, unknown>;
-      if (!isHardBlockerCode(br["code"])) errors.push(`hard_blockers[${i}].code: invalid code`);
-      if (typeof br["message"] !== "string") errors.push(`hard_blockers[${i}].message: not a string`);
+      if (!isHardBlockerCode(br['code'])) errors.push(`hard_blockers[${i}].code: invalid code`);
+      if (typeof br['message'] !== 'string')
+        errors.push(`hard_blockers[${i}].message: not a string`);
     });
   }
 
   // LAT-134: new required fields
-  if (typeof o["local_agent_eligible"] !== "boolean") {
-    errors.push("local_agent_eligible: not a boolean");
+  if (typeof o['local_agent_eligible'] !== 'boolean') {
+    errors.push('local_agent_eligible: not a boolean');
   }
-  if (!isComplexityTag(o["complexity_tag"])) {
-    errors.push("complexity_tag: not a valid ComplexityTag");
+  if (!isComplexityTag(o['complexity_tag'])) {
+    errors.push('complexity_tag: not a valid ComplexityTag');
   }
-  if (!isReasoningTag(o["reasoning_tag"])) {
-    errors.push("reasoning_tag: not a valid ReasoningTag");
+  if (!isReasoningTag(o['reasoning_tag'])) {
+    errors.push('reasoning_tag: not a valid ReasoningTag');
   }
 
   // Cross-field invariant: dispatchable=true must have no hard blockers.
-  if (o["dispatchable"] === true && Array.isArray(blockersRaw) && blockersRaw.length > 0) {
-    errors.push("dispatchable=true but hard_blockers is non-empty");
+  if (o['dispatchable'] === true && Array.isArray(blockersRaw) && blockersRaw.length > 0) {
+    errors.push('dispatchable=true but hard_blockers is non-empty');
   }
   // Cross-field invariant: high risk must not be dispatchable.
-  if (o["risk_class"] === "high" && o["dispatchable"] === true) {
-    errors.push("risk_class=high is incompatible with dispatchable=true");
+  if (o['risk_class'] === 'high' && o['dispatchable'] === true) {
+    errors.push('risk_class=high is incompatible with dispatchable=true');
   }
 
   if (errors.length > 0) return { ok: false, errors };
@@ -533,53 +518,43 @@ export function validateClassifierOutput(
 }
 
 function isRiskClass(v: unknown): v is RiskClass {
-  return v === "low" || v === "medium" || v === "high";
+  return v === 'low' || v === 'medium' || v === 'high';
 }
 
 function isWorkType(v: unknown): v is WorkType {
   return (
-    v === "code_change" ||
-    v === "docs_change" ||
-    v === "test_change" ||
-    v === "research_spike" ||
-    v === "decision" ||
-    v === "ops" ||
-    v === "unknown"
+    v === 'code_change' ||
+    v === 'docs_change' ||
+    v === 'test_change' ||
+    v === 'research_spike' ||
+    v === 'decision' ||
+    v === 'ops' ||
+    v === 'unknown'
   );
 }
 
 function isComplexityTag(v: unknown): v is ComplexityTag {
-  return (
-    v === "small" ||
-    v === "medium" ||
-    v === "large" ||
-    v === "unknown"
-  );
+  return v === 'small' || v === 'medium' || v === 'large' || v === 'unknown';
 }
 
 function isReasoningTag(v: unknown): v is ReasoningTag {
-  return (
-    v === "implementation" ||
-    v === "synthesis" ||
-    v === "architecture" ||
-    v === "unknown"
-  );
+  return v === 'implementation' || v === 'synthesis' || v === 'architecture' || v === 'unknown';
 }
 
 function isHardBlockerCode(v: unknown): v is HardBlockerCode {
   return (
-    v === "no_explicit_dispatch_target" ||
-    v === "missing_identifier" ||
-    v === "missing_uuid" ||
-    v === "empty_title" ||
-    v === "vague_planning_title" ||
-    v === "missing_acceptance_criteria" ||
-    v === "description_too_short" ||
-    v === "risky_scope_secret_rotation" ||
-    v === "risky_scope_credential_handling" ||
-    v === "risky_scope_deploy_release" ||
-    v === "risky_scope_auto_merge" ||
-    v === "risky_scope_primary_decision" ||
-    v === "risky_scope_vague_spike"
+    v === 'no_explicit_dispatch_target' ||
+    v === 'missing_identifier' ||
+    v === 'missing_uuid' ||
+    v === 'empty_title' ||
+    v === 'vague_planning_title' ||
+    v === 'missing_acceptance_criteria' ||
+    v === 'description_too_short' ||
+    v === 'risky_scope_secret_rotation' ||
+    v === 'risky_scope_credential_handling' ||
+    v === 'risky_scope_deploy_release' ||
+    v === 'risky_scope_auto_merge' ||
+    v === 'risky_scope_primary_decision' ||
+    v === 'risky_scope_vague_spike'
   );
 }

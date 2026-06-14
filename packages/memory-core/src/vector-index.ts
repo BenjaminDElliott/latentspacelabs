@@ -86,7 +86,7 @@ export class VectorIndex {
       this.vectorDim = frame.embedding.length;
     } else if (frame.embedding.length !== this.vectorDim) {
       throw new Error(
-        `Dimension mismatch: expected ${this.vectorDim}, got ${frame.embedding.length}`
+        `Dimension mismatch: expected ${this.vectorDim}, got ${frame.embedding.length}`,
       );
     }
 
@@ -112,7 +112,7 @@ export class VectorIndex {
       filterTypes?: string[];
       filterTags?: string[];
       filterEntities?: string[];
-    } = {}
+    } = {},
   ): SearchResult[] {
     const startTime = performance.now();
     const limit = options.limit ?? 10;
@@ -142,9 +142,7 @@ export class VectorIndex {
 
       // Entity filter
       if (options.filterEntities && options.filterEntities.length > 0) {
-        const hasEntity = options.filterEntities.some((e) =>
-          frame.entities.includes(e)
-        );
+        const hasEntity = options.filterEntities.some((e) => frame.entities.includes(e));
         if (!hasEntity) continue;
       }
 
@@ -217,8 +215,7 @@ export class VectorIndex {
       dimension: this.vectorDim,
       frameCount: this.frames.length,
       maxFrames: this.maxFrames,
-      avgQueryTimeMs:
-        this.queryCount > 0 ? this.totalQueryTime / this.queryCount : 0,
+      avgQueryTimeMs: this.queryCount > 0 ? this.totalQueryTime / this.queryCount : 0,
     };
   }
 

@@ -13,7 +13,7 @@
  * - Automatic eviction of oldest entries when capacity is reached
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 
 import type {
   ExperienceLogEntry,
@@ -21,15 +21,11 @@ import type {
   ExperienceStoreConfig,
   SimilaritySearchOptions,
   SimilaritySearchResult,
-} from "./types.js";
-import type { Embedding } from "./embedding.js";
-import { DEFAULT_EXPERIENCE_STORE_CONFIG } from "./types.js";
-import { mergeExperienceStoreConfig } from "./config.js";
-import {
-  buildExperienceEmbedding,
-  buildQueryEmbedding,
-  cosineSimilarity,
-} from "./embedding.js";
+} from './types.js';
+import type { Embedding } from './embedding.js';
+import { DEFAULT_EXPERIENCE_STORE_CONFIG } from './types.js';
+import { mergeExperienceStoreConfig } from './config.js';
+import { buildExperienceEmbedding, buildQueryEmbedding, cosineSimilarity } from './embedding.js';
 
 // ─── Experience Store ───────────────────────────────────────────────────────
 
@@ -136,7 +132,7 @@ export class ExperienceStore {
    */
   list(options?: {
     tagFilter?: string[];
-    outcomeFilter?: ExperienceOutcome["classification"];
+    outcomeFilter?: ExperienceOutcome['classification'];
     workspaceFilter?: string;
     limit?: number;
   }): ExperienceLogEntry[] {
@@ -144,30 +140,21 @@ export class ExperienceStore {
 
     // Apply tag filter (AND semantics — must have ALL specified tags)
     if (options?.tagFilter && options.tagFilter.length > 0) {
-      results = results.filter((e) =>
-        options.tagFilter!.every((tag) => e.tags.includes(tag)),
-      );
+      results = results.filter((e) => options.tagFilter!.every((tag) => e.tags.includes(tag)));
     }
 
     // Apply outcome filter
     if (options?.outcomeFilter) {
-      results = results.filter(
-        (e) => e.outcome.classification === options.outcomeFilter,
-      );
+      results = results.filter((e) => e.outcome.classification === options.outcomeFilter);
     }
 
     // Apply workspace filter
     if (options?.workspaceFilter) {
-      results = results.filter(
-        (e) => e.workspaceContext === options.workspaceFilter,
-      );
+      results = results.filter((e) => e.workspaceContext === options.workspaceFilter);
     }
 
     // Sort by newest first
-    results.sort(
-      (a, b) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-    );
+    results.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 
     // Apply limit
     if (options?.limit) {
@@ -188,10 +175,7 @@ export class ExperienceStore {
    * @param options - Search options (topK, minScore, filters)
    * @returns Ranked list of similar experiences
    */
-  search(
-    query: string,
-    options?: SimilaritySearchOptions,
-  ): SimilaritySearchResult[] {
+  search(query: string, options?: SimilaritySearchOptions): SimilaritySearchResult[] {
     const topK = options?.topK ?? 5;
     const minScore = options?.minScore ?? 0.0;
 
@@ -214,22 +198,18 @@ export class ExperienceStore {
 
       // Apply tag filter
       if (options?.tagFilter && options.tagFilter.length > 0) {
-        const hasAllTags = options.tagFilter.every((tag) =>
-          experience.tags.includes(tag),
-        );
+        const hasAllTags = options.tagFilter.every((tag) => experience.tags.includes(tag));
         if (!hasAllTags) continue;
       }
 
       // Apply outcome filter
       if (options?.outcomeFilter) {
-        if (experience.outcome.classification !== options.outcomeFilter)
-          continue;
+        if (experience.outcome.classification !== options.outcomeFilter) continue;
       }
 
       // Apply workspace filter
       if (options?.workspaceFilter) {
-        if (experience.workspaceContext !== options.workspaceFilter)
-          continue;
+        if (experience.workspaceContext !== options.workspaceFilter) continue;
       }
 
       scored.push({ experience, score: similarity });
@@ -293,24 +273,18 @@ export class ExperienceStore {
 
   private sanitizeEntry(entry: ExperienceLogEntry): ExperienceLogEntry {
     // Enforce max prompt length
-    const maxPrompt = Math.min(
-      entry.taskPrompt.length,
-      this.config.maxPromptLength,
-    );
+    const maxPrompt = Math.min(entry.taskPrompt.length, this.config.maxPromptLength);
     const taskPrompt =
       maxPrompt < entry.taskPrompt.length
-        ? entry.taskPrompt.slice(0, this.config.maxPromptLength) + "..."
+        ? entry.taskPrompt.slice(0, this.config.maxPromptLength) + '...'
         : entry.taskPrompt;
 
     // Enforce max output length per action
     const sanitizedActions = entry.actions.map((action) => {
-      const maxOutput = Math.min(
-        action.output.length,
-        this.config.maxOutputLength,
-      );
+      const maxOutput = Math.min(action.output.length, this.config.maxOutputLength);
       const output =
         maxOutput < action.output.length
-          ? action.output.slice(0, this.config.maxOutputLength) + "..."
+          ? action.output.slice(0, this.config.maxOutputLength) + '...'
           : action.output;
       return { ...action, output };
     });
@@ -350,27 +324,25 @@ export class ExperienceStore {
     }
   }
 
-  private inferTaskType(
-    entry: Pick<ExperienceLogEntry, "actions" | "taskPrompt">,
-  ): string {
+  private inferTaskType(entry: Pick<ExperienceLogEntry, 'actions' | 'taskPrompt'>): string {
     const typeSet = new Set(entry.actions.map((a) => a.type.toLowerCase()));
 
-    if (typeSet.has("mcp_linear_get_issue") || typeSet.has("mcp_linear_save_issue")) {
-      return "linear_task_management";
+    if (typeSet.has('mcp_linear_get_issue') || typeSet.has('mcp_linear_save_issue')) {
+      return 'linear_task_management';
     }
-    if (typeSet.has("terminal") || typeSet.has("write_file") || typeSet.has("read_file")) {
-      return "code_development";
+    if (typeSet.has('terminal') || typeSet.has('write_file') || typeSet.has('read_file')) {
+      return 'code_development';
     }
-    if (typeSet.has("mcp_linear_list_issues") || typeSet.has("mcp_linear_list_projects")) {
-      return "linear_query";
+    if (typeSet.has('mcp_linear_list_issues') || typeSet.has('mcp_linear_list_projects')) {
+      return 'linear_query';
     }
-    if (typeSet.has("mcp_linear_save_comment") || typeSet.has("mcp_linear_delete_comment")) {
-      return "comment_management";
+    if (typeSet.has('mcp_linear_save_comment') || typeSet.has('mcp_linear_delete_comment')) {
+      return 'comment_management';
     }
-    if (typeSet.has("mcp_linear_get_document") || typeSet.has("mcp_linear_save_document")) {
-      return "document_management";
+    if (typeSet.has('mcp_linear_get_document') || typeSet.has('mcp_linear_save_document')) {
+      return 'document_management';
     }
 
-    return "general";
+    return 'general';
   }
 }

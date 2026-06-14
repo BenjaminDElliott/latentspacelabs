@@ -13,4 +13,4 @@ export {
   type RefusalCode,
   type Refusal,
   type ValidationResult,
-} from "./validate.js";
+} from './validate.js';

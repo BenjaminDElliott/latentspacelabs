@@ -5,11 +5,5 @@ export {
   formatResult,
   hasBlockingFindings,
   DEFAULT_CONFIG,
-} from "./scan.js";
-export type {
-  PolicyConfig,
-  PolicyFinding,
-  ScanOptions,
-  ScanResult,
-  Severity,
-} from "./scan.js";
+} from './scan.js';
+export type { PolicyConfig, PolicyFinding, ScanOptions, ScanResult, Severity } from './scan.js';

@@ -25,8 +25,8 @@
  * redacted." The evidence here is the dry-run summary.
  */
 
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import type {
   BranchPlan,
@@ -37,9 +37,9 @@ import type {
   SizeLimits,
   TicketPack,
   ValidationFinding,
-} from "./types.js";
-import { DEFAULT_SIZE_LIMITS } from "./types.js";
-import { validateTicketPack } from "./validate.js";
+} from './types.js';
+import { DEFAULT_SIZE_LIMITS } from './types.js';
+import { validateTicketPack } from './validate.js';
 
 export interface DryRunOptions {
   sizeLimits?: SizeLimits;
@@ -58,15 +58,17 @@ export interface DryRunResult {
 }
 
 function buildBranchPlan(pack: TicketPack): BranchPlan {
-  const example = pack.branchRules.prTitlePrefix.length > 0
-    ? `${pack.branchRules.prTitlePrefix} <one-line description>`
-    : `${pack.header.linearId}: <one-line description>`;
+  const example =
+    pack.branchRules.prTitlePrefix.length > 0
+      ? `${pack.branchRules.prTitlePrefix} <one-line description>`
+      : `${pack.header.linearId}: <one-line description>`;
   return {
     branch: pack.branchRules.branch,
-    prTitlePrefix: pack.branchRules.prTitlePrefix.length > 0
-      ? pack.branchRules.prTitlePrefix
-      : `${pack.header.linearId}:`,
-    prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : "main",
+    prTitlePrefix:
+      pack.branchRules.prTitlePrefix.length > 0
+        ? pack.branchRules.prTitlePrefix
+        : `${pack.header.linearId}:`,
+    prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : 'main',
     prTitleExample: example,
   };
 }
@@ -81,9 +83,9 @@ function buildBranchPlan(pack: TicketPack): BranchPlan {
 function isForbiddenPathBullet(cleaned: string): boolean {
   const lower = cleaned.toLowerCase();
   return (
-    lower.includes("forbidden path") ||
-    lower.includes("forbidden paths") ||
-    (lower.includes("no edits") && (lower.includes("forbidden") || lower.includes("path")))
+    lower.includes('forbidden path') ||
+    lower.includes('forbidden paths') ||
+    (lower.includes('no edits') && (lower.includes('forbidden') || lower.includes('path')))
   );
 }
 
@@ -115,19 +117,19 @@ function extractShellCommand(value: string): string | null {
 }
 
 const SHELL_COMMAND_HEADS = [
-  "npm",
-  "npx",
-  "node",
-  "pnpm",
-  "yarn",
-  "bun",
-  "tsc",
-  "tsx",
-  "vitest",
-  "jest",
-  "make",
-  "bash",
-  "sh",
+  'npm',
+  'npx',
+  'node',
+  'pnpm',
+  'yarn',
+  'bun',
+  'tsc',
+  'tsx',
+  'vitest',
+  'jest',
+  'make',
+  'bash',
+  'sh',
 ];
 
 function looksLikeShellCommand(value: string): boolean {
@@ -147,65 +149,62 @@ function buildCheckPlan(pack: TicketPack): CheckPlanItem[] {
     if (isForbiddenPathBullet(trimmed)) {
       sawForbiddenPathPolicy = true;
       out.push({
-        name: "Forbidden-path guardrail",
-        command: trimmed.replace(/`/g, ""),
-        source: "ticket-pack",
-        kind: "policy",
-        policyId: "forbidden_paths",
+        name: 'Forbidden-path guardrail',
+        command: trimmed.replace(/`/g, ''),
+        source: 'ticket-pack',
+        kind: 'policy',
+        policyId: 'forbidden_paths',
       });
       continue;
     }
 
     const shell = extractShellCommand(trimmed);
     if (shell !== null) {
-      const isRepoGate = shell.toLowerCase().includes("npm run check");
+      const isRepoGate = shell.toLowerCase().includes('npm run check');
       if (isRepoGate) sawRepoGate = true;
       out.push({
-        name: isRepoGate ? "Repo gate" : (shell.length > 80 ? shell.slice(0, 77) + "..." : shell),
-        command: isRepoGate ? "npm run check" : shell,
-        source: "ticket-pack",
-        kind: "shell",
+        name: isRepoGate ? 'Repo gate' : shell.length > 80 ? shell.slice(0, 77) + '...' : shell,
+        command: isRepoGate ? 'npm run check' : shell,
+        source: 'ticket-pack',
+        kind: 'shell',
       });
       continue;
     }
 
     // Bullet doesn't name a known shell command and isn't a recognised
     // policy guardrail — preserve it for human review but never exec it.
-    const display = trimmed.replace(/`/g, "");
+    const display = trimmed.replace(/`/g, '');
     out.push({
-      name: display.length > 80 ? display.slice(0, 77) + "..." : display,
+      name: display.length > 80 ? display.slice(0, 77) + '...' : display,
       command: display,
-      source: "ticket-pack",
-      kind: "manual",
+      source: 'ticket-pack',
+      kind: 'manual',
     });
   }
   if (!sawRepoGate) {
     out.unshift({
-      name: "Repo gate",
-      command: "npm run check",
-      source: "repo-gate",
-      kind: "shell",
+      name: 'Repo gate',
+      command: 'npm run check',
+      source: 'repo-gate',
+      kind: 'shell',
     });
   }
   if (pack.filesForbidden.length > 0 && !sawForbiddenPathPolicy) {
     out.push({
-      name: "Forbidden-path guardrail",
-      command: "No edits under forbidden paths declared in the pack.",
-      source: "repo-gate",
-      kind: "policy",
-      policyId: "forbidden_paths",
+      name: 'Forbidden-path guardrail',
+      command: 'No edits under forbidden paths declared in the pack.',
+      source: 'repo-gate',
+      kind: 'policy',
+      policyId: 'forbidden_paths',
     });
   }
   return out;
 }
 
-function decideSizeRefusal(
-  pack: TicketPack,
-  limits: SizeLimits,
-): RefusalReason | null {
+function decideSizeRefusal(pack: TicketPack, limits: SizeLimits): RefusalReason | null {
   if (pack.filesInScope.length > limits.maxFilesInScope) {
     return {
-      code: "too_many_files_in_scope",
+      code: 'too_many_files_in_scope',
       message:
         `Files in scope (${pack.filesInScope.length}) exceeds the small-model surface limit (${limits.maxFilesInScope}). ` +
         "Decompose further or fall back to ADR-0018's runtime per ADR-0019.",
@@ -213,18 +212,18 @@ function decideSizeRefusal(
   }
   if (pack.acceptanceCriteria.length > limits.maxAcceptanceCriteria) {
     return {
-      code: "too_many_acceptance_criteria",
+      code: 'too_many_acceptance_criteria',
       message:
         `Acceptance criteria count (${pack.acceptanceCriteria.length}) exceeds the limit (${limits.maxAcceptanceCriteria}). ` +
-        "Split the ticket.",
+        'Split the ticket.',
     };
   }
-  if (Buffer.byteLength(pack.raw, "utf8") > limits.maxRawBytes) {
+  if (Buffer.byteLength(pack.raw, 'utf8') > limits.maxRawBytes) {
     return {
-      code: "pack_too_large",
+      code: 'pack_too_large',
       message:
-        `Pack size (${Buffer.byteLength(pack.raw, "utf8")} bytes) exceeds the limit (${limits.maxRawBytes} bytes). ` +
-        "The pack itself is too long for the small-model surface.",
+        `Pack size (${Buffer.byteLength(pack.raw, 'utf8')} bytes) exceeds the limit (${limits.maxRawBytes} bytes). ` +
+        'The pack itself is too long for the small-model surface.',
     };
   }
   return null;
@@ -232,35 +231,32 @@ function decideSizeRefusal(
 
 function findingsToRefusals(findings: ValidationFinding[]): RefusalReason[] {
   return findings
-    .filter((f) => f.severity === "error")
+    .filter((f) => f.severity === 'error')
     .map((f) => ({ code: f.code, message: f.message }));
 }
 
 function decideStatus(args: {
   validationOk: boolean;
-  packReadiness: TicketPack["header"]["readinessStatus"] | null;
+  packReadiness: TicketPack['header']['readinessStatus'] | null;
   sizeRefusal: RefusalReason | null;
 }): HarnessStatus {
-  if (!args.validationOk) return "needs_clarification";
-  if (args.sizeRefusal !== null) return "too_large";
+  if (!args.validationOk) return 'needs_clarification';
+  if (args.sizeRefusal !== null) return 'too_large';
   switch (args.packReadiness) {
-    case "ready":
-      return "ready";
-    case "blocked":
-      return "blocked";
-    case "needs_clarification":
-      return "needs_clarification";
-    case "too_large":
-      return "too_large";
+    case 'ready':
+      return 'ready';
+    case 'blocked':
+      return 'blocked';
+    case 'needs_clarification':
+      return 'needs_clarification';
+    case 'too_large':
+      return 'too_large';
     default:
-      return "needs_clarification";
+      return 'needs_clarification';
   }
 }
 
-export async function dryRun(
-  packPath: string,
-  options: DryRunOptions = {},
-): Promise<DryRunResult> {
+export async function dryRun(packPath: string, options: DryRunOptions = {}): Promise<DryRunResult> {
   const limits = options.sizeLimits ?? DEFAULT_SIZE_LIMITS;
   const now = options.now ?? (() => new Date());
   const generatedAt = now().toISOString();
@@ -268,18 +264,18 @@ export async function dryRun(
 
   let raw: string;
   try {
-    raw = await readFile(absolutePath, "utf8");
+    raw = await readFile(absolutePath, 'utf8');
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     const summary: DryRunSummary = {
-      schemaVersion: "1.0.0",
-      ticket: "unknown",
+      schemaVersion: '1.0.0',
+      ticket: 'unknown',
       packPath: absolutePath,
-      status: "harness_error",
+      status: 'harness_error',
       generatedAt,
-      packReadinessStatus: "unknown",
-      costBand: "unknown",
-      riskLevel: "unknown",
+      packReadinessStatus: 'unknown',
+      costBand: 'unknown',
+      riskLevel: 'unknown',
       filesInScope: [],
       filesForbidden: [],
       acceptanceCriteria: [],
@@ -287,7 +283,7 @@ export async function dryRun(
       checkPlan: [],
       refusals: [
         {
-          code: "pack_unreadable",
+          code: 'pack_unreadable',
           message: `cannot read ticket pack at ${absolutePath}: ${message}`,
         },
       ],
@@ -305,21 +301,21 @@ export async function dryRun(
 
   if (pack === null) {
     const summary: DryRunSummary = {
-      schemaVersion: "1.0.0",
-      ticket: "unknown",
+      schemaVersion: '1.0.0',
+      ticket: 'unknown',
       packPath: absolutePath,
-      status: "needs_clarification",
+      status: 'needs_clarification',
       generatedAt,
-      packReadinessStatus: "unknown",
-      costBand: "unknown",
-      riskLevel: "unknown",
+      packReadinessStatus: 'unknown',
+      costBand: 'unknown',
+      riskLevel: 'unknown',
       filesInScope: [],
       filesForbidden: [],
       acceptanceCriteria: [],
       branchPlan: null,
       checkPlan: [],
       refusals: findingsToRefusals(findings),
-      notes: ["pack could not be parsed; see refusals for the missing fields"],
+      notes: ['pack could not be parsed; see refusals for the missing fields'],
       endpointInvoked: false,
       prOpened: false,
       linearWriteBack: false,
@@ -340,17 +336,17 @@ export async function dryRun(
   });
 
   const notes: string[] = [];
-  for (const w of findings.filter((f) => f.severity === "warning")) {
+  for (const w of findings.filter((f) => f.severity === 'warning')) {
     notes.push(`warning: ${w.message}`);
   }
-  if (status === "ready") {
+  if (status === 'ready') {
     notes.push(
-      "dry-run only: no opencode run was started, no endpoint contacted, no branch created, no PR opened, no Linear write-back.",
+      'dry-run only: no opencode run was started, no endpoint contacted, no branch created, no PR opened, no Linear write-back.',
     );
   }
 
   const summary: DryRunSummary = {
-    schemaVersion: "1.0.0",
+    schemaVersion: '1.0.0',
     ticket: pack.header.linearId,
     packPath: absolutePath,
     status,

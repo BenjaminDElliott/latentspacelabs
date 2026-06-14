@@ -17,7 +17,7 @@ import type {
   ArtefactCheck,
   RunArtefactInput,
   RunArtefactOutcome,
-} from "./run-artifact.js";
+} from './run-artifact.js';
 
 /* ------------------------------------------------------------------ */
 /* Control-loop summary projection                                     */
@@ -36,12 +36,12 @@ export interface ControlLoopSummaryLike {
     packPath: string;
     state: string;
     mode: string;
-    costBand: "low" | "medium" | "high" | "unknown";
-    riskLevel: "low" | "medium" | "high" | "unknown";
+    costBand: 'low' | 'medium' | 'high' | 'unknown';
+    riskLevel: 'low' | 'medium' | 'high' | 'unknown';
     provider: {
       adapter: string;
       runtimeId: string;
-      costClass: "low" | "medium" | "high";
+      costClass: 'low' | 'medium' | 'high';
     } | null;
     branch: {
       branch: string;
@@ -52,9 +52,9 @@ export interface ControlLoopSummaryLike {
     checks: ReadonlyArray<{
       name: string;
       command: string;
-      outcome: "passed" | "failed" | "skipped" | "manual";
+      outcome: 'passed' | 'failed' | 'skipped' | 'manual';
       durationMs: number;
-      kind?: "shell" | "policy" | "manual";
+      kind?: 'shell' | 'policy' | 'manual';
       detail?: string;
     }>;
     refusals: ReadonlyArray<{ code: string; message: string }>;
@@ -72,18 +72,18 @@ export interface ControlLoopSummaryLike {
  */
 function controlLoopStateToOutcome(state: string): RunArtefactOutcome {
   switch (state) {
-    case "ready_for_review":
-      return "ready_for_review";
-    case "checks_failed":
-      return "checks_failed";
-    case "refused":
-      return "refused";
-    case "failed":
-      return "failed";
-    case "planned":
-      return "planned";
+    case 'ready_for_review':
+      return 'ready_for_review';
+    case 'checks_failed':
+      return 'checks_failed';
+    case 'refused':
+      return 'refused';
+    case 'failed':
+      return 'failed';
+    case 'planned':
+      return 'planned';
     default:
-      return "failed";
+      return 'failed';
   }
 }
 
@@ -107,9 +107,7 @@ export interface FromControlLoopSummaryArgs {
  * is pure data — the caller decides which fields to override before
  * passing it to `buildRunArtefact`.
  */
-export function fromControlLoopSummary(
-  args: FromControlLoopSummaryArgs,
-): RunArtefactInput {
+export function fromControlLoopSummary(args: FromControlLoopSummaryArgs): RunArtefactInput {
   const { summary } = args;
   const ev = summary.evidence;
 
@@ -118,23 +116,23 @@ export function fromControlLoopSummary(
     command: c.command,
     outcome: c.outcome,
     durationMs: c.durationMs,
-    kind: c.kind ?? "shell",
+    kind: c.kind ?? 'shell',
     ...(c.detail !== undefined ? { detail: c.detail } : {}),
   }));
 
   const acceptance: ReadonlyArray<AcceptanceCriterionCoverage> =
     summary.preflight.acceptanceCriteria.map((criterion) => ({
       criterion,
-      status: "unknown" as const,
+      status: 'unknown' as const,
     }));
 
   const refusalCode = ev.refusals[0]?.code ?? null;
-  const refusalMessage = ev.refusals[0]?.message ?? "";
+  const refusalMessage = ev.refusals[0]?.message ?? '';
 
   return {
     invocation_id: args.invocation_id,
-    surface: "control-loop",
-    producer: args.producer ?? "control-loop-runner",
+    surface: 'control-loop',
+    producer: args.producer ?? 'control-loop-runner',
     outcome: controlLoopStateToOutcome(ev.state),
     started_at: new Date(ev.startedAt),
     ended_at: new Date(ev.finishedAt),
@@ -178,8 +176,8 @@ export interface OpencodeDryRunSummaryLike {
   status: string;
   generatedAt: string;
   packReadinessStatus: string;
-  costBand: "low" | "medium" | "high" | "unknown";
-  riskLevel: "low" | "medium" | "high" | "unknown";
+  costBand: 'low' | 'medium' | 'high' | 'unknown';
+  riskLevel: 'low' | 'medium' | 'high' | 'unknown';
   filesInScope: ReadonlyArray<string>;
   filesForbidden: ReadonlyArray<string>;
   acceptanceCriteria: ReadonlyArray<string>;
@@ -187,25 +185,25 @@ export interface OpencodeDryRunSummaryLike {
   checkPlan: ReadonlyArray<{
     name: string;
     command: string;
-    source: "ticket-pack" | "repo-gate";
-    kind: "shell" | "policy" | "manual";
+    source: 'ticket-pack' | 'repo-gate';
+    kind: 'shell' | 'policy' | 'manual';
   }>;
   refusals: ReadonlyArray<{ code: string; message: string }>;
 }
 
 function harnessStatusToOutcome(status: string): RunArtefactOutcome {
   switch (status) {
-    case "ready":
+    case 'ready':
       // The harness never dispatches; "ready" means a real run *would*
       // start. From the artefact's view that maps to `planned`.
-      return "planned";
-    case "blocked":
-    case "needs_clarification":
-    case "too_large":
-      return "refused";
-    case "harness_error":
+      return 'planned';
+    case 'blocked':
+    case 'needs_clarification':
+    case 'too_large':
+      return 'refused';
+    case 'harness_error':
     default:
-      return "failed";
+      return 'failed';
   }
 }
 
@@ -222,30 +220,29 @@ export interface FromOpencodeDryRunArgs {
   skill_version?: string;
 }
 
-export function fromOpencodeDryRunSummary(
-  args: FromOpencodeDryRunArgs,
-): RunArtefactInput {
+export function fromOpencodeDryRunSummary(args: FromOpencodeDryRunArgs): RunArtefactInput {
   const { summary } = args;
   const refusal = summary.refusals[0];
 
-  const acceptance: ReadonlyArray<AcceptanceCriterionCoverage> =
-    summary.acceptanceCriteria.map((criterion) => ({
+  const acceptance: ReadonlyArray<AcceptanceCriterionCoverage> = summary.acceptanceCriteria.map(
+    (criterion) => ({
       criterion,
-      status: "unknown" as const,
-    }));
+      status: 'unknown' as const,
+    }),
+  );
 
   const checks: ArtefactCheck[] = summary.checkPlan.map((c) => ({
     name: c.name,
     command: c.command,
-    outcome: "skipped" as const,
+    outcome: 'skipped' as const,
     durationMs: 0,
     kind: c.kind,
   }));
 
   return {
     invocation_id: args.invocation_id,
-    surface: "opencode-harness",
-    producer: args.producer ?? "opencode-harness:dry-run",
+    surface: 'opencode-harness',
+    producer: args.producer ?? 'opencode-harness:dry-run',
     outcome: harnessStatusToOutcome(summary.status),
     started_at: args.started_at,
     ended_at: args.ended_at,
@@ -264,7 +261,7 @@ export function fromOpencodeDryRunSummary(
     ...(args.prompt_version !== undefined ? { prompt_version: args.prompt_version } : {}),
     ...(args.skill_version !== undefined ? { skill_version: args.skill_version } : {}),
     refusal_code: refusal?.code ?? null,
-    refusal_message: refusal?.message ?? "",
+    refusal_message: refusal?.message ?? '',
     pr_url: null,
     checks,
     changed_files: null,

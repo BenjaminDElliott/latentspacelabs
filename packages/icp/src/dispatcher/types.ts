@@ -14,7 +14,7 @@
  * not require real Linear/RunPod/opencode credentials).
  */
 
-import type { RunArtefact } from "../observability/run-artifact.js";
+import type { RunArtefact } from '../observability/run-artifact.js';
 
 /** Eligibility outcome for one Linear issue against the MVP rules. */
 export type EligibilityOutcome =
@@ -28,7 +28,7 @@ export type EligibilityOutcome =
  * `unknown` unless the explicit-override gate is also active (LAT-129
  * MVP gate).
  */
-export type ComplexityTag = "small" | "medium" | "large" | "unknown";
+export type ComplexityTag = 'small' | 'medium' | 'large' | 'unknown';
 
 /**
  * LAT-134: parsed reasoning tag extracted from the issue's Linear labels.
@@ -39,7 +39,7 @@ export type ComplexityTag = "small" | "medium" | "large" | "unknown";
  *  - `architecture`   → frontier reasoning or human review
  *  - `unknown`        → requires human approval; do not silently dispatch
  */
-export type ReasoningTag = "implementation" | "synthesis" | "architecture" | "unknown";
+export type ReasoningTag = 'implementation' | 'synthesis' | 'architecture' | 'unknown';
 
 /** Linear issue fields the dispatcher reads. */
 export interface DispatchIssue {
@@ -69,22 +69,22 @@ export interface DispatchIssue {
 
 /** Final terminal outcome of a dispatcher invocation. */
 export type DispatchOutcome =
-  | "no_eligible_issue"
-  | "ready_for_review"
-  | "checks_failed"
-  | "failed"
-  | "refused"
-  | "planned"
-  | "config_error"
+  | 'no_eligible_issue'
+  | 'ready_for_review'
+  | 'checks_failed'
+  | 'failed'
+  | 'refused'
+  | 'planned'
+  | 'config_error'
   /**
    * LAT-143: control-loop reported `ready_for_review` but the run produced
    * no actionable review artifact (no branch, no PR, no patch path, no
    * explicit local diff path). The dispatcher refuses to promote such
    * runs because there is nothing for a reviewer to look at.
    */
-  | "no_review_artifact"
+  | 'no_review_artifact'
   /** LAT-138: same ticket already in flight in this process. */
-  | "duplicate_in_flight";
+  | 'duplicate_in_flight';
 
 /** Sanitised summary the dispatcher prints / persists. */
 export interface DispatchReport {
@@ -175,10 +175,10 @@ export interface ControlLoopJsonSummary {
  * exactly where to look.
  */
 export type ReviewArtifact =
-  | { kind: "branch"; ref: string; prUrl: string | null }
-  | { kind: "pr"; prUrl: string }
-  | { kind: "patch"; path: string }
-  | { kind: "diff"; path: string };
+  | { kind: 'branch'; ref: string; prUrl: string | null }
+  | { kind: 'pr'; prUrl: string }
+  | { kind: 'patch'; path: string }
+  | { kind: 'diff'; path: string };
 
 /**
  * Linear client surface the dispatcher uses. Implemented for real by the
@@ -198,7 +198,9 @@ export interface DispatcherLinearClient {
    * description carry the full structured run evidence. The sub-issue is
    * queryable in Linear (filter by parent, by label, by state).
    */
-  createRunRecord(issue: import("./linear-client.js").RunRecordIssue): Promise<{ id: string; url: string }>;
+  createRunRecord(
+    issue: import('./linear-client.js').RunRecordIssue,
+  ): Promise<{ id: string; url: string }>;
 }
 
 /** Spawn surface the dispatcher uses to run the control-loop CLI. */
@@ -209,9 +211,9 @@ export type DispatcherSpawn = (
 ) => DispatcherSpawnedProcess;
 
 export interface DispatcherSpawnedProcess {
-  readonly stdout: { on(event: "data", cb: (chunk: Buffer | string) => void): void };
-  readonly stderr: { on(event: "data", cb: (chunk: Buffer | string) => void): void };
-  on(event: "error", cb: (err: Error) => void): void;
-  on(event: "close", cb: (code: number | null) => void): void;
+  readonly stdout: { on(event: 'data', cb: (chunk: Buffer | string) => void): void };
+  readonly stderr: { on(event: 'data', cb: (chunk: Buffer | string) => void): void };
+  on(event: 'error', cb: (err: Error) => void): void;
+  on(event: 'close', cb: (code: number | null) => void): void;
   kill(signal?: NodeJS.Signals | number): boolean;
 }

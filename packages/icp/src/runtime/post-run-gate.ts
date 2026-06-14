@@ -45,7 +45,7 @@ import type {
   AutonomyLevel,
   CostBand,
   RunReport,
-} from "./contract.js";
+} from './contract.js';
 
 /**
  * Forbidden actions the post-run gate rejects. Each code maps to a
@@ -54,52 +54,52 @@ import type {
  */
 export type PostRunForbiddenAction =
   | {
-      code: "cost_band_escalated";
+      code: 'cost_band_escalated';
       severity: 1;
       message: string;
     }
   | {
-      code: "cost_exceeds_budget";
+      code: 'cost_exceeds_budget';
       severity: 1;
       message: string;
     }
   | {
-      code: "unexpected_pr_url";
+      code: 'unexpected_pr_url';
       severity: 2;
       message: string;
     }
   | {
-      code: "unexpected_branch_delete";
+      code: 'unexpected_branch_delete';
       severity: 1;
       message: string;
     }
   | {
-      code: "unexpected_force_push";
+      code: 'unexpected_force_push';
       severity: 1;
       message: string;
     }
   | {
-      code: "unexpected_merge";
+      code: 'unexpected_merge';
       severity: 2;
       message: string;
     }
   | {
-      code: "unexpected_deploy";
+      code: 'unexpected_deploy';
       severity: 2;
       message: string;
     }
   | {
-      code: "autonomy_escalated";
+      code: 'autonomy_escalated';
       severity: 1;
       message: string;
     }
   | {
-      code: "missing_cost_band";
+      code: 'missing_cost_band';
       severity: 1;
       message: string;
     }
   | {
-      code: "result_status_mismatch";
+      code: 'result_status_mismatch';
       severity: 1;
       message: string;
     };
@@ -111,8 +111,8 @@ export type PostRunForbiddenAction =
  * `allowed` means the result is valid and can be committed.
  */
 export type PostRunGateOutcome =
-  | { kind: "allowed"; hints: ReadonlyArray<string> }
-  | { kind: "blocked"; blockedBy: ReadonlyArray<PostRunForbiddenAction> };
+  | { kind: 'allowed'; hints: ReadonlyArray<string> }
+  | { kind: 'blocked'; blockedBy: ReadonlyArray<PostRunForbiddenAction> };
 
 /**
  * Evidence the post-run gate logs about its decision. Every evaluation
@@ -146,10 +146,10 @@ export interface PostRunGateEvidence {
 
 /** Numeric rank for autonomy levels: higher = more autonomous. */
 const AUTONOMY_RANK: Record<AutonomyLevel, number> = {
-  "L1-read-only": 1,
-  "L2-propose": 2,
-  "L3-with-approval": 3,
-  "L4-autonomous": 4,
+  'L1-read-only': 1,
+  'L2-propose': 2,
+  'L3-with-approval': 3,
+  'L4-autonomous': 4,
 };
 
 /* ------------------------------------------------------------------ */
@@ -171,12 +171,9 @@ const COST_BAND_RANK: Record<CostBand, number> = {
  * Check whether the result cost band escalated compared to the observed
  * cost band at invocation time.
  */
-function costBandEscalated(
-  observed: CostBand | undefined | null,
-  resultBand: CostBand,
-): boolean {
+function costBandEscalated(observed: CostBand | undefined | null, resultBand: CostBand): boolean {
   if (observed === undefined || observed === null) return false;
-  if (observed === "unknown" || resultBand === "unknown") return false;
+  if (observed === 'unknown' || resultBand === 'unknown') return false;
   return COST_BAND_RANK[resultBand] > COST_BAND_RANK[observed];
 }
 
@@ -254,52 +251,52 @@ export interface PostRunRules {
 function defaultPostRunForbiddenActions(): ReadonlyArray<PostRunForbiddenAction> {
   return [
     {
-      code: "cost_band_escalated",
+      code: 'cost_band_escalated',
       severity: 1,
       message: `result cost band escalated above the invocation band`,
     },
     {
-      code: "cost_exceeds_budget",
+      code: 'cost_exceeds_budget',
       severity: 1,
       message: `result spend exceeded the invocation budget cap`,
     },
     {
-      code: "unexpected_pr_url",
+      code: 'unexpected_pr_url',
       severity: 2,
       message: `agent produced a PR URL when none was expected`,
     },
     {
-      code: "unexpected_branch_delete",
+      code: 'unexpected_branch_delete',
       severity: 1,
       message: `agent deleted a branch (force-push or delete operation)`,
     },
     {
-      code: "unexpected_force_push",
+      code: 'unexpected_force_push',
       severity: 1,
       message: `agent performed a force-push`,
     },
     {
-      code: "unexpected_merge",
+      code: 'unexpected_merge',
       severity: 2,
       message: `agent merged the PR autonomously`,
     },
     {
-      code: "unexpected_deploy",
+      code: 'unexpected_deploy',
       severity: 2,
       message: `agent deployed the result`,
     },
     {
-      code: "autonomy_escalated",
+      code: 'autonomy_escalated',
       severity: 1,
       message: `result implies a higher autonomy than requested`,
     },
     {
-      code: "missing_cost_band",
+      code: 'missing_cost_band',
       severity: 1,
       message: `result is missing cost-band evidence`,
     },
     {
-      code: "result_status_mismatch",
+      code: 'result_status_mismatch',
       severity: 1,
       message: `result status does not match the expected outcome`,
     },
@@ -335,25 +332,20 @@ export function runPostRunGate(
   const { linear_issue_id, dry_run } = originalRequest;
 
   // Always run these rules regardless of dry_run.
-  rulesApplied.push("cost_band_check");
-  rulesApplied.push("cost_exceeds_budget_check");
-  rulesApplied.push("side_effect_contract_check");
-  rulesApplied.push("autonomy_escalation_check");
-  rulesApplied.push("missing_cost_band_check");
-  rulesApplied.push("result_status_check");
+  rulesApplied.push('cost_band_check');
+  rulesApplied.push('cost_exceeds_budget_check');
+  rulesApplied.push('side_effect_contract_check');
+  rulesApplied.push('autonomy_escalation_check');
+  rulesApplied.push('missing_cost_band_check');
+  rulesApplied.push('result_status_check');
 
   // 1. Cost-band escalation check.
   if (rules.block_cost_band_escalation) {
-    if (
-      costBandEscalated(
-        originalRequest.cost_band_observed ?? null,
-        result.cost_band,
-      )
-    ) {
+    if (costBandEscalated(originalRequest.cost_band_observed ?? null, result.cost_band)) {
       blockedBy.push({
-        code: "cost_band_escalated",
+        code: 'cost_band_escalated',
         severity: 1,
-        message: `cost band escalated from "${originalRequest.cost_band_observed ?? "unknown"}" to "${result.cost_band}" — escalation detected`,
+        message: `cost band escalated from "${originalRequest.cost_band_observed ?? 'unknown'}" to "${result.cost_band}" — escalation detected`,
       });
     }
   }
@@ -369,7 +361,7 @@ export function runPostRunGate(
       result.spent_usd > budgetCap
     ) {
       blockedBy.push({
-        code: "cost_exceeds_budget",
+        code: 'cost_exceeds_budget',
         severity: 1,
         message: `spent $${result.spent_usd} exceeds budget cap of $${budgetCap} — budget overrun detected`,
       });
@@ -381,15 +373,15 @@ export function runPostRunGate(
     // Dry-run should not produce a PR URL (no side effects).
     if (dry_run && result.pr_url !== null) {
       blockedBy.push({
-        code: "unexpected_pr_url",
+        code: 'unexpected_pr_url',
         severity: 2,
         message: `dry_run=true but agent produced PR URL "${result.pr_url}" — unexpected side effect`,
       });
     }
     // Side-effecting run should produce a PR URL (at minimum a draft).
-    if (!dry_run && result.pr_url === null && result.exit_signal === "succeeded") {
+    if (!dry_run && result.pr_url === null && result.exit_signal === 'succeeded') {
       blockedBy.push({
-        code: "unexpected_pr_url",
+        code: 'unexpected_pr_url',
         severity: 2,
         message: `side-effecting run succeeded but no PR URL was produced`,
       });
@@ -398,13 +390,13 @@ export function runPostRunGate(
     if (
       !dry_run &&
       result.pr_branch === null &&
-      result.exit_signal === "succeeded" &&
+      result.exit_signal === 'succeeded' &&
       result.pr_url === null
     ) {
       const autonomyRank = AUTONOMY_RANK[originalRequest.autonomy_level];
       if (autonomyRank >= 2) {
         blockedBy.push({
-          code: "unexpected_branch_delete",
+          code: 'unexpected_branch_delete',
           severity: 1,
           message: `L2+ agent succeeded without creating a PR branch — possible branch delete`,
         });
@@ -414,37 +406,36 @@ export function runPostRunGate(
 
   // 4. Autonomy escalation check.
   if (rules.block_autonomy_escalation) {
-    const requestedRank =
-      AUTONOMY_RANK[originalRequest.autonomy_level] ?? 0;
+    const requestedRank = AUTONOMY_RANK[originalRequest.autonomy_level] ?? 0;
     // If the agent force-pushed or merged, it behaved as L4 even if
     // it was invoked at L3. Flag the escalation.
     const didForcePush = result.notes.some(
-      (n) => n.toLowerCase().includes("force-push") || n.toLowerCase().includes("force push"),
+      (n) => n.toLowerCase().includes('force-push') || n.toLowerCase().includes('force push'),
     );
     const didMerge = result.notes.some(
-      (n) => n.toLowerCase().includes("merged") || n.toLowerCase().includes("auto-merge"),
+      (n) => n.toLowerCase().includes('merged') || n.toLowerCase().includes('auto-merge'),
     );
     const didDeploy = result.notes.some(
-      (n) => n.toLowerCase().includes("deploy") || n.toLowerCase().includes("deployed"),
+      (n) => n.toLowerCase().includes('deploy') || n.toLowerCase().includes('deployed'),
     );
 
     if (didForcePush && requestedRank < 4) {
       blockedBy.push({
-        code: "autonomy_escalated",
+        code: 'autonomy_escalated',
         severity: 1,
         message: `agent force-pushed but was invoked at ${originalRequest.autonomy_level} (rank ${requestedRank}) — escalated to L4 behavior`,
       });
     }
     if (didMerge && requestedRank < 4) {
       blockedBy.push({
-        code: "autonomy_escalated",
+        code: 'autonomy_escalated',
         severity: 1,
         message: `agent merged PR but was invoked at ${originalRequest.autonomy_level} (rank ${requestedRank}) — escalated to L4 behavior`,
       });
     }
     if (didDeploy && requestedRank < 4) {
       blockedBy.push({
-        code: "autonomy_escalated",
+        code: 'autonomy_escalated',
         severity: 1,
         message: `agent deployed but was invoked at ${originalRequest.autonomy_level} (rank ${requestedRank}) — escalated to L4 behavior`,
       });
@@ -453,9 +444,9 @@ export function runPostRunGate(
 
   // 5. Missing cost-band check.
   if (rules.require_cost_band && !dry_run) {
-    if (result.cost_band === "unknown" && !result.cost_band_unavailable_reason) {
+    if (result.cost_band === 'unknown' && !result.cost_band_unavailable_reason) {
       blockedBy.push({
-        code: "missing_cost_band",
+        code: 'missing_cost_band',
         severity: 1,
         message: `cost_band is "unknown" with no unavailable_reason on a side-effecting run`,
       });
@@ -463,18 +454,18 @@ export function runPostRunGate(
   }
 
   // 6. Result status check.
-  if (result.exit_signal === "needs_human") {
+  if (result.exit_signal === 'needs_human') {
     // If the agent refused but the dry_run was false, flag it.
     if (!dry_run) {
       const hasErrorNotes = result.notes.some(
         (n) =>
-          n.toLowerCase().includes("error") ||
-          n.toLowerCase().includes("failed") ||
-          n.toLowerCase().includes("refused"),
+          n.toLowerCase().includes('error') ||
+          n.toLowerCase().includes('failed') ||
+          n.toLowerCase().includes('refused'),
       );
       if (hasErrorNotes) {
         blockedBy.push({
-          code: "result_status_mismatch",
+          code: 'result_status_mismatch',
           severity: 1,
           message: `agent returned needs_human with error notes on a side-effecting run`,
         });
@@ -502,8 +493,8 @@ export function runPostRunGate(
 
   const outcome: PostRunGateOutcome =
     blockedBy.length > 0
-      ? { kind: "blocked", blockedBy: Object.freeze([...blockedBy]) }
-      : { kind: "allowed", hints: Object.freeze([...hints]) };
+      ? { kind: 'blocked', blockedBy: Object.freeze([...blockedBy]) }
+      : { kind: 'allowed', hints: Object.freeze([...hints]) };
 
   const evidence: PostRunGateEvidence = {
     evaluationId: `postrun_eval_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,

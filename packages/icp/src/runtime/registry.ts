@@ -8,9 +8,9 @@
  * directory (`docs/decisions/`, `docs/prds/`, `docs/process/`, or
  * `docs/templates/`).
  */
-import { access } from "node:fs/promises";
-import { resolve } from "node:path";
-import type { SkillDefinition, SkillStatus, ToolName } from "./contract.js";
+import { access } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import type { SkillDefinition, SkillStatus, ToolName } from './contract.js';
 
 /**
  * Canonical-doc roots a skill's `derived_from:` entry may point into
@@ -19,10 +19,10 @@ import type { SkillDefinition, SkillStatus, ToolName } from "./contract.js";
  * provenance source — the canonical regime is `docs/`.
  */
 const CANONICAL_DOC_ROOTS = [
-  "docs/decisions/",
-  "docs/prds/",
-  "docs/process/",
-  "docs/templates/",
+  'docs/decisions/',
+  'docs/prds/',
+  'docs/process/',
+  'docs/templates/',
 ] as const;
 
 // Skills declare more specific input/output types than the registry stores.
@@ -43,7 +43,7 @@ export class SkillRegistryError extends Error {
     public readonly detail: string,
   ) {
     super(`skill '${skillName}' invalid: ${detail}`);
-    this.name = "SkillRegistryError";
+    this.name = 'SkillRegistryError';
   }
 }
 
@@ -73,9 +73,7 @@ export class SkillRegistry {
 
   get(name: string, version?: string): RegisteredSkill | undefined {
     if (version) return this.skills.get(`${name}@${version}`);
-    const match = [...this.skills.values()].find(
-      (s) => s.definition.name === name,
-    );
+    const match = [...this.skills.values()].find((s) => s.definition.name === name);
     return match;
   }
 
@@ -84,8 +82,8 @@ export class SkillRegistry {
   }
 
   private validateShape(def: AnySkillDefinition): void {
-    if (!def.name || typeof def.name !== "string") {
-      throw new SkillRegistryError(def.name ?? "<unnamed>", "missing name");
+    if (!def.name || typeof def.name !== 'string') {
+      throw new SkillRegistryError(def.name ?? '<unnamed>', 'missing name');
     }
     if (!/^\d+\.\d+\.\d+$/.test(def.version)) {
       throw new SkillRegistryError(
@@ -93,42 +91,33 @@ export class SkillRegistry {
         `version '${def.version}' is not semver MAJOR.MINOR.PATCH`,
       );
     }
-    if (typeof def.execute !== "function") {
-      throw new SkillRegistryError(def.name, "execute is not a function");
+    if (typeof def.execute !== 'function') {
+      throw new SkillRegistryError(def.name, 'execute is not a function');
     }
     if (!def.derived_at || !/^\d{4}-\d{2}-\d{2}$/.test(def.derived_at)) {
-      throw new SkillRegistryError(
-        def.name,
-        "derived_at must be an ISO date (YYYY-MM-DD)",
-      );
+      throw new SkillRegistryError(def.name, 'derived_at must be an ISO date (YYYY-MM-DD)');
     }
   }
 
   private async validateProvenance(def: AnySkillDefinition): Promise<void> {
     if (!def.derived_from || def.derived_from.length === 0) {
-      throw new SkillRegistryError(
-        def.name,
-        "derived_from is empty (ADR-0004 violation)",
-      );
+      throw new SkillRegistryError(def.name, 'derived_from is empty (ADR-0004 violation)');
     }
     for (const rel of def.derived_from) {
       // Normalise backslashes so a path authored on Windows still validates
       // against the POSIX-style canonical roots below.
-      const norm = rel.replace(/\\/g, "/");
+      const norm = rel.replace(/\\/g, '/');
       if (!CANONICAL_DOC_ROOTS.some((root) => norm.startsWith(root))) {
         throw new SkillRegistryError(
           def.name,
-          `derived_from path must point into ${CANONICAL_DOC_ROOTS.join(", ")} (ADR-0016): ${rel}`,
+          `derived_from path must point into ${CANONICAL_DOC_ROOTS.join(', ')} (ADR-0016): ${rel}`,
         );
       }
       const abs = resolve(this.options.repoRoot, rel);
       try {
         await access(abs);
       } catch {
-        throw new SkillRegistryError(
-          def.name,
-          `derived_from path does not resolve: ${rel}`,
-        );
+        throw new SkillRegistryError(def.name, `derived_from path does not resolve: ${rel}`);
       }
     }
   }

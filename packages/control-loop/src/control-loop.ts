@@ -21,14 +21,10 @@
  * are explicit non-goals for this MVP slice.
  */
 
-import { dryRun } from "@latentspacelabs/opencode-harness";
-import type {
-  CostBand,
-  RiskLevel,
-  TicketPack,
-} from "@latentspacelabs/opencode-harness";
+import { dryRun } from '@latentspacelabs/opencode-harness';
+import type { CostBand, RiskLevel, TicketPack } from '@latentspacelabs/opencode-harness';
 
-import { runAllGuardrails } from "./guardrails.js";
+import { runAllGuardrails } from './guardrails.js';
 import type {
   AdapterRequest,
   BranchEvidence,
@@ -39,9 +35,9 @@ import type {
   RunState,
   RunSummary,
   RuntimeAdapter,
-} from "./types.js";
-import { MissingConfigError } from "./types.js";
-import { selectAdapter } from "./adapters.js";
+} from './types.js';
+import { MissingConfigError } from './types.js';
+import { selectAdapter } from './adapters.js';
 
 export interface RunControlLoopOptions {
   packPath: string;
@@ -60,25 +56,28 @@ export interface RunControlLoopOptions {
 
 function nextActionFor(state: RunState, refusals: ReadonlyArray<RefusalEvidence>): string {
   switch (state) {
-    case "ready_for_review":
-      return "Human reviewer: open the planned branch, inspect the diff, and decide whether to merge.";
-    case "checks_failed":
-      return "Human reviewer: inspect failed checks; fix the pack or the implementation, then re-run.";
-    case "failed":
-      return "Operator: read adapter logs, address the failure cause, then re-run. Do not retry blindly.";
-    case "refused": {
-      const codes = refusals.map((r) => r.code).join(", ");
-      return `Author: address the refusal (${codes || "see refusals"}) and resubmit a corrected pack.`;
+    case 'ready_for_review':
+      return 'Human reviewer: open the planned branch, inspect the diff, and decide whether to merge.';
+    case 'checks_failed':
+      return 'Human reviewer: inspect failed checks; fix the pack or the implementation, then re-run.';
+    case 'failed':
+      return 'Operator: read adapter logs, address the failure cause, then re-run. Do not retry blindly.';
+    case 'refused': {
+      const codes = refusals.map((r) => r.code).join(', ');
+      return `Author: address the refusal (${codes || 'see refusals'}) and resubmit a corrected pack.`;
     }
-    case "planned":
-      return "Operator: re-run with mode=mock or mode=live to actually dispatch.";
-    case "running":
+    case 'planned':
+      return 'Operator: re-run with mode=mock or mode=live to actually dispatch.';
+    case 'running':
       // Should never be observed in a final summary.
-      return "Adapter is still running; this should not appear in a final summary.";
+      return 'Adapter is still running; this should not appear in a final summary.';
   }
 }
 
-function buildAdapterRequest(pack: TicketPack, requiredChecks: ReadonlyArray<{ name: string; command: string }>): AdapterRequest {
+function buildAdapterRequest(
+  pack: TicketPack,
+  requiredChecks: ReadonlyArray<{ name: string; command: string }>,
+): AdapterRequest {
   return {
     ticket: pack.header.linearId,
     packPath: pack.rawPath,
@@ -87,7 +86,7 @@ function buildAdapterRequest(pack: TicketPack, requiredChecks: ReadonlyArray<{ n
     riskLevel: pack.header.riskLevel,
     branch: pack.branchRules.branch,
     prTitlePrefix: pack.branchRules.prTitlePrefix,
-    prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : "main",
+    prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : 'main',
     filesInScope: pack.filesInScope,
     filesForbidden: pack.filesForbidden,
     requiredChecks,
@@ -102,18 +101,18 @@ function refusedSummary(args: {
   ticket: string;
   packPath: string;
   mode: RunMode;
-  costBand: CostBand | "unknown";
-  riskLevel: RiskLevel | "unknown";
+  costBand: CostBand | 'unknown';
+  riskLevel: RiskLevel | 'unknown';
   refusals: ReadonlyArray<RefusalEvidence>;
   startedAt: string;
   finishedAt: string;
-  preflight: RunSummary["preflight"];
+  preflight: RunSummary['preflight'];
   branch: BranchEvidence | null;
 }): RunSummary {
   const evidence: RunEvidence = {
     ticket: args.ticket,
     packPath: args.packPath,
-    state: "refused",
+    state: 'refused',
     mode: args.mode,
     costBand: args.costBand,
     riskLevel: args.riskLevel,
@@ -124,10 +123,10 @@ function refusedSummary(args: {
     logs: null,
     startedAt: args.startedAt,
     finishedAt: args.finishedAt,
-    nextHumanAction: nextActionFor("refused", args.refusals),
+    nextHumanAction: nextActionFor('refused', args.refusals),
   };
   return {
-    schemaVersion: "1.0.0",
+    schemaVersion: '1.0.0',
     evidence,
     preflight: args.preflight,
   };
@@ -142,7 +141,7 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   const preflight = dry.summary;
 
   // Step 1: harness refusal short-circuits us before any adapter runs.
-  if (preflight.status !== "ready") {
+  if (preflight.status !== 'ready') {
     return refusedSummary({
       ticket: preflight.ticket,
       packPath: preflight.packPath,
@@ -168,8 +167,8 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
       riskLevel: preflight.riskLevel,
       refusals: [
         {
-          code: "harness_inconsistent",
-          message: "harness reported ready but did not return a parsed pack; refusing.",
+          code: 'harness_inconsistent',
+          message: 'harness reported ready but did not return a parsed pack; refusing.',
         },
       ],
       startedAt,
@@ -210,7 +209,7 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
         riskLevel: pack.header.riskLevel,
         refusals: [
           {
-            code: "missing_runtime_config",
+            code: 'missing_runtime_config',
             message: err.message,
           },
         ],
@@ -224,18 +223,18 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   }
 
   // Step 4: plan mode does not dispatch.
-  if (options.mode === "plan") {
+  if (options.mode === 'plan') {
     const branch: BranchEvidence = {
       branch: pack.branchRules.branch,
       prTitlePrefix: pack.branchRules.prTitlePrefix,
-      prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : "main",
+      prBase: pack.branchRules.prBase.length > 0 ? pack.branchRules.prBase : 'main',
       prUrl: null,
     };
     const finishedAt = now().toISOString();
     const evidence: RunEvidence = {
       ticket: pack.header.linearId,
       packPath: pack.rawPath,
-      state: "planned",
+      state: 'planned',
       mode: options.mode,
       costBand: pack.header.costBand,
       riskLevel: pack.header.riskLevel,
@@ -246,9 +245,9 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
       logs: null,
       startedAt,
       finishedAt,
-      nextHumanAction: nextActionFor("planned", []),
+      nextHumanAction: nextActionFor('planned', []),
     };
-    return { schemaVersion: "1.0.0", evidence, preflight };
+    return { schemaVersion: '1.0.0', evidence, preflight };
   }
 
   // Step 5: dispatch.
@@ -259,8 +258,8 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   // every `Expected checks` bullet to the adapter, which then tried to
   // exec English like `No edits under forbidden paths.` and failed with
   // `/bin/sh: No: command not found`.
-  const shellChecks = preflight.checkPlan.filter((c) => c.kind === "shell");
-  const nonShellChecks = preflight.checkPlan.filter((c) => c.kind !== "shell");
+  const shellChecks = preflight.checkPlan.filter((c) => c.kind === 'shell');
+  const nonShellChecks = preflight.checkPlan.filter((c) => c.kind !== 'shell');
   const requiredChecks = shellChecks.map((c) => ({ name: c.name, command: c.command }));
   const request = buildAdapterRequest(pack, requiredChecks);
 
@@ -277,7 +276,7 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
         riskLevel: pack.header.riskLevel,
         refusals: [
           {
-            code: "missing_runtime_config",
+            code: 'missing_runtime_config',
             message: err.message,
           },
         ],
@@ -293,25 +292,25 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
     const evidence: RunEvidence = {
       ticket: pack.header.linearId,
       packPath: pack.rawPath,
-      state: "failed",
+      state: 'failed',
       mode: options.mode,
       costBand: pack.header.costBand,
       riskLevel: pack.header.riskLevel,
-      provider: { adapter: adapter.id, runtimeId: "unknown", costClass: pack.header.costBand },
+      provider: { adapter: adapter.id, runtimeId: 'unknown', costClass: pack.header.costBand },
       branch: null,
       checks: [],
       refusals: [
         {
-          code: "adapter_threw",
+          code: 'adapter_threw',
           message: `adapter ${adapter.id} threw: ${message}`,
         },
       ],
       logs: null,
       startedAt,
       finishedAt,
-      nextHumanAction: nextActionFor("failed", []),
+      nextHumanAction: nextActionFor('failed', []),
     };
-    return { schemaVersion: "1.0.0", evidence, preflight };
+    return { schemaVersion: '1.0.0', evidence, preflight };
   }
 
   // Step 6: translate adapter result.
@@ -324,18 +323,18 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
   // preserves forbidden-path protection (the rule is visible and the
   // pack still declares `filesForbidden`) without weakening it.
   const adapterChecks: CheckResult[] = result.checks.map((c) =>
-    c.kind === undefined ? { ...c, kind: "shell" as const } : c,
+    c.kind === undefined ? { ...c, kind: 'shell' as const } : c,
   );
   const policyEvidence: CheckResult[] = nonShellChecks.map((c) => ({
     name: c.name,
     command: c.command,
-    outcome: "manual" as const,
+    outcome: 'manual' as const,
     durationMs: 0,
-    kind: c.kind === "policy" ? "policy" : "manual",
+    kind: c.kind === 'policy' ? 'policy' : 'manual',
     detail:
-      c.kind === "policy" && c.policyId === "forbidden_paths"
+      c.kind === 'policy' && c.policyId === 'forbidden_paths'
         ? "Reviewer must confirm the diff touches no path matched by the pack's `filesForbidden` list."
-        : "Reviewer must confirm this assertion against the resulting branch.",
+        : 'Reviewer must confirm this assertion against the resulting branch.',
   }));
   const checks: CheckResult[] = [...adapterChecks, ...policyEvidence];
   const finishedAt = now().toISOString();
@@ -355,5 +354,5 @@ export async function runControlLoop(options: RunControlLoopOptions): Promise<Ru
     finishedAt,
     nextHumanAction: nextActionFor(result.state, result.refusals ?? []),
   };
-  return { schemaVersion: "1.0.0", evidence, preflight };
+  return { schemaVersion: '1.0.0', evidence, preflight };
 }

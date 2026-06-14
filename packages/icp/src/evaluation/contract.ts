@@ -14,10 +14,7 @@
  * - Failure categories seeded from real LAT-61 refusal kinds; no speculative
  *   "long-term pattern" categories until the harness has real runs to read.
  */
-import type {
-  AgentInvocationResult,
-  CodingAgentRefusalKind,
-} from "./types-re-export.js";
+import type { AgentInvocationResult, CodingAgentRefusalKind } from './types-re-export.js';
 
 /**
  * ADR-0007 recommendation ladder. This PRD (LAT-26 §6.2 non-functional rule
@@ -25,14 +22,14 @@ import type {
  * and produces the same five tokens the review/QA report templates carry.
  */
 export type Recommendation =
-  | "approve"
-  | "approve-with-nits"
-  | "request-changes"
-  | "block-merge"
-  | "needs-human";
+  | 'approve'
+  | 'approve-with-nits'
+  | 'request-changes'
+  | 'block-merge'
+  | 'needs-human';
 
 /** ADR-0007 severity ladder; reused verbatim. */
-export type Severity = "nit" | "low" | "medium" | "high" | "critical";
+export type Severity = 'nit' | 'low' | 'medium' | 'high' | 'critical';
 
 /**
  * The failure-category vocabulary the harness records on every non-success
@@ -53,11 +50,11 @@ export type Severity = "nit" | "low" | "medium" | "high" | "critical";
  * drifting into retro aggregation. New categories require an ADR amendment.
  */
 export type FailureCategory =
-  | "none"
+  | 'none'
   | CodingAgentRefusalKind
-  | "missing_evidence_floor"
-  | "recommendation_ladder_violation"
-  | "preflight_ticket_not_agent_ready";
+  | 'missing_evidence_floor'
+  | 'recommendation_ladder_violation'
+  | 'preflight_ticket_not_agent_ready';
 
 /**
  * A single finding surfaced by the evaluator. Compact on purpose — the full
@@ -97,7 +94,7 @@ export interface EvaluationReport {
 }
 
 /** The readiness-check's three-valued verdict, per PRD LAT-26 §6.3. */
-export type ReadinessVerdict = "ready" | "caution" | "refuse";
+export type ReadinessVerdict = 'ready' | 'caution' | 'refuse';
 
 /**
  * Structured reason the readiness check emits. Mirrors the LAT-61 refusal
@@ -124,7 +121,7 @@ export interface ReadinessReport {
 export interface ReadinessTicketInput {
   linear_issue_id: string;
   /** Risk level from the agent-ready ticket. `null` = not set. */
-  risk_level: "low" | "medium" | "high" | null;
+  risk_level: 'low' | 'medium' | 'high' | null;
   /** Numeric budget cap from the agent-ready ticket. `null` = missing. */
   budget_cap_usd: number | null;
   /** Scope block. Both in/out arrays must be non-empty to pass. */
@@ -135,7 +132,7 @@ export interface ReadinessTicketInput {
   /** Whether the ticket's Tests section is populated. */
   has_tests_section: boolean;
   /** ADR-0005 sequencing: `unknown` means the block was missing. */
-  sequencing_status: "ready" | "caution" | "blocked" | "unknown";
+  sequencing_status: 'ready' | 'caution' | 'blocked' | 'unknown';
   /** Whether the coding-agent repo target is known (`owner/name`). */
   repo: string | null;
   /** Whether a one-sentence goal was provided. */

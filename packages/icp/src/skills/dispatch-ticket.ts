@@ -16,13 +16,8 @@
  * This is the runtime adapter for the three canonical docs named in
  * `derived_from`; the runner / registry enforce provenance and evidence.
  */
-import type {
-  AutonomyLevel,
-  CostBand,
-  SkillDefinition,
-  SkillStatus,
-} from "../runtime/contract.js";
-import type { FormatInput } from "../adapters/write-back-formatter.js";
+import type { AutonomyLevel, CostBand, SkillDefinition, SkillStatus } from '../runtime/contract.js';
+import type { FormatInput } from '../adapters/write-back-formatter.js';
 
 export interface DispatchTicketInputs extends Record<string, unknown> {
   linear_issue_id: string;
@@ -46,7 +41,7 @@ export interface DispatchTicketInputs extends Record<string, unknown> {
    * to `normal`; callers aware of elevated/runaway_risk context pass it
    * explicitly so the adapter can refuse preflight.
    */
-  cost_band_observed?: "normal" | "elevated" | "runaway_risk" | "unknown";
+  cost_band_observed?: 'normal' | 'elevated' | 'runaway_risk' | 'unknown';
 }
 
 export type DispatchTicketOutputs = {
@@ -72,40 +67,37 @@ export type DispatchTicketOutputs = {
   budget_cap_usd: number | null;
 } & Record<string, unknown>;
 
-const AUTONOMY: AutonomyLevel = "L3-with-approval";
+const AUTONOMY: AutonomyLevel = 'L3-with-approval';
 
-export const dispatchTicketSkill: SkillDefinition<
-  DispatchTicketInputs,
-  DispatchTicketOutputs
-> = {
-  name: "dispatch-ticket",
-  version: "0.2.0",
+export const dispatchTicketSkill: SkillDefinition<DispatchTicketInputs, DispatchTicketOutputs> = {
+  name: 'dispatch-ticket',
+  version: '0.2.0',
   inputs: [
-    { name: "linear_issue_id", type: "string", required: true },
-    { name: "approve", type: "boolean", required: false },
-    { name: "dry_run", type: "boolean", required: false },
-    { name: "repo", type: "string", required: false },
-    { name: "branch_target", type: "string", required: false },
-    { name: "ticket_title", type: "string", required: false },
-    { name: "ticket_summary", type: "string", required: false },
-    { name: "cost_band_observed", type: "string", required: false },
+    { name: 'linear_issue_id', type: 'string', required: true },
+    { name: 'approve', type: 'boolean', required: false },
+    { name: 'dry_run', type: 'boolean', required: false },
+    { name: 'repo', type: 'string', required: false },
+    { name: 'branch_target', type: 'string', required: false },
+    { name: 'ticket_title', type: 'string', required: false },
+    { name: 'ticket_summary', type: 'string', required: false },
+    { name: 'cost_band_observed', type: 'string', required: false },
   ],
   required_tools: [
-    "linear-adapter",
-    "policy-evaluator",
-    "agent-invocation-adapter",
-    "run-recorder",
-    "write-back-formatter",
+    'linear-adapter',
+    'policy-evaluator',
+    'agent-invocation-adapter',
+    'run-recorder',
+    'write-back-formatter',
   ],
   autonomy_level: AUTONOMY,
   requires_approval_flag: true,
   evidence: { run_report: true, linear_write_back: true, cost_band: true },
   derived_from: [
-    "docs/decisions/0005-linear-dependency-and-sequencing-model.md",
-    "docs/decisions/0006-agent-run-visibility-schema.md",
-    "docs/decisions/0008-agent-control-layer-and-perplexity-boundary.md",
+    'docs/decisions/0005-linear-dependency-and-sequencing-model.md',
+    'docs/decisions/0006-agent-run-visibility-schema.md',
+    'docs/decisions/0008-agent-control-layer-and-perplexity-boundary.md',
   ],
-  derived_at: "2026-04-23",
+  derived_at: '2026-04-23',
 
   async execute(ctx) {
     const startedAt = ctx.now();
@@ -120,11 +112,11 @@ export const dispatchTicketSkill: SkillDefinition<
 
     // Refuse dispatch when the policy verdict is worse than caution, unless
     // this is a dry-run (which is allowed to surface reasons regardless).
-    const policyRefuses = policy.verdict === "blocked" || policy.verdict === "stop";
+    const policyRefuses = policy.verdict === 'blocked' || policy.verdict === 'stop';
 
     if (policyRefuses && !ctx.dry_run) {
       const recorded = await ctx.tools.runRecorder.record({
-        run_id: "",
+        run_id: '',
         linear_issue_id: linearIssueId,
         autonomy_level: AUTONOMY,
         started_at: startedAt,
@@ -134,12 +126,12 @@ export const dispatchTicketSkill: SkillDefinition<
         agent_result: null,
         dry_run: false,
         summary: `Dispatch refused for ${linearIssueId}: ${policy.verdict}`,
-        next_action: "resolve policy failures and retry",
+        next_action: 'resolve policy failures and retry',
         open_questions: policy.reasons,
         budget_cap_usd: issue.budget_cap_usd,
       });
       return {
-        status: "blocked",
+        status: 'blocked',
         run_id: recorded.report.run_id,
         linear_issue_id: linearIssueId,
         pr_url: null,
@@ -157,7 +149,7 @@ export const dispatchTicketSkill: SkillDefinition<
     // Dry-run: evaluate policy + record, but never invoke the agent or post.
     if (ctx.dry_run) {
       const recorded = await ctx.tools.runRecorder.record({
-        run_id: "",
+        run_id: '',
         linear_issue_id: linearIssueId,
         autonomy_level: AUTONOMY,
         started_at: startedAt,
@@ -168,14 +160,14 @@ export const dispatchTicketSkill: SkillDefinition<
         dry_run: true,
         summary: `Dry-run dispatch evaluation for ${linearIssueId}: verdict=${policy.verdict}`,
         next_action:
-          policy.verdict === "ready"
-            ? "rerun with approve=true to dispatch"
-            : "address the policy reasons before dispatch",
+          policy.verdict === 'ready'
+            ? 'rerun with approve=true to dispatch'
+            : 'address the policy reasons before dispatch',
         open_questions: policy.reasons,
         budget_cap_usd: issue.budget_cap_usd,
       });
       return {
-        status: policy.verdict === "ready" ? "succeeded" : "caution",
+        status: policy.verdict === 'ready' ? 'succeeded' : 'caution',
         run_id: recorded.report.run_id,
         linear_issue_id: linearIssueId,
         pr_url: null,
@@ -197,13 +189,13 @@ export const dispatchTicketSkill: SkillDefinition<
     // cost_band_observed, skill_name_and_version). The adapter refuses
     // structurally when any required field is missing.
     const agentResult = await ctx.tools.agents.invoke({
-      agent_type: "coding",
+      agent_type: 'coding',
       linear_issue_id: linearIssueId,
       autonomy_level: AUTONOMY,
       approve: ctx.approve,
       dry_run: false,
       repo: ctx.inputs.repo,
-      branch_target: ctx.inputs.branch_target ?? "main",
+      branch_target: ctx.inputs.branch_target ?? 'main',
       branch_naming: `lat-${issueNumber(linearIssueId)}-<slug>`,
       ticket_context: {
         title: ctx.inputs.ticket_title ?? linearIssueId,
@@ -212,20 +204,20 @@ export const dispatchTicketSkill: SkillDefinition<
           issue.sequencing.dispatch_note ??
           `Dispatch ${linearIssueId} per ADR-0005 / ADR-0013.`,
         guardrails: [
-          "No auto-merge; all PRs are human-reviewed (ADR-0008).",
-          "No secret values in PR body, logs, or run report (ADR-0017 Rule 5).",
-          "ADR-0009 cost bands apply; runaway risk halts dispatch.",
+          'No auto-merge; all PRs are human-reviewed (ADR-0008).',
+          'No secret values in PR body, logs, or run report (ADR-0017 Rule 5).',
+          'ADR-0009 cost bands apply; runaway risk halts dispatch.',
         ],
         non_goals: [],
       },
       budget_cap_usd: issue.budget_cap_usd,
-      cost_band_observed: ctx.inputs.cost_band_observed ?? "normal",
-      skill_name_and_version: "dispatch-ticket@0.2.0",
+      cost_band_observed: ctx.inputs.cost_band_observed ?? 'normal',
+      skill_name_and_version: 'dispatch-ticket@0.2.0',
     });
 
     const endedAt = ctx.now();
     const recorded = await ctx.tools.runRecorder.record({
-      run_id: "",
+      run_id: '',
       linear_issue_id: linearIssueId,
       autonomy_level: AUTONOMY,
       started_at: startedAt,
@@ -245,7 +237,7 @@ export const dispatchTicketSkill: SkillDefinition<
     // dispatch path is auditable. Cancelled runs still get recorded but we
     // defer write-back to the human who cancelled.
     let linearCommentUrl: string | null = null;
-    if (agentResult.exit_signal !== "cancelled") {
+    if (agentResult.exit_signal !== 'cancelled') {
       const body = formatWriteBack(ctx.tools.writeBack, {
         report: recorded.report,
         run_report_url: recorded.path,
@@ -273,26 +265,22 @@ export const dispatchTicketSkill: SkillDefinition<
   },
 };
 
-function summaryFor(
-  issueId: string,
-  verdict: string,
-  signal: string,
-): string {
+function summaryFor(issueId: string, verdict: string, signal: string): string {
   return `Dispatched coding agent for ${issueId} (policy=${verdict}, agent=${signal}).`;
 }
 
 function nextActionFor(signal: string): string {
   switch (signal) {
-    case "succeeded":
-      return "review PR and merge if approved";
-    case "failed":
-      return "inspect agent errors and retriage";
-    case "needs_human":
+    case 'succeeded':
+      return 'review PR and merge if approved';
+    case 'failed':
+      return 'inspect agent errors and retriage';
+    case 'needs_human':
       return "resolve the agent's blocker and retry";
-    case "cancelled":
-      return "decide whether to resume or close";
+    case 'cancelled':
+      return 'decide whether to resume or close';
     default:
-      return "review run report";
+      return 'review run report';
   }
 }
 
@@ -305,32 +293,32 @@ function nextActionFor(signal: string): string {
  */
 function runStatusFrom(signal: string): SkillStatus {
   switch (signal) {
-    case "succeeded":
-      return "succeeded";
-    case "failed":
-      return "failed";
-    case "needs_human":
-      return "needs_human";
-    case "cancelled":
-      return "stopped";
+    case 'succeeded':
+      return 'succeeded';
+    case 'failed':
+      return 'failed';
+    case 'needs_human':
+      return 'needs_human';
+    case 'cancelled':
+      return 'stopped';
     default:
-      return "failed";
+      return 'failed';
   }
 }
 
 function issueNumber(issueId: string): string {
   const m = /-(\d+)$/.exec(issueId);
-  return m ? (m[1] as string) : "nn";
+  return m ? (m[1] as string) : 'nn';
 }
 
 function formatWriteBack(
   formatter: {
     formatFull?: (input: FormatInput) => string;
-    format: (report: FormatInput["report"]) => string;
+    format: (report: FormatInput['report']) => string;
   },
   input: FormatInput,
 ): string {
-  if (typeof formatter.formatFull === "function") {
+  if (typeof formatter.formatFull === 'function') {
     return formatter.formatFull(input);
   }
   return formatter.format(input.report);

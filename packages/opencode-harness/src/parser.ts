@@ -18,7 +18,7 @@ import type {
   TicketPack,
   TicketPackBranchRules,
   TicketPackHeader,
-} from "./types.js";
+} from './types.js';
 
 const SECTION_HEADER_RE = /^##\s+(.+?)\s*$/;
 const HEADER_BULLET_RE = /^[-*]\s+\*\*([^*]+):\*\*\s*(.*?)\s*$/;
@@ -27,13 +27,13 @@ const CHECKBOX_BULLET_RE = /^[-*]\s+\[[ xX]\]\s+(.*?)\s*$/;
 const PLAIN_BULLET_RE = /^[-*]\s+(.*?)\s*$/;
 
 const READINESS_VALUES = new Set<ReadinessStatus>([
-  "ready",
-  "blocked",
-  "needs_clarification",
-  "too_large",
+  'ready',
+  'blocked',
+  'needs_clarification',
+  'too_large',
 ]);
-const COST_BAND_VALUES = new Set<CostBand>(["low", "medium", "high"]);
-const RISK_VALUES = new Set<RiskLevel>(["low", "medium", "high"]);
+const COST_BAND_VALUES = new Set<CostBand>(['low', 'medium', 'high']);
+const RISK_VALUES = new Set<RiskLevel>(['low', 'medium', 'high']);
 
 interface ParsedSections {
   header: Map<string, string>;
@@ -51,9 +51,9 @@ function splitIntoSections(raw: string): ParsedSections {
   for (const line of lines) {
     const sectionMatch = line.match(SECTION_HEADER_RE);
     if (sectionMatch) {
-      const name = (sectionMatch[1] ?? "").trim();
+      const name = (sectionMatch[1] ?? '').trim();
       current = name;
-      inHeader = name.toLowerCase() === "header";
+      inHeader = name.toLowerCase() === 'header';
       if (!sections.has(name)) sections.set(name, []);
       continue;
     }
@@ -62,8 +62,8 @@ function splitIntoSections(raw: string): ParsedSections {
     if (inHeader) {
       const m = line.match(HEADER_BULLET_RE) ?? line.match(ALT_HEADER_BULLET_RE);
       if (m) {
-        const key = (m[1] ?? "").trim().toLowerCase();
-        const value = (m[2] ?? "").trim();
+        const key = (m[1] ?? '').trim().toLowerCase();
+        const value = (m[2] ?? '').trim();
         header.set(key, value);
         continue;
       }
@@ -88,14 +88,14 @@ function extractBullets(lines: string[]): string[] {
     const line = raw.trimEnd();
     const checkbox = line.match(CHECKBOX_BULLET_RE);
     if (checkbox) {
-      const text = (checkbox[1] ?? "").trim();
+      const text = (checkbox[1] ?? '').trim();
       if (text.length > 0) out.push(text);
       continue;
     }
     const plain = line.match(PLAIN_BULLET_RE);
     if (plain) {
-      const text = (plain[1] ?? "").trim();
-      if (text.length > 0 && !text.startsWith("**")) out.push(text);
+      const text = (plain[1] ?? '').trim();
+      if (text.length > 0 && !text.startsWith('**')) out.push(text);
     }
   }
   return out;
@@ -116,7 +116,7 @@ function extractGoal(lines: string[]): string {
     }
     collected.push(trimmed);
   }
-  return collected.join(" ").trim();
+  return collected.join(' ').trim();
 }
 
 /**
@@ -125,10 +125,7 @@ function extractGoal(lines: string[]): string {
  * accepts either inline (`- **Files in scope (allowlist):** path1, path2`) or
  * nested-bullet form (`  - path1`).
  */
-function extractFileList(
-  lines: string[],
-  labels: string[],
-): string[] {
+function extractFileList(lines: string[], labels: string[]): string[] {
   const labelMatchers = labels.map((l) => l.toLowerCase());
   const result: string[] = [];
   let inLabel = false;
@@ -143,19 +140,19 @@ function extractFileList(
       trimmed.match(/^[-*]\s+([A-Za-z][^:]+):\s+(.*)$/);
 
     if (labelMatch) {
-      const key = (labelMatch[1] ?? "").trim().toLowerCase();
-      const inline = (labelMatch[2] ?? "").trim();
+      const key = (labelMatch[1] ?? '').trim().toLowerCase();
+      const inline = (labelMatch[2] ?? '').trim();
       if (labelMatchers.some((m) => key.includes(m))) {
         inLabel = true;
         inlineDone = false;
         if (inline.length > 0) {
-          for (const piece of inline.split(",")) {
+          for (const piece of inline.split(',')) {
             const value = piece
               .trim()
-              .replace(/\(new\)$/, "")
+              .replace(/\(new\)$/, '')
               .trim()
-              .replace(/^`+/, "")
-              .replace(/`+$/, "")
+              .replace(/^`+/, '')
+              .replace(/`+$/, '')
               .trim();
             if (value.length > 0) result.push(value);
           }
@@ -170,17 +167,17 @@ function extractFileList(
     if (inLabel) {
       const nested = line.match(/^\s{2,}[-*]\s+(.*?)\s*$/);
       if (nested) {
-        const value = (nested[1] ?? "")
+        const value = (nested[1] ?? '')
           .trim()
-          .replace(/\(new\)$/, "")
+          .replace(/\(new\)$/, '')
           .trim()
-          .replace(/^`+/, "")
-          .replace(/`+$/, "")
+          .replace(/^`+/, '')
+          .replace(/`+$/, '')
           .trim();
         if (value.length > 0) result.push(value);
       } else if (trimmed.length === 0) {
         if (inlineDone || result.length > 0) inLabel = false;
-      } else if (trimmed.startsWith("-") || trimmed.startsWith("*")) {
+      } else if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
         inLabel = false;
       }
     }
@@ -195,50 +192,48 @@ function extractDependencyPolicy(lines: string[]): string {
     const m =
       trimmed.match(/^[-*]\s+\*\*Dependency policy:\*\*\s*(.*)$/i) ??
       trimmed.match(/^[-*]\s+Dependency policy:\s+(.*)$/i);
-    if (m) return (m[1] ?? "").trim();
+    if (m) return (m[1] ?? '').trim();
   }
-  return "";
+  return '';
 }
 
 function extractBranchRules(lines: string[]): TicketPackBranchRules {
-  let branch = "";
-  let prTitlePrefix = "";
-  let prBase = "";
+  let branch = '';
+  let prTitlePrefix = '';
+  let prBase = '';
   for (const raw of lines) {
     const trimmed = raw.trim();
     const branchMatch =
       trimmed.match(/^[-*]\s+\*\*Branch(?:\s+name)?:\*\*\s*`?([^`\s]+)`?/i) ??
       trimmed.match(/^[-*]\s+Branch(?:\s+name)?:\s+`?([^`\s]+)`?/i);
-    if (branchMatch) branch = (branchMatch[1] ?? "").trim();
+    if (branchMatch) branch = (branchMatch[1] ?? '').trim();
 
     const titleMatch =
       trimmed.match(/^[-*]\s+\*\*PR title(?:\s+prefix)?:\*\*\s*`?([^`]*)`?/i) ??
       trimmed.match(/^[-*]\s+PR title(?:\s+prefix)?:\s+`?([^`]*)`?/i);
-    if (titleMatch) prTitlePrefix = (titleMatch[1] ?? "").trim();
+    if (titleMatch) prTitlePrefix = (titleMatch[1] ?? '').trim();
 
     const baseMatch =
       trimmed.match(/^[-*]\s+\*\*PR base:\*\*\s*`?([^`\s]+)`?/i) ??
       trimmed.match(/^[-*]\s+PR base:\s+`?([^`\s]+)`?/i);
-    if (baseMatch) prBase = (baseMatch[1] ?? "").trim();
+    if (baseMatch) prBase = (baseMatch[1] ?? '').trim();
   }
   return { branch, prTitlePrefix, prBase };
 }
 
-function asReadiness(value: string): ReadinessStatus | "" {
+function asReadiness(value: string): ReadinessStatus | '' {
   const v = value.trim().toLowerCase();
-  return READINESS_VALUES.has(v as ReadinessStatus)
-    ? (v as ReadinessStatus)
-    : "";
+  return READINESS_VALUES.has(v as ReadinessStatus) ? (v as ReadinessStatus) : '';
 }
 
-function asCostBand(value: string): CostBand | "" {
+function asCostBand(value: string): CostBand | '' {
   const v = value.trim().toLowerCase();
-  return COST_BAND_VALUES.has(v as CostBand) ? (v as CostBand) : "";
+  return COST_BAND_VALUES.has(v as CostBand) ? (v as CostBand) : '';
 }
 
-function asRiskLevel(value: string): RiskLevel | "" {
+function asRiskLevel(value: string): RiskLevel | '' {
   const v = value.trim().toLowerCase();
-  return RISK_VALUES.has(v as RiskLevel) ? (v as RiskLevel) : "";
+  return RISK_VALUES.has(v as RiskLevel) ? (v as RiskLevel) : '';
 }
 
 export interface ParseResult {
@@ -250,20 +245,24 @@ export function parseTicketPack(raw: string, packPath: string): ParseResult {
   const errors: string[] = [];
   const { header, sections } = splitIntoSections(raw);
 
-  const linearId = (header.get("linear id") ?? "").trim();
-  const packVersion = (header.get("pack version") ?? "").trim();
-  const plannerSource = (header.get("planner run / source") ?? header.get("planner run") ?? "").trim();
-  const costBand = asCostBand(header.get("cost band") ?? "");
-  const riskLevel = asRiskLevel(header.get("risk level") ?? "");
-  const readinessStatus = asReadiness(header.get("readiness status") ?? "");
+  const linearId = (header.get('linear id') ?? '').trim();
+  const packVersion = (header.get('pack version') ?? '').trim();
+  const plannerSource = (
+    header.get('planner run / source') ??
+    header.get('planner run') ??
+    ''
+  ).trim();
+  const costBand = asCostBand(header.get('cost band') ?? '');
+  const riskLevel = asRiskLevel(header.get('risk level') ?? '');
+  const readinessStatus = asReadiness(header.get('readiness status') ?? '');
 
-  if (linearId.length === 0) errors.push("missing header field: Linear ID");
-  if (packVersion.length === 0) errors.push("missing header field: Pack version");
-  if (costBand === "") errors.push("missing or invalid header field: Cost band");
-  if (riskLevel === "") errors.push("missing or invalid header field: Risk level");
-  if (readinessStatus === "") errors.push("missing or invalid header field: Readiness status");
+  if (linearId.length === 0) errors.push('missing header field: Linear ID');
+  if (packVersion.length === 0) errors.push('missing header field: Pack version');
+  if (costBand === '') errors.push('missing or invalid header field: Cost band');
+  if (riskLevel === '') errors.push('missing or invalid header field: Risk level');
+  if (readinessStatus === '') errors.push('missing or invalid header field: Readiness status');
 
-  if (errors.length > 0 && (linearId.length === 0 || readinessStatus === "")) {
+  if (errors.length > 0 && (linearId.length === 0 || readinessStatus === '')) {
     return { pack: null, errors };
   }
 
@@ -271,28 +270,28 @@ export function parseTicketPack(raw: string, packPath: string): ParseResult {
     linearId,
     packVersion,
     plannerSource,
-    costBand: costBand === "" ? "low" : costBand,
-    riskLevel: riskLevel === "" ? "low" : riskLevel,
-    readinessStatus: readinessStatus === "" ? "ready" : readinessStatus,
+    costBand: costBand === '' ? 'low' : costBand,
+    riskLevel: riskLevel === '' ? 'low' : riskLevel,
+    readinessStatus: readinessStatus === '' ? 'ready' : readinessStatus,
   };
 
-  const goal = extractGoal(getSection(sections, "Goal"));
-  const acceptanceCriteria = extractBullets(getSection(sections, "Acceptance criteria"));
-  const constraintsLines = getSection(sections, "Constraints");
+  const goal = extractGoal(getSection(sections, 'Goal'));
+  const acceptanceCriteria = extractBullets(getSection(sections, 'Acceptance criteria'));
+  const constraintsLines = getSection(sections, 'Constraints');
   const filesInScope = extractFileList(constraintsLines, [
-    "files in scope",
-    "files in scope (allowlist)",
-    "allowlist",
+    'files in scope',
+    'files in scope (allowlist)',
+    'allowlist',
   ]);
   const filesForbidden = extractFileList(constraintsLines, [
-    "files / paths forbidden",
-    "files forbidden",
-    "forbidden",
+    'files / paths forbidden',
+    'files forbidden',
+    'forbidden',
   ]);
   const dependencyPolicy = extractDependencyPolicy(constraintsLines);
 
-  const expectedChecks = extractBullets(getSection(sections, "Expected checks"));
-  const branchRules = extractBranchRules(getSection(sections, "Branch / PR rules"));
+  const expectedChecks = extractBullets(getSection(sections, 'Expected checks'));
+  const branchRules = extractBranchRules(getSection(sections, 'Branch / PR rules'));
 
   const pack: TicketPack = {
     header: headerOut,

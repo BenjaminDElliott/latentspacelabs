@@ -10,9 +10,9 @@
  * fire.
  */
 
-import type { TicketPack } from "@latentspacelabs/opencode-harness";
+import type { TicketPack } from '@latentspacelabs/opencode-harness';
 
-import type { RefusalEvidence } from "./types.js";
+import type { RefusalEvidence } from './types.js';
 
 /**
  * Patterns we treat as secret-shaped. The point is to refuse a pack that
@@ -22,18 +22,21 @@ import type { RefusalEvidence } from "./types.js";
  * specifically before we send its raw text to a runtime.
  */
 const SECRET_PATTERNS: ReadonlyArray<{ code: string; pattern: RegExp }> = [
-  { code: "secret_aws_access_key", pattern: /\bAKIA[0-9A-Z]{16}\b/ },
-  { code: "secret_github_token", pattern: /\bghp_[A-Za-z0-9]{36}\b/ },
-  { code: "secret_anthropic_key", pattern: /\bsk-ant-[A-Za-z0-9_-]{20,}/ },
-  { code: "secret_openai_key", pattern: /\bsk-[A-Za-z0-9]{20,}\b/ },
-  { code: "secret_private_key_block", pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
-  { code: "secret_bearer_header", pattern: /Authorization:\s*Bearer\s+[A-Za-z0-9._-]{16,}/i },
+  { code: 'secret_aws_access_key', pattern: /\bAKIA[0-9A-Z]{16}\b/ },
+  { code: 'secret_github_token', pattern: /\bghp_[A-Za-z0-9]{36}\b/ },
+  { code: 'secret_anthropic_key', pattern: /\bsk-ant-[A-Za-z0-9_-]{20,}/ },
+  { code: 'secret_openai_key', pattern: /\bsk-[A-Za-z0-9]{20,}\b/ },
+  {
+    code: 'secret_private_key_block',
+    pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+  },
+  { code: 'secret_bearer_header', pattern: /Authorization:\s*Bearer\s+[A-Za-z0-9._-]{16,}/i },
 ];
 
 const FORBIDDEN_DEP_KEYWORDS: ReadonlyArray<{ code: string; needle: RegExp; label: string }> = [
-  { code: "forbidden_python_dep", needle: /\bpython\b/i, label: "Python" },
-  { code: "forbidden_pnpm_dep", needle: /\bpnpm\b/i, label: "pnpm" },
-  { code: "forbidden_yarn_dep", needle: /\byarn\b/i, label: "yarn" },
+  { code: 'forbidden_python_dep', needle: /\bpython\b/i, label: 'Python' },
+  { code: 'forbidden_pnpm_dep', needle: /\bpnpm\b/i, label: 'pnpm' },
+  { code: 'forbidden_yarn_dep', needle: /\byarn\b/i, label: 'yarn' },
 ];
 
 export function checkSecrets(pack: TicketPack): RefusalEvidence[] {
@@ -43,8 +46,8 @@ export function checkSecrets(pack: TicketPack): RefusalEvidence[] {
       refusals.push({
         code,
         message:
-          "ticket pack contains a secret-shaped string. Refusing before any runtime sees it. " +
-          "Rotate the value, rewrite the pack, and retry.",
+          'ticket pack contains a secret-shaped string. Refusing before any runtime sees it. ' +
+          'Rotate the value, rewrite the pack, and retry.',
       });
     }
   }
@@ -90,9 +93,5 @@ export function checkCostBandSafety(pack: TicketPack): RefusalEvidence[] {
 }
 
 export function runAllGuardrails(pack: TicketPack): RefusalEvidence[] {
-  return [
-    ...checkSecrets(pack),
-    ...checkDependencyPolicy(pack),
-    ...checkCostBandSafety(pack),
-  ];
+  return [...checkSecrets(pack), ...checkDependencyPolicy(pack), ...checkCostBandSafety(pack)];
 }

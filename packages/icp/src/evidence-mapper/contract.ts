@@ -45,9 +45,9 @@ export interface ProviderOutput {
   /** Run state / status string from the provider. */
   state?: string;
   /** Cost class consumed. */
-  cost_class?: "low" | "medium" | "high" | "unknown";
+  cost_class?: 'low' | 'medium' | 'high' | 'unknown';
   /** Risk class of the run. */
-  risk_level?: "low" | "medium" | "high" | "unknown";
+  risk_level?: 'low' | 'medium' | 'high' | 'unknown';
   /** Provider adapter identifier. */
   adapter?: string | null;
   /** Runtime identifier assigned by the provider. */
@@ -60,9 +60,9 @@ export interface ProviderOutput {
   checks?: ReadonlyArray<{
     name: string;
     command: string;
-    outcome: "passed" | "failed" | "skipped" | "manual";
+    outcome: 'passed' | 'failed' | 'skipped' | 'manual';
     durationMs: number;
-    kind?: "shell" | "policy" | "manual";
+    kind?: 'shell' | 'policy' | 'manual';
     detail?: string;
   }>;
   /** Acceptance criteria the run was measured against. */
@@ -116,7 +116,7 @@ export interface PartialEvidence {
  */
 export interface ValidationWarning {
   /** Severity level. `soft` means the artefact is still valid. */
-  severity: "soft" | "hard";
+  severity: 'soft' | 'hard';
   /** Short code for programmatic matching, e.g. `MISSING_TICKET_ID`. */
   code: string;
   /** Human-readable message. */
@@ -133,7 +133,7 @@ export interface ValidationWarning {
  */
 export interface MappedRunArtefact {
   /** The mapped `RunArtefact`. */
-  artefact: import("../observability/run-artifact.js").RunArtefact;
+  artefact: import('../observability/run-artifact.js').RunArtefact;
   /** Whether the artefact is complete (no hard-missing fields). */
   complete: boolean;
   /** Fields that were partial / defaulted. */
@@ -174,15 +174,15 @@ export interface MapArgs {
   /** Producer label to stamp on the artefact. Defaults to the provider name. */
   producer?: string;
   /** Whether the artefact should be classified as dataset_candidate. */
-  artefact_class?: import("../observability/run-artifact.js").ArtefactClass;
+  artefact_class?: import('../observability/run-artifact.js').ArtefactClass;
   /** Training eligibility override. */
-  training_eligibility?: import("../observability/run-artifact.js").TrainingEligibility;
+  training_eligibility?: import('../observability/run-artifact.js').TrainingEligibility;
   /** Quality label override. */
-  quality_label?: import("../observability/run-artifact.js").QualityLabel;
+  quality_label?: import('../observability/run-artifact.js').QualityLabel;
 }
 
 /* ------------------------------------------------------------------ */
 /* Public surface                                                      */
 /* ------------------------------------------------------------------ */
 
-export { mapProviderOutput } from "./mapper.js";
+export { mapProviderOutput } from './mapper.js';

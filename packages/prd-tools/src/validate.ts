@@ -1,33 +1,27 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 export const REQUIRED_KEYS = [
-  "prd_id",
-  "title",
-  "status",
-  "owner",
-  "date",
-  "related_linear",
-  "related_adrs",
-  "derived_from",
-  "supersedes",
-  "superseded_by",
+  'prd_id',
+  'title',
+  'status',
+  'owner',
+  'date',
+  'related_linear',
+  'related_adrs',
+  'derived_from',
+  'supersedes',
+  'superseded_by',
 ] as const;
 
-export const REQUIRED_NONEMPTY_KEYS = [
-  "prd_id",
-  "title",
-  "status",
-  "owner",
-  "date",
-] as const;
+export const REQUIRED_NONEMPTY_KEYS = ['prd_id', 'title', 'status', 'owner', 'date'] as const;
 
 export const ALLOWED_STATUSES = [
-  "draft",
-  "in-review",
-  "approved",
-  "superseded",
-  "archived",
+  'draft',
+  'in-review',
+  'approved',
+  'superseded',
+  'archived',
 ] as const;
 
 const ROOT_FILENAME_RE = /^root-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
@@ -50,7 +44,7 @@ interface ParsedFrontmatter {
   fields: Record<string, string | string[] | null>;
 }
 
-type PrdKind = "root" | "feature";
+type PrdKind = 'root' | 'feature';
 
 interface PrdSummary {
   file: string;
@@ -60,12 +54,10 @@ interface PrdSummary {
   fields: Record<string, string | string[] | null>;
 }
 
-export async function validatePrdDirectory(
-  directory: string,
-): Promise<PrdValidationResult> {
+export async function validatePrdDirectory(directory: string): Promise<PrdValidationResult> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = entries
-    .filter((e) => e.isFile() && e.name.endsWith(".md") && e.name !== "README.md")
+    .filter((e) => e.isFile() && e.name.endsWith('.md') && e.name !== 'README.md')
     .map((e) => e.name)
     .sort();
 
@@ -85,11 +77,11 @@ export async function validatePrdDirectory(
     let kind: PrdKind | null = null;
     let linearPrefix: string | null = null;
     if (ROOT_FILENAME_RE.test(file)) {
-      kind = "root";
+      kind = 'root';
     } else {
       const m = FEATURE_FILENAME_RE.exec(file);
       if (m) {
-        kind = "feature";
+        kind = 'feature';
         linearPrefix = m[1]!;
       }
     }
@@ -102,9 +94,9 @@ export async function validatePrdDirectory(
       continue;
     }
 
-    const stem = file.replace(/\.md$/, "");
+    const stem = file.replace(/\.md$/, '');
     const full = join(directory, file);
-    const text = await readFile(full, "utf8");
+    const text = await readFile(full, 'utf8');
     const parsed = parseFrontmatter(text);
     if (!parsed) {
       errors.push({ file, message: `missing or malformed YAML frontmatter` });
@@ -122,15 +114,15 @@ export async function validatePrdDirectory(
       if (value === undefined || value === null) {
         continue;
       }
-      if (typeof value === "string" && value.trim() === "") {
+      if (typeof value === 'string' && value.trim() === '') {
         errors.push({ file, message: `frontmatter key '${key}' is empty` });
       } else if (Array.isArray(value) && value.length === 0) {
         errors.push({ file, message: `frontmatter key '${key}' is empty` });
       }
     }
 
-    const prdId = parsed.fields["prd_id"];
-    if (typeof prdId === "string" && prdId.trim() !== "") {
+    const prdId = parsed.fields['prd_id'];
+    if (typeof prdId === 'string' && prdId.trim() !== '') {
       prdIdOwners.set(prdId, [...(prdIdOwners.get(prdId) ?? []), file]);
       if (prdId !== stem) {
         errors.push({
@@ -140,12 +132,12 @@ export async function validatePrdDirectory(
       }
     }
 
-    const status = parsed.fields["status"];
-    if (typeof status === "string" && status.trim() !== "") {
+    const status = parsed.fields['status'];
+    if (typeof status === 'string' && status.trim() !== '') {
       if (!ALLOWED_STATUSES.includes(status as (typeof ALLOWED_STATUSES)[number])) {
         errors.push({
           file,
-          message: `status '${status}' is not one of ${ALLOWED_STATUSES.join(", ")}`,
+          message: `status '${status}' is not one of ${ALLOWED_STATUSES.join(', ')}`,
         });
       }
     }
@@ -156,26 +148,24 @@ export async function validatePrdDirectory(
   for (const [id, owners] of prdIdOwners) {
     if (owners.length > 1) {
       errors.push({
-        file: owners.join(", "),
+        file: owners.join(', '),
         message: `duplicate frontmatter prd_id '${id}'`,
       });
     }
   }
 
   const knownStems = new Set(summaries.map((s) => s.stem));
-  const rootStems = new Set(
-    summaries.filter((s) => s.kind === "root").map((s) => s.stem),
-  );
+  const rootStems = new Set(summaries.filter((s) => s.kind === 'root').map((s) => s.stem));
 
   for (const s of summaries) {
-    const derivedFrom = s.fields["derived_from"];
+    const derivedFrom = s.fields['derived_from'];
     const derivedList = asList(derivedFrom);
 
-    if (s.kind === "root") {
+    if (s.kind === 'root') {
       if (derivedList.length > 0) {
         errors.push({
           file: s.file,
-          message: `root PRD must have empty derived_from; found ${derivedList.join(", ")}`,
+          message: `root PRD must have empty derived_from; found ${derivedList.join(', ')}`,
         });
       }
     } else {
@@ -189,7 +179,7 @@ export async function validatePrdDirectory(
           if (!knownStems.has(ref)) {
             errors.push({
               file: s.file,
-              message: `derived_from '${ref}' does not match any PRD file in ${s.file.includes("/") ? "this directory" : "this directory"}`,
+              message: `derived_from '${ref}' does not match any PRD file in ${s.file.includes('/') ? 'this directory' : 'this directory'}`,
             });
           } else if (!rootStems.has(ref)) {
             errors.push({
@@ -201,7 +191,7 @@ export async function validatePrdDirectory(
       }
 
       if (s.linearPrefix) {
-        const relatedLinear = asList(s.fields["related_linear"]);
+        const relatedLinear = asList(s.fields['related_linear']);
         if (relatedLinear.length > 0 && !relatedLinear.includes(s.linearPrefix)) {
           errors.push({
             file: s.file,
@@ -217,19 +207,19 @@ export async function validatePrdDirectory(
 
 function asList(value: string | string[] | null | undefined): string[] {
   if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value.filter((v) => v.trim() !== "");
-  if (typeof value === "string") {
-    return value.trim() === "" ? [] : [value.trim()];
+  if (Array.isArray(value)) return value.filter((v) => v.trim() !== '');
+  if (typeof value === 'string') {
+    return value.trim() === '' ? [] : [value.trim()];
   }
   return [];
 }
 
 export function parseFrontmatter(text: string): ParsedFrontmatter | null {
-  if (!text.startsWith("---")) return null;
-  const afterFirst = text.indexOf("\n");
+  if (!text.startsWith('---')) return null;
+  const afterFirst = text.indexOf('\n');
   if (afterFirst === -1) return null;
   const rest = text.slice(afterFirst + 1);
-  const endIdx = rest.indexOf("\n---");
+  const endIdx = rest.indexOf('\n---');
   if (endIdx === -1) return null;
   const raw = rest.slice(0, endIdx);
   return { raw, fields: parseMinimalYaml(raw) };
@@ -237,11 +227,11 @@ export function parseFrontmatter(text: string): ParsedFrontmatter | null {
 
 function parseMinimalYaml(raw: string): Record<string, string | string[] | null> {
   const out: Record<string, string | string[] | null> = {};
-  const lines = raw.split("\n");
+  const lines = raw.split('\n');
   let i = 0;
   while (i < lines.length) {
     const line = lines[i]!;
-    if (line.trim() === "" || line.trimStart().startsWith("#")) {
+    if (line.trim() === '' || line.trimStart().startsWith('#')) {
       i += 1;
       continue;
     }
@@ -252,11 +242,11 @@ function parseMinimalYaml(raw: string): Record<string, string | string[] | null>
     }
     const key = match[1]!;
     const rawValue = match[2]!;
-    if (rawValue === "") {
+    if (rawValue === '') {
       const items: string[] = [];
       let j = i + 1;
       while (j < lines.length && /^\s+-\s+/.test(lines[j]!)) {
-        items.push(lines[j]!.replace(/^\s+-\s+/, "").trim());
+        items.push(lines[j]!.replace(/^\s+-\s+/, '').trim());
         j += 1;
       }
       if (items.length > 0) {
@@ -275,10 +265,7 @@ function parseMinimalYaml(raw: string): Record<string, string | string[] | null>
 }
 
 function stripQuotes(v: string): string {
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
     return v.slice(1, -1);
   }
   return v;
@@ -294,5 +281,5 @@ export function formatResult(result: PrdValidationResult): string {
   for (const e of result.errors) {
     lines.push(`  - ${e.file}: ${e.message}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }

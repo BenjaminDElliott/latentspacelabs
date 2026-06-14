@@ -5,14 +5,10 @@
  * and the runtime constraints fixed by ADR-0019. Pure types — no I/O.
  */
 
-export type ReadinessStatus =
-  | "ready"
-  | "blocked"
-  | "needs_clarification"
-  | "too_large";
+export type ReadinessStatus = 'ready' | 'blocked' | 'needs_clarification' | 'too_large';
 
-export type CostBand = "low" | "medium" | "high";
-export type RiskLevel = "low" | "medium" | "high";
+export type CostBand = 'low' | 'medium' | 'high';
+export type RiskLevel = 'low' | 'medium' | 'high';
 
 export interface TicketPackHeader {
   linearId: string;
@@ -42,7 +38,7 @@ export interface TicketPack {
   rawPath: string;
 }
 
-export type ValidationSeverity = "error" | "warning";
+export type ValidationSeverity = 'error' | 'warning';
 
 export interface ValidationFinding {
   severity: ValidationSeverity;
@@ -64,11 +60,11 @@ export interface ValidationResult {
  * harness deliberately does not invoke it.
  */
 export type HarnessStatus =
-  | "ready"
-  | "blocked"
-  | "needs_clarification"
-  | "too_large"
-  | "harness_error";
+  | 'ready'
+  | 'blocked'
+  | 'needs_clarification'
+  | 'too_large'
+  | 'harness_error';
 
 /**
  * How a check plan item is enforced.
@@ -89,7 +85,7 @@ export type HarnessStatus =
  * `No edits under forbidden paths.` as a shell command and got
  * `/bin/sh: No: command not found`.
  */
-export type CheckKind = "shell" | "policy" | "manual";
+export type CheckKind = 'shell' | 'policy' | 'manual';
 
 /**
  * Stable identifier for a structural policy validation. Keeps the
@@ -97,7 +93,7 @@ export type CheckKind = "shell" | "policy" | "manual";
  * recognise today is the forbidden-path guardrail; new kinds extend
  * this union.
  */
-export type PolicyId = "forbidden_paths";
+export type PolicyId = 'forbidden_paths';
 
 export interface CheckPlanItem {
   name: string;
@@ -107,7 +103,7 @@ export interface CheckPlanItem {
    * pack, preserved for evidence/debugging only — never executed.
    */
   command: string;
-  source: "ticket-pack" | "repo-gate";
+  source: 'ticket-pack' | 'repo-gate';
   /** What the runtime is allowed to do with this item. Defaults to `shell`. */
   kind: CheckKind;
   /** Set on `policy` items; identifies the structural rule. */
@@ -127,14 +123,14 @@ export interface RefusalReason {
 }
 
 export interface DryRunSummary {
-  schemaVersion: "1.0.0";
+  schemaVersion: '1.0.0';
   ticket: string;
   packPath: string;
   status: HarnessStatus;
   generatedAt: string;
-  packReadinessStatus: ReadinessStatus | "unknown";
-  costBand: CostBand | "unknown";
-  riskLevel: RiskLevel | "unknown";
+  packReadinessStatus: ReadinessStatus | 'unknown';
+  costBand: CostBand | 'unknown';
+  riskLevel: RiskLevel | 'unknown';
   filesInScope: string[];
   filesForbidden: string[];
   acceptanceCriteria: string[];

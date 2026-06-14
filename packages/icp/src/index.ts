@@ -8,8 +8,8 @@
  * approval, and posts the ADR-0006 five-element Linear write-back.
  */
 
-export const ICP_PACKAGE_NAME = "@latentspacelabs/icp";
-export const ICP_PACKAGE_VERSION = "0.0.0";
+export const ICP_PACKAGE_NAME = '@latentspacelabs/icp';
+export const ICP_PACKAGE_VERSION = '0.0.0';
 
 export type {
   AgentType,
@@ -36,22 +36,18 @@ export type {
   WriteBackFormatter,
   ResolvedTools,
   SkillExecutionContext,
-} from "./runtime/contract.js";
-export { RUN_REPORT_SCHEMA_VERSION, toRunStatus } from "./runtime/contract.js";
+} from './runtime/contract.js';
+export { RUN_REPORT_SCHEMA_VERSION, toRunStatus } from './runtime/contract.js';
 
-export { SkillRegistry, SkillRegistryError } from "./runtime/registry.js";
-export type { RegistryOptions, RegisteredSkill } from "./runtime/registry.js";
+export { SkillRegistry, SkillRegistryError } from './runtime/registry.js';
+export type { RegistryOptions, RegisteredSkill } from './runtime/registry.js';
 
-export { SkillRunner } from "./runtime/runner.js";
-export type {
-  RunnerOptions,
-  RunInvocation,
-  RunResult,
-} from "./runtime/runner.js";
+export { SkillRunner } from './runtime/runner.js';
+export type { RunnerOptions, RunInvocation, RunResult } from './runtime/runner.js';
 
-export { createPolicyEvaluator } from "./adapters/policy-evaluator.js";
-export { createRunRecorder } from "./adapters/run-recorder.js";
-export { createWriteBackFormatter } from "./adapters/write-back-formatter.js";
+export { createPolicyEvaluator } from './adapters/policy-evaluator.js';
+export { createRunRecorder } from './adapters/run-recorder.js';
+export { createWriteBackFormatter } from './adapters/write-back-formatter.js';
 export {
   createStubLinearAdapter,
   createLinearAdapter,
@@ -59,7 +55,7 @@ export {
   LinearAdapterError,
   buildSnapshotFromRaw,
   parseDispatchFields,
-} from "./adapters/linear-adapter.js";
+} from './adapters/linear-adapter.js';
 export type {
   StubLinearAdapterOptions,
   LinearAdapterOptions,
@@ -67,14 +63,14 @@ export type {
   LinearAdapterEvent,
   FetchLike,
   FetchLikeResponse,
-} from "./adapters/linear-adapter.js";
+} from './adapters/linear-adapter.js';
 export {
   createStubAgentAdapter,
   createCodingAgentAdapter,
   createCommandCodingAgentProvider,
   parseProviderEnvelope,
   scrubSecrets,
-} from "./adapters/agent-invocation-adapter.js";
+} from './adapters/agent-invocation-adapter.js';
 export type {
   StubAgentAdapterOptions,
   StubAgentResponse,
@@ -90,19 +86,15 @@ export type {
   SerialisedProviderRequest,
   SpawnLike,
   SpawnedLike,
-} from "./adapters/agent-invocation-adapter.js";
+} from './adapters/agent-invocation-adapter.js';
 
 export {
   dispatchTicketSkill,
   type DispatchTicketInputs,
   type DispatchTicketOutputs,
-} from "./skills/dispatch-ticket.js";
+} from './skills/dispatch-ticket.js';
 
-export {
-  evaluateReadiness,
-  evaluateCodingRun,
-  aggregateRunsForRetro,
-} from "./evaluation/index.js";
+export { evaluateReadiness, evaluateCodingRun, aggregateRunsForRetro } from './evaluation/index.js';
 export type {
   Recommendation,
   Severity,
@@ -118,7 +110,7 @@ export type {
   RetroCandidate,
   RetroAggregationResult,
   RetroAggregationOptions,
-} from "./evaluation/index.js";
+} from './evaluation/index.js';
 
 /* LAT-129 polling dispatcher MVP. Selects one eligible Linear issue,
  * generates a bounded ticket pack, invokes the control-loop CLI once,
@@ -130,20 +122,17 @@ export {
   defaultControlLoopCliPath,
   defaultRepoRoot,
   runDispatcherFromEnv,
-} from "./dispatcher/dispatch.js";
+} from './dispatcher/dispatch.js';
 export type {
   DispatcherConfig,
   DispatcherDeps,
   RunDispatcherInput,
-} from "./dispatcher/dispatch.js";
-export { redactOutput } from "./dispatcher/redact.js";
-export { evaluateEligibility } from "./dispatcher/select.js";
-export { buildTicketPack } from "./dispatcher/ticket-pack.js";
-export { runControlLoopCli } from "./dispatcher/control-loop-runner.js";
-export {
-  createDispatcherLinearClient,
-  DispatcherLinearError,
-} from "./dispatcher/linear-client.js";
+} from './dispatcher/dispatch.js';
+export { redactOutput } from './dispatcher/redact.js';
+export { evaluateEligibility } from './dispatcher/select.js';
+export { buildTicketPack } from './dispatcher/ticket-pack.js';
+export { runControlLoopCli } from './dispatcher/control-loop-runner.js';
+export { createDispatcherLinearClient, DispatcherLinearError } from './dispatcher/linear-client.js';
 export type {
   DispatchIssue,
   DispatchOutcome,
@@ -154,24 +143,20 @@ export type {
   ControlLoopRunResult,
   ControlLoopJsonSummary,
   EligibilityOutcome,
-} from "./dispatcher/types.js";
+} from './dispatcher/types.js';
 
 /* LAT-186 pre-run invocation gate. Validates AgentInvocationRequest
  * parameters against isolation rules before a run proceeds. Blocks if
  * any forbidden action is detected, and logs the gate decision with
  * evidence. LAT-187 adds the corresponding post-run gate. */
-export {
-  runPreRunGate,
-  buildDefaultRules,
-  buildPermissiveRules,
-} from "./runtime/gates.js";
+export { runPreRunGate, buildDefaultRules, buildPermissiveRules } from './runtime/gates.js';
 export type {
   GateOutcome,
   GateEvidence,
   InvocationGateInput,
   IsolationRules,
   ForbiddenAction,
-} from "./runtime/gates.js";
+} from './runtime/gates.js';
 
 /* LAT-140 structured run artefact (sanitised observability record).
  * Pure module: produces the JSON / compact comment-ready summary; the
@@ -181,7 +166,7 @@ export {
   buildRunArtefact,
   renderRunArtefactJson,
   formatArtefactCompactRef,
-} from "./observability/run-artifact.js";
+} from './observability/run-artifact.js';
 export type {
   RunArtefact,
   RunArtefactInput,
@@ -197,7 +182,7 @@ export type {
   RedactionMetadata,
   RiskClass,
   TrainingEligibility,
-} from "./observability/run-artifact.js";
+} from './observability/run-artifact.js';
 
 /* LAT-184 run-record module — builds Linear sub-issue title and description
  * from a structured run artefact. Produces queryable run records inside
@@ -206,27 +191,24 @@ export {
   buildRunRecord,
   buildRunRecordTitle,
   buildRunRecordDescription,
-} from "./observability/run-record.js";
+} from './observability/run-record.js';
 
 export {
   fromControlLoopSummary,
   fromOpencodeDryRunSummary,
-} from "./observability/from-summaries.js";
+} from './observability/from-summaries.js';
 export type {
   ControlLoopSummaryLike,
   OpencodeDryRunSummaryLike,
   FromControlLoopSummaryArgs,
   FromOpencodeDryRunArgs,
-} from "./observability/from-summaries.js";
+} from './observability/from-summaries.js';
 
 /* ICP observability cockpit (LAT-55, PRD docs/prds/LAT-28). Read-through
  * projection of the ADR-0006 envelope onto the seven MVP views. */
-export { readRunsDir, parseRunJson } from "./cockpit/reader.js";
-export { buildCockpitState } from "./cockpit/views.js";
-export {
-  renderCockpitSummary,
-  type SummaryOptions,
-} from "./cockpit/summary.js";
+export { readRunsDir, parseRunJson } from './cockpit/reader.js';
+export { buildCockpitState } from './cockpit/views.js';
+export { renderCockpitSummary, type SummaryOptions } from './cockpit/summary.js';
 export type {
   ActiveRunRow,
   BlockedWorkRow,
@@ -244,4 +226,4 @@ export type {
   QAReviewReport,
   RecentCompletionRow,
   ViewName,
-} from "./cockpit/types.js";
+} from './cockpit/types.js';

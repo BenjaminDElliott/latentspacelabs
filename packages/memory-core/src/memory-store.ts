@@ -3,7 +3,7 @@
  *
  * Combines SmartFrames, VectorIndex, EntityStore, and TemporalRanker into
  * a single unified memory layer. Provides the full memory pipeline:
- * 
+ *
  *   Write → Embed → Store → Index → Retrieve → Rank → Return
  *
  * Key design principles:
@@ -46,21 +46,21 @@ const DEFAULT_DIMENSION = 384;
  */
 function hashToEmbedding(text: string, dim: number = DEFAULT_DIMENSION): number[] {
   const result: number[] = new Array(dim).fill(0);
-  
+
   // Use a simple hash to generate deterministic but distributed embeddings
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
   }
-  
+
   // Generate dim values from hash and its derivatives
   for (let i = 0; i < dim; i++) {
     // Mix the hash with the index to get different values per position
     const mixed = ((hash + i * 2654435761) >>> 0) % 100000;
     // Map to [-1, 1] range, then normalize later
-    result[i] = (mixed / 50000) - 1;
+    result[i] = mixed / 50000 - 1;
   }
-  
+
   // Normalize to unit length (cosine similarity requires it)
   const n = Math.sqrt(result.reduce((s, v) => s + v * v, 0));
   if (n > 0) {
@@ -76,7 +76,7 @@ function hashToEmbedding(text: string, dim: number = DEFAULT_DIMENSION): number[
  */
 function extractEntities(content: string): string[] {
   const entities: string[] = [];
-  
+
   // Look for capitalized words (potential proper nouns)
   const capitalized = content.match(/[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*/g) ?? [];
   for (const match of capitalized) {
@@ -85,13 +85,13 @@ function extractEntities(content: string): string[] {
       entities.push(trimmed);
     }
   }
-  
+
   // Look for URL patterns
   const urls = content.match(/https?:\/\/[^\s]+/g) ?? [];
   for (const url of urls) {
     entities.push(url.slice(0, 60)); // truncate long URLs
   }
-  
+
   // Look for code identifiers (camelCase, SCREAMING_CASE)
   const codeMatches = content.match(/[A-Z][a-zA-Z0-9]+[a-z][a-zA-Z0-9]+/g) ?? [];
   for (const match of codeMatches) {
@@ -99,14 +99,14 @@ function extractEntities(content: string): string[] {
       entities.push(match);
     }
   }
-  
+
   // Deduplicate and limit
   return [...new Set(entities)].slice(0, 20);
 }
 
 /**
  * MemoryStore — the unified memory engine.
- * 
+ *
  * Wraps SmartFrame creation, VectorIndex search, EntityStore linking,
  * and TemporalRanker scoring into a single API.
  */
@@ -130,7 +130,7 @@ export class MemoryStore {
 
   /**
    * Add a new memory frame. ADD-only: never overwrites.
-   * 
+   *
    * Steps:
    * 1. Create SmartFrame with embedding
    * 2. Verify integrity
@@ -189,13 +189,15 @@ export class MemoryStore {
   /**
    * Add multiple frames in batch.
    */
-  async addMany(params: Array<{
-    type: MemoryType;
-    content: string;
-    summary?: string;
-    tags?: string[];
-    metadata?: Record<string, unknown>;
-  }>): Promise<WriteResult[]> {
+  async addMany(
+    params: Array<{
+      type: MemoryType;
+      content: string;
+      summary?: string;
+      tags?: string[];
+      metadata?: Record<string, unknown>;
+    }>,
+  ): Promise<WriteResult[]> {
     const results: WriteResult[] = [];
     for (const p of params) {
       results.push(await this.add(p));
@@ -207,12 +209,12 @@ export class MemoryStore {
 
   /**
    * Search memories using hybrid semantic + keyword + temporal ranking.
-   * 
+   *
    * This is the single-pass retrieval from mem0 v3: one call, no agentic loops.
    */
   async search(query: string, options: Partial<SearchQuery> = {}): Promise<SearchResult[]> {
     const queryEmbedding = hashToEmbedding(query, this.embeddingDim);
-    
+
     const filterTypes = options.types ?? [
       MemoryType.Episodic,
       MemoryType.Semantic,
@@ -231,7 +233,7 @@ export class MemoryStore {
 
     // Step 2: Temporal ranking
     const orderBy = options.orderBy ?? 'mixed';
-    
+
     if (orderBy === 'similarity') {
       // Pure similarity ranking
       return vectorResults;
@@ -240,9 +242,7 @@ export class MemoryStore {
     if (orderBy === 'time') {
       // Pure temporal ranking (most recent first)
       const ranked = [...vectorResults].sort(
-        (a, b) =>
-          new Date(b.frame.createdAt).getTime() -
-          new Date(a.frame.createdAt).getTime()
+        (a, b) => new Date(b.frame.createdAt).getTime() - new Date(a.frame.createdAt).getTime(),
       );
       return ranked;
     }
@@ -264,7 +264,7 @@ export class MemoryStore {
 
     for (const frame of this.frames) {
       let key: string;
-      
+
       switch (request.groupBy) {
         case 'same-entity': {
           // Group by most common entity
@@ -272,9 +272,10 @@ export class MemoryStore {
           for (const e of frame.entities) {
             entityCounts.set(e, (entityCounts.get(e) ?? 0) + 1);
           }
-          key = entityCounts.size > 0
-            ? [...entityCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
-            : frame.id.slice(0, 8);
+          key =
+            entityCounts.size > 0
+              ? [...entityCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+              : frame.id.slice(0, 8);
           break;
         }
         case 'same-day': {

@@ -10,17 +10,12 @@
  *   3. No URL, token, or runtime hostname is ever embedded in this file.
  */
 
-import type {
-  AdapterRequest,
-  AdapterRunResult,
-  CheckResult,
-  RuntimeAdapter,
-} from "./types.js";
+import type { AdapterRequest, AdapterRunResult, CheckResult, RuntimeAdapter } from './types.js';
 
-import { LiveOpencodeAdapter } from "./live-adapter.js";
-import type { LiveAdapterEnv } from "./live-adapter.js";
+import { LiveOpencodeAdapter } from './live-adapter.js';
+import type { LiveAdapterEnv } from './live-adapter.js';
 
-export { LiveOpencodeAdapter } from "./live-adapter.js";
+export { LiveOpencodeAdapter } from './live-adapter.js';
 export type {
   LiveAdapterEnv,
   LiveOpencodeAdapterOptions,
@@ -30,11 +25,11 @@ export type {
   ProcessRunner,
   ProcessSpawnOptions,
   ProcessResult,
-} from "./live-adapter.js";
+} from './live-adapter.js';
 
 export interface MockAdapterOptions {
   /** Force a particular outcome. Default: all checks pass. */
-  outcome?: "ready_for_review" | "checks_failed" | "failed";
+  outcome?: 'ready_for_review' | 'checks_failed' | 'failed';
   /** Override the runtime identifier (default: deterministic per ticket). */
   runtimeId?: string;
   /** Override the timestamp source for stable test snapshots. */
@@ -48,13 +43,13 @@ export interface MockAdapterOptions {
  * paths it cannot back up; it returns null/`memory` for those.
  */
 export class MockRuntimeAdapter implements RuntimeAdapter {
-  readonly id = "mock";
-  private readonly outcome: MockAdapterOptions["outcome"];
+  readonly id = 'mock';
+  private readonly outcome: MockAdapterOptions['outcome'];
   private readonly runtimeIdOverride: string | undefined;
   private readonly now: () => Date;
 
   constructor(options: MockAdapterOptions = {}) {
-    this.outcome = options.outcome ?? "ready_for_review";
+    this.outcome = options.outcome ?? 'ready_for_review';
     this.runtimeIdOverride = options.runtimeId;
     this.now = options.now ?? (() => new Date());
   }
@@ -68,16 +63,16 @@ export class MockRuntimeAdapter implements RuntimeAdapter {
     const checks: CheckResult[] = req.requiredChecks.map((c) => ({
       name: c.name,
       command: c.command,
-      outcome: this.outcome === "checks_failed" ? "failed" : "passed",
+      outcome: this.outcome === 'checks_failed' ? 'failed' : 'passed',
       durationMs: 0,
-      ...(this.outcome === "checks_failed"
-        ? { detail: "mock adapter forced this check to fail" }
+      ...(this.outcome === 'checks_failed'
+        ? { detail: 'mock adapter forced this check to fail' }
         : {}),
     }));
 
-    if (this.outcome === "failed") {
+    if (this.outcome === 'failed') {
       return {
-        state: "failed",
+        state: 'failed',
         provider: {
           adapter: this.id,
           runtimeId,
@@ -90,18 +85,18 @@ export class MockRuntimeAdapter implements RuntimeAdapter {
           prUrl: null,
         },
         checks: [],
-        logs: { type: "memory", path: `mock://${runtimeId}/run.log` },
+        logs: { type: 'memory', path: `mock://${runtimeId}/run.log` },
         refusals: [
           {
-            code: "adapter_failure",
-            message: "mock adapter was configured to simulate an unrecoverable failure",
+            code: 'adapter_failure',
+            message: 'mock adapter was configured to simulate an unrecoverable failure',
           },
         ],
       };
     }
 
     return {
-      state: this.outcome === "checks_failed" ? "checks_failed" : "ready_for_review",
+      state: this.outcome === 'checks_failed' ? 'checks_failed' : 'ready_for_review',
       provider: {
         adapter: this.id,
         runtimeId,
@@ -116,7 +111,7 @@ export class MockRuntimeAdapter implements RuntimeAdapter {
       },
       checks,
       logs: {
-        type: "memory",
+        type: 'memory',
         path: `mock://${runtimeId}/run-${this.now().toISOString()}.log`,
       },
     };
@@ -124,26 +119,26 @@ export class MockRuntimeAdapter implements RuntimeAdapter {
 }
 
 export interface SelectAdapterOptions {
-  mode: "mock" | "plan" | "live";
+  mode: 'mock' | 'plan' | 'live';
   env: NodeJS.ProcessEnv;
 }
 
 export function selectAdapter(opts: SelectAdapterOptions): RuntimeAdapter {
   switch (opts.mode) {
-    case "mock":
-    case "plan":
+    case 'mock':
+    case 'plan':
       return new MockRuntimeAdapter();
-    case "live": {
+    case 'live': {
       const env: LiveAdapterEnv = {
-        CONTROL_LOOP_LIVE_ENABLED: opts.env["CONTROL_LOOP_LIVE_ENABLED"],
-        CONTROL_LOOP_PROVIDER: opts.env["CONTROL_LOOP_PROVIDER"],
-        CONTROL_LOOP_WORKDIR: opts.env["CONTROL_LOOP_WORKDIR"],
-        CONTROL_LOOP_OPENCODE_BIN: opts.env["CONTROL_LOOP_OPENCODE_BIN"],
-        CONTROL_LOOP_OPENCODE_MODEL: opts.env["CONTROL_LOOP_OPENCODE_MODEL"],
-        CONTROL_LOOP_TIMEOUT_MS: opts.env["CONTROL_LOOP_TIMEOUT_MS"],
-        RUNPOD_API_KEY: opts.env["RUNPOD_API_KEY"],
-        RUNPOD_VLLM_API_KEY: opts.env["RUNPOD_VLLM_API_KEY"],
-        RUNPOD_POD_ID: opts.env["RUNPOD_POD_ID"],
+        CONTROL_LOOP_LIVE_ENABLED: opts.env['CONTROL_LOOP_LIVE_ENABLED'],
+        CONTROL_LOOP_PROVIDER: opts.env['CONTROL_LOOP_PROVIDER'],
+        CONTROL_LOOP_WORKDIR: opts.env['CONTROL_LOOP_WORKDIR'],
+        CONTROL_LOOP_OPENCODE_BIN: opts.env['CONTROL_LOOP_OPENCODE_BIN'],
+        CONTROL_LOOP_OPENCODE_MODEL: opts.env['CONTROL_LOOP_OPENCODE_MODEL'],
+        CONTROL_LOOP_TIMEOUT_MS: opts.env['CONTROL_LOOP_TIMEOUT_MS'],
+        RUNPOD_API_KEY: opts.env['RUNPOD_API_KEY'],
+        RUNPOD_VLLM_API_KEY: opts.env['RUNPOD_VLLM_API_KEY'],
+        RUNPOD_POD_ID: opts.env['RUNPOD_POD_ID'],
       };
       return new LiveOpencodeAdapter({ env });
     }

@@ -6,14 +6,14 @@ defined in [ADR-0019](../../docs/decisions/0019-opencode-local-qwen-implementati
 This package validates a [ticket pack](../../docs/templates/opencode-ticket-pack.md)
 (the LAT-104 contract) and produces a Linear-ready run summary **without
 invoking opencode, the local Qwen endpoint, GitHub, or Linear**. It is the
-"fail before you run" gate that ADR-0019's *Confirmation* section calls for.
+"fail before you run" gate that ADR-0019's _Confirmation_ section calls for.
 
 ## What it does
 
 1. Reads a ticket pack file from disk.
 2. Validates the pack against the LAT-104 contract (header, goal, acceptance
    criteria, allowlist, branch/PR rules, expected checks, no embedded secrets).
-3. Decides whether the runtime would *start* a real opencode + Qwen run, or
+3. Decides whether the runtime would _start_ a real opencode + Qwen run, or
    refuse it as `blocked` / `needs_clarification` / `too_large`.
 4. Emits a structured summary (markdown or JSON) suitable for pasting into a
    Linear comment as the implementation dry-run artifact.
@@ -43,12 +43,12 @@ opencode-dry-run /tmp/lat-200-pack.md --format json --out /tmp/run-summary.json
 
 ### Exit codes
 
-| Code | Meaning                                              |
-| ---: | ---------------------------------------------------- |
-|    0 | `ready` — dry-run pass, the runtime would proceed    |
-|    2 | `blocked` / `needs_clarification` / `too_large`      |
-|    3 | harness internal error (e.g. unreadable pack file)   |
-|   64 | invalid CLI arguments                                |
+| Code | Meaning                                            |
+| ---: | -------------------------------------------------- |
+|    0 | `ready` — dry-run pass, the runtime would proceed  |
+|    2 | `blocked` / `needs_clarification` / `too_large`    |
+|    3 | harness internal error (e.g. unreadable pack file) |
+|   64 | invalid CLI arguments                              |
 
 ## Refusal modes
 
@@ -78,8 +78,9 @@ LAT-105 the repo can land while honouring the project's guardrails: no
 endpoint URL, no auth token, no live local endpoint, no GitHub side-effects.
 
 When an operator wants to take a pack from a green dry run to a real opencode
-+ Qwen run, the runtime they hand off to is **owned by LAT-103** (opencode
-agents/skills/commands and the self-hosted-runner workflow). The handoff is:
+
+- Qwen run, the runtime they hand off to is **owned by LAT-103** (opencode
+  agents/skills/commands and the self-hosted-runner workflow). The handoff is:
 
 1. Run the dry run on the pack: `opencode-dry-run path/to/pack.md`.
 2. Confirm the harness reports `status: ready` and exit code 0.
@@ -96,7 +97,7 @@ the runtime never starts.
 
 ## Why no live-endpoint mode here
 
-ADR-0019 *Endpoint and credential model* forbids committing the local Qwen
+ADR-0019 _Endpoint and credential model_ forbids committing the local Qwen
 endpoint URL or any auth token, and forbids exposing the endpoint publicly.
 A live-endpoint dry-run mode would either need an endpoint URL in this repo
 (forbidden) or an endpoint URL pulled from operator-side configuration (which

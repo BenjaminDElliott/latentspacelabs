@@ -13,11 +13,7 @@
  * provider/runtime identifier was used.
  */
 
-import type {
-  CostBand,
-  DryRunSummary,
-  RiskLevel,
-} from "@latentspacelabs/opencode-harness";
+import type { CostBand, DryRunSummary, RiskLevel } from '@latentspacelabs/opencode-harness';
 
 /**
  * Final terminal state for a single bounded dispatch.
@@ -37,16 +33,16 @@ import type {
  *                 before merge.
  */
 export type RunState =
-  | "planned"
-  | "running"
-  | "refused"
-  | "failed"
-  | "checks_failed"
-  | "ready_for_review";
+  | 'planned'
+  | 'running'
+  | 'refused'
+  | 'failed'
+  | 'checks_failed'
+  | 'ready_for_review';
 
-export type RunMode = "mock" | "plan" | "live";
+export type RunMode = 'mock' | 'plan' | 'live';
 
-export type CheckOutcome = "passed" | "failed" | "skipped" | "manual";
+export type CheckOutcome = 'passed' | 'failed' | 'skipped' | 'manual';
 
 /**
  * What the runtime is allowed to do with this check. Mirrors
@@ -58,7 +54,7 @@ export type CheckOutcome = "passed" | "failed" | "skipped" | "manual";
  *              `manual` if the adapter has no signal to verify it.
  * - `manual` — surfaced in evidence for human review; never executed.
  */
-export type CheckKind = "shell" | "policy" | "manual";
+export type CheckKind = 'shell' | 'policy' | 'manual';
 
 export interface CheckResult {
   name: string;
@@ -100,7 +96,7 @@ export interface BranchEvidence {
 
 /** Where the adapter wrote its raw logs. The loop never reads this back. */
 export interface LogsLocation {
-  type: "local-file" | "memory" | "external";
+  type: 'local-file' | 'memory' | 'external';
   path: string;
 }
 
@@ -109,8 +105,8 @@ export interface RunEvidence {
   packPath: string;
   state: RunState;
   mode: RunMode;
-  costBand: CostBand | "unknown";
-  riskLevel: RiskLevel | "unknown";
+  costBand: CostBand | 'unknown';
+  riskLevel: RiskLevel | 'unknown';
   provider: ProviderEvidence | null;
   branch: BranchEvidence | null;
   checks: CheckResult[];
@@ -123,7 +119,7 @@ export interface RunEvidence {
 }
 
 export interface RunSummary {
-  schemaVersion: "1.0.0";
+  schemaVersion: '1.0.0';
   evidence: RunEvidence;
   /** The dry-run summary that gated this dispatch. Always present. */
   preflight: DryRunSummary;
@@ -149,7 +145,7 @@ export interface AdapterRequest {
 
 export interface AdapterRunResult {
   /** What state the adapter wants the loop to terminate in. */
-  state: Extract<RunState, "failed" | "checks_failed" | "ready_for_review">;
+  state: Extract<RunState, 'failed' | 'checks_failed' | 'ready_for_review'>;
   provider: ProviderEvidence;
   branch: BranchEvidence;
   checks: CheckResult[];
@@ -183,7 +179,7 @@ export interface RuntimeAdapter {
  * silently falls back to a different cost class or adapter.
  */
 export class MissingConfigError extends Error {
-  override readonly name = "MissingConfigError";
+  override readonly name = 'MissingConfigError';
   readonly missingKeys: ReadonlyArray<string>;
   constructor(message: string, missingKeys: ReadonlyArray<string> = []) {
     super(message);

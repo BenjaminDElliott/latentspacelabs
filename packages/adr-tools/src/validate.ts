@@ -1,13 +1,7 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
-export const REQUIRED_KEYS = [
-  "id",
-  "title",
-  "status",
-  "date",
-  "decision_makers",
-] as const;
+export const REQUIRED_KEYS = ['id', 'title', 'status', 'date', 'decision_makers'] as const;
 
 const FILENAME_RE = /^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
 const ID_RE = /^ADR-(\d{4})$/;
@@ -28,12 +22,10 @@ interface ParsedFrontmatter {
   fields: Record<string, string | string[] | null>;
 }
 
-export async function validateAdrDirectory(
-  directory: string,
-): Promise<AdrValidationResult> {
+export async function validateAdrDirectory(directory: string): Promise<AdrValidationResult> {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = entries
-    .filter((e) => e.isFile() && e.name.endsWith(".md") && e.name !== "README.md")
+    .filter((e) => e.isFile() && e.name.endsWith('.md') && e.name !== 'README.md')
     .map((e) => e.name)
     .sort();
 
@@ -54,7 +46,7 @@ export async function validateAdrDirectory(
     prefixOwners.set(prefix, [...(prefixOwners.get(prefix) ?? []), file]);
 
     const full = join(directory, file);
-    const text = await readFile(full, "utf8");
+    const text = await readFile(full, 'utf8');
     const parsed = parseFrontmatter(text);
     if (!parsed) {
       errors.push({ file, message: `missing or malformed YAML frontmatter` });
@@ -67,7 +59,7 @@ export async function validateAdrDirectory(
         errors.push({ file, message: `missing required frontmatter key '${key}'` });
         continue;
       }
-      if (typeof value === "string" && value.trim() === "") {
+      if (typeof value === 'string' && value.trim() === '') {
         errors.push({ file, message: `frontmatter key '${key}' is empty` });
         continue;
       }
@@ -76,8 +68,8 @@ export async function validateAdrDirectory(
       }
     }
 
-    const idRaw = parsed.fields["id"];
-    if (typeof idRaw === "string") {
+    const idRaw = parsed.fields['id'];
+    if (typeof idRaw === 'string') {
       const idMatch = ID_RE.exec(idRaw);
       if (!idMatch) {
         errors.push({
@@ -100,7 +92,7 @@ export async function validateAdrDirectory(
   for (const [prefix, owners] of prefixOwners) {
     if (owners.length > 1) {
       errors.push({
-        file: owners.join(", "),
+        file: owners.join(', '),
         message: `duplicate filename prefix '${prefix}'`,
       });
     }
@@ -108,7 +100,7 @@ export async function validateAdrDirectory(
   for (const [id, owners] of idOwners) {
     if (owners.length > 1) {
       errors.push({
-        file: owners.join(", "),
+        file: owners.join(', '),
         message: `duplicate frontmatter id '${id}'`,
       });
     }
@@ -118,11 +110,11 @@ export async function validateAdrDirectory(
 }
 
 export function parseFrontmatter(text: string): ParsedFrontmatter | null {
-  if (!text.startsWith("---")) return null;
-  const afterFirst = text.indexOf("\n");
+  if (!text.startsWith('---')) return null;
+  const afterFirst = text.indexOf('\n');
   if (afterFirst === -1) return null;
   const rest = text.slice(afterFirst + 1);
-  const endIdx = rest.indexOf("\n---");
+  const endIdx = rest.indexOf('\n---');
   if (endIdx === -1) return null;
   const raw = rest.slice(0, endIdx);
   return { raw, fields: parseMinimalYaml(raw) };
@@ -130,11 +122,11 @@ export function parseFrontmatter(text: string): ParsedFrontmatter | null {
 
 function parseMinimalYaml(raw: string): Record<string, string | string[] | null> {
   const out: Record<string, string | string[] | null> = {};
-  const lines = raw.split("\n");
+  const lines = raw.split('\n');
   let i = 0;
   while (i < lines.length) {
     const line = lines[i]!;
-    if (line.trim() === "" || line.trimStart().startsWith("#")) {
+    if (line.trim() === '' || line.trimStart().startsWith('#')) {
       i += 1;
       continue;
     }
@@ -145,11 +137,11 @@ function parseMinimalYaml(raw: string): Record<string, string | string[] | null>
     }
     const key = match[1]!;
     const rawValue = match[2]!;
-    if (rawValue === "") {
+    if (rawValue === '') {
       const items: string[] = [];
       let j = i + 1;
       while (j < lines.length && /^\s+-\s+/.test(lines[j]!)) {
-        items.push(lines[j]!.replace(/^\s+-\s+/, "").trim());
+        items.push(lines[j]!.replace(/^\s+-\s+/, '').trim());
         j += 1;
       }
       if (items.length > 0) {
@@ -168,10 +160,7 @@ function parseMinimalYaml(raw: string): Record<string, string | string[] | null>
 }
 
 function stripQuotes(v: string): string {
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
     return v.slice(1, -1);
   }
   return v;
@@ -187,5 +176,5 @@ export function formatResult(result: AdrValidationResult): string {
   for (const e of result.errors) {
     lines.push(`  - ${e.file}: ${e.message}`);
   }
-  return lines.join("\n");
+  return lines.join('\n');
 }

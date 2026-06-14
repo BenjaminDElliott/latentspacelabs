@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
-import { readFile } from "node:fs/promises";
-import { scanPaths, formatResult, hasBlockingFindings } from "./scan.js";
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { scanPaths, formatResult, hasBlockingFindings } from './scan.js';
 
 interface CliArgs {
   staged: boolean;
@@ -17,9 +17,9 @@ function parseArgs(argv: string[]): CliArgs {
   let tracked = false;
   let help = false;
   for (const a of argv) {
-    if (a === "--staged") staged = true;
-    else if (a === "--tracked") tracked = true;
-    else if (a === "--help" || a === "-h") help = true;
+    if (a === '--staged') staged = true;
+    else if (a === '--tracked') tracked = true;
+    else if (a === '--help' || a === '-h') help = true;
     else paths.push(a);
   }
   return { staged, tracked, paths, help };
@@ -27,23 +27,23 @@ function parseArgs(argv: string[]): CliArgs {
 
 function usage(): string {
   return [
-    "Usage: secret-guard [--staged | --tracked] [paths...]",
-    "",
-    "Blocks commits / merges that would include local .env files or obvious",
-    "literal API keys / tokens.",
-    "  --staged   read the staged file list from git (pre-commit hook mode).",
-    "  --tracked  scan every git-tracked file in the repo (CI mode).",
-    "  (default)  scan the paths passed on the argv.",
-    "",
-    "Exits 0 on clean, 1 on blocking finding, 2 on internal error.",
-    "",
-    "See docs/process/secret-commit-guardrails.md for setup and policy.",
-    "",
-  ].join("\n");
+    'Usage: secret-guard [--staged | --tracked] [paths...]',
+    '',
+    'Blocks commits / merges that would include local .env files or obvious',
+    'literal API keys / tokens.',
+    '  --staged   read the staged file list from git (pre-commit hook mode).',
+    '  --tracked  scan every git-tracked file in the repo (CI mode).',
+    '  (default)  scan the paths passed on the argv.',
+    '',
+    'Exits 0 on clean, 1 on blocking finding, 2 on internal error.',
+    '',
+    'See docs/process/secret-commit-guardrails.md for setup and policy.',
+    '',
+  ].join('\n');
 }
 
 function gitRepoRoot(): string {
-  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" });
+  const r = spawnSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' });
   if (r.status !== 0) {
     throw new Error(`git rev-parse --show-toplevel failed: ${r.stderr.trim()}`);
   }
@@ -51,41 +51,40 @@ function gitRepoRoot(): string {
 }
 
 function stagedFiles(repoRoot: string): string[] {
-  const r = spawnSync(
-    "git",
-    ["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"],
-    { cwd: repoRoot, encoding: "utf8" },
-  );
+  const r = spawnSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
   if (r.status !== 0) {
     throw new Error(`git diff --cached failed: ${r.stderr.trim()}`);
   }
   return r.stdout
-    .split("\u0000")
+    .split('\u0000')
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
     .map((rel) => resolve(repoRoot, rel));
 }
 
 function trackedFiles(repoRoot: string): string[] {
-  const r = spawnSync(
-    "git",
-    ["ls-files", "-z"],
-    { cwd: repoRoot, encoding: "utf8", maxBuffer: 1024 * 1024 * 64 },
-  );
+  const r = spawnSync('git', ['ls-files', '-z'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    maxBuffer: 1024 * 1024 * 64,
+  });
   if (r.status !== 0) {
     throw new Error(`git ls-files failed: ${r.stderr.trim()}`);
   }
   return r.stdout
-    .split("\u0000")
+    .split('\u0000')
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
     .map((rel) => resolve(repoRoot, rel));
 }
 
 function stagedBlob(repoRoot: string, relPath: string): string | null {
-  const r = spawnSync("git", ["show", `:${relPath}`], {
+  const r = spawnSync('git', ['show', `:${relPath}`], {
     cwd: repoRoot,
-    encoding: "utf8",
+    encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 16,
   });
   if (r.status !== 0) return null;
@@ -100,7 +99,7 @@ async function main(): Promise<void> {
   }
 
   if (args.staged && args.tracked) {
-    process.stderr.write("secret-guard: --staged and --tracked are mutually exclusive\n");
+    process.stderr.write('secret-guard: --staged and --tracked are mutually exclusive\n');
     process.exit(2);
   }
 
@@ -110,11 +109,11 @@ async function main(): Promise<void> {
     const root = gitRepoRoot();
     files = stagedFiles(root);
     reader = async (abs: string) => {
-      const rel = abs.startsWith(root + "/") ? abs.slice(root.length + 1) : abs;
+      const rel = abs.startsWith(root + '/') ? abs.slice(root.length + 1) : abs;
       const blob = stagedBlob(root, rel);
       if (blob === null) {
         // fall back to on-disk read
-        return readFile(abs, "utf8");
+        return readFile(abs, 'utf8');
       }
       return blob;
     };
@@ -132,15 +131,15 @@ async function main(): Promise<void> {
   const result = await scanPaths(reader ? { files, readFile: reader } : { files });
   const output = formatResult(result);
   if (hasBlockingFindings(result)) {
-    process.stderr.write(output + "\n");
+    process.stderr.write(output + '\n');
     process.stderr.write(
-      "\nCommit blocked by secret-guard. If this is a placeholder, edit the value " +
-        "(e.g. use <your-key> or ${VAR}). If you need to commit a template, rename to " +
-        ".env.example / .env.template. To investigate locally: npm run secret-guard -- <path>.\n",
+      '\nCommit blocked by secret-guard. If this is a placeholder, edit the value ' +
+        '(e.g. use <your-key> or ${VAR}). If you need to commit a template, rename to ' +
+        '.env.example / .env.template. To investigate locally: npm run secret-guard -- <path>.\n',
     );
     process.exit(1);
   }
-  process.stdout.write(output + "\n");
+  process.stdout.write(output + '\n');
   process.exit(0);
 }
 
