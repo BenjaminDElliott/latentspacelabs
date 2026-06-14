@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/skill-definition.schema.json",
+  "title": "Skill Definition I/O Contract",
+  "description": "I/O contract for the skill framework (ADR-0012). Validates SkillDefinition, SkillInputSpec, and EvidenceContract.",
+  "type": "object",
+  "definitions": {
+    "SkillInputSpec": {
+      "type": "object",
+      "required": ["name", "type", "required"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Input parameter name."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "boolean"],
+          "description": "Input parameter type."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this input is required."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceContract": {
+      "type": "object",
+      "required": ["run_report", "linear_write_back", "cost_band"],
+      "properties": {
+        "run_report": {
+          "type": "boolean",
+          "description": "Whether the skill must produce a run report."
+        },
+        "linear_write_back": {
+          "type": "boolean",
+          "description": "Whether the skill must post evidence to Linear."
+        },
+        "cost_band": {
+          "type": "boolean",
+          "description": "Whether cost-band evidence is required (ADR-0009)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SkillDefinition": {
+      "type": "object",
+      "required": ["name", "version", "inputs", "required_tools", "autonomy_level", "requires_approval_flag", "evidence", "derived_from", "derived_at"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Skill name (e.g. 'dispatch-ticket')."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "SemVer skill version."
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SkillInputSpec" },
+          "minItems": 0,
+          "description": "Required inputs for this skill."
+        },
+        "required_tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["linear-adapter", "policy-evaluator", "agent-invocation-adapter", "run-recorder", "write-back-formatter"]
+          },
+          "minItems": 0,
+          "description": "Tools this skill depends on."
+        },
+        "autonomy_level": {
+          "type": "string",
+          "enum": ["L1-read-only", "L2-propose", "L3-with-approval", "L4-autonomous"],
+          "description": "Required autonomy level."
+        },
+        "requires_approval_flag": {
+          "type": "boolean",
+          "description": "Whether this skill needs explicit approval."
+        },
+        "evidence": {
+          "$ref": "#/definitions/EvidenceContract"
+        },
+        "derived_from": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "ADR-0004 doc paths this skill adapts."
+        },
+        "derived_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this skill was derived."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/definitions/SkillDefinition"
+}

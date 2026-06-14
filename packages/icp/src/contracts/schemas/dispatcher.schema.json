@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/dispatcher.schema.json",
+  "title": "Dispatcher/SRE Agent I/O Contract",
+  "description": "I/O contract for dispatcher and SRE agent types. Validates DispatchIssue → DispatchReport.",
+  "type": "object",
+  "definitions": {
+    "DispatchIssue": {
+      "type": "object",
+      "required": ["identifier", "uuid", "title", "description", "stateName", "stateId", "labels"],
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "pattern": "^[A-Z]+-\\d+$",
+          "description": "Linear identifier in human form (e.g. LAT-126)."
+        },
+        "uuid": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Internal Linear UUID."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "stateName": {
+          "type": "string",
+          "description": "Current workflow state name."
+        },
+        "stateId": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 0,
+          "description": "Label names, lowercased by the client."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DispatchReport": {
+      "type": "object",
+      "required": ["outcome", "message"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "no_eligible_issue",
+            "ready_for_review",
+            "checks_failed",
+            "failed",
+            "refused",
+            "planned",
+            "config_error",
+            "no_review_artifact",
+            "duplicate_in_flight"
+          ],
+          "description": "Final terminal outcome of dispatcher invocation."
+        },
+        "issueIdentifier": {
+          "type": ["string", "null"]
+        },
+        "promoted": {
+          "type": "boolean"
+        },
+        "commented": {
+          "type": "boolean"
+        },
+        "packPath": {
+          "type": ["string", "null"]
+        },
+        "artefactPath": {
+          "type": ["string", "null"]
+        },
+        "controlLoopExitCode": {
+          "type": ["number", "null"]
+        },
+        "message": {
+          "type": "string"
+        },
+        "worktreeBranch": {
+          "type": ["string", "null"]
+        },
+        "worktreePath": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/DispatchIssue" },
+    { "$ref": "#/definitions/DispatchReport" }
+  ]
+}

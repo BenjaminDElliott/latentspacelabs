@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BenjaminDElliott/latentspacelabs/icp/readiness.schema.json",
+  "title": "PM Agent Readiness I/O Contract",
+  "description": "I/O contract for PM agent type. Validates ReadinessTicketInput → ReadinessReport.",
+  "type": "object",
+  "definitions": {
+    "ReadinessTicketInput": {
+      "type": "object",
+      "required": ["linear_issue_id", "scope_in", "scope_out", "acceptance_criteria", "has_tests_section", "sequencing_status"],
+      "properties": {
+        "linear_issue_id": {
+          "type": "string"
+        },
+        "risk_level": {
+          "type": ["string", "null"],
+          "enum": ["low", "medium", "high", null],
+          "description": "Risk level. null = not set."
+        },
+        "budget_cap_usd": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Numeric budget cap. null = missing."
+        },
+        "scope_in": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "In-scope items. Must be non-empty to pass."
+        },
+        "scope_out": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Out-of-scope items. Must be non-empty to pass."
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Acceptance criteria; each must be testable."
+        },
+        "has_tests_section": {
+          "type": "boolean"
+        },
+        "sequencing_status": {
+          "type": "string",
+          "enum": ["ready", "caution", "blocked", "unknown"]
+        },
+        "repo": {
+          "type": ["string", "null"],
+          "description": "Coding-agent repo target (owner/name)."
+        },
+        "goal": {
+          "type": ["string", "null"],
+          "description": "One-sentence goal."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReadinessReport": {
+      "type": "object",
+      "required": ["verdict", "reasons"],
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": ["ready", "caution", "refuse"],
+          "description": "Three-valued verdict per PRD LAT-26 §6.3."
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["category", "message"],
+            "properties": {
+              "category": { "type": "string" },
+              "message": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "description": "Structured reasons for the verdict."
+        },
+        "refusal_markdown": {
+          "type": ["string", "null"],
+          "description": "Ticket-facing refusal block when verdict is refuse."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/ReadinessTicketInput" },
+    { "$ref": "#/definitions/ReadinessReport" }
+  ]
+}
