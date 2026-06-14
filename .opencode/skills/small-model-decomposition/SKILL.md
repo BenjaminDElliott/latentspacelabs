@@ -7,6 +7,8 @@ description: Heuristics for the planner agent to decide whether a ticket fits th
 
 The implementer is a small local model with bounded context and tool surface. Tickets that exceed that surface must be **split or refused** before they reach the implementer, not discovered mid-run.
 
+The implementation workflow is defined in `docs/templates/local-agent-prompt.md`. Use this skill when the pack is oversized for that workflow.
+
 ## When to use
 
 - Inside `ticket-planner` when reviewing a draft pack.

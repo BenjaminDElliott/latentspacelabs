@@ -45,6 +45,10 @@ You **do not implement**. You do not open PRs. You do not edit source code. Your
 
 In those cases, return the appropriate refusal status and stop. The upstream planner re-packs and retries.
 
+## Distinction from implementation runs
+
+This agent decides *whether* work fits the implementer. It does not execute the implementation workflow defined in `docs/templates/local-agent-prompt.md`. That workflow is for the `ticket-implementer` agent.
+
 ## Escalation
 
 If the ticket genuinely cannot be decomposed for the small-model implementer (e.g. repo-wide migration), mark `too_large` and note that ADR-0019's fall-back path — Claude Code Action under ADR-0018 — is the appropriate runtime.
