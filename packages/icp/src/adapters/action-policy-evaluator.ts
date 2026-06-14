@@ -449,7 +449,7 @@ export function evaluate(
     if (agentRank < rule.minAutonomyLevel) {
       return {
         verdict: "propose",
-        reason: `Agent autonomy level (${autonomyLevel ?? "none", rank ${agentRank}}) is below the minimum required (${rule.minAutonomyLevel}) for "${action}". ${rule.notes}`,
+        reason: `Agent autonomy level (${autonomyLevel ?? "none"}, rank ${agentRank}) is below the minimum required (${rule.minAutonomyLevel}) for "${action}". ${rule.notes}`,
         approver: rule.approver ?? "Ben",
       };
     }
