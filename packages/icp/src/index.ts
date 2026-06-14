@@ -39,29 +39,6 @@ export type {
 } from "./runtime/contract.js";
 export { RUN_REPORT_SCHEMA_VERSION, toRunStatus } from "./runtime/contract.js";
 
-export type {
-  GateVerdict,
-  AdapterAction,
-  ActionScope,
-  IsolationRule,
-  ForbiddenActions,
-  PreRunGateInput,
-  PreRunGateResult,
-  PostRunGateInput,
-  PostRunGateResult,
-  PolicyEvaluationContext,
-  PolicyGateEvaluator,
-  PreRunGate,
-  PostRunGate,
-  AdapterRunnerGate,
-  AdapterGateOutcome,
-} from "./runtime/contract.js";
-
-export {
-  getDefaultIsolationRules,
-  getDefaultForbiddenActions,
-} from "./runtime/contract.js";
-
 export { SkillRegistry, SkillRegistryError } from "./runtime/registry.js";
 export type { RegistryOptions, RegisteredSkill } from "./runtime/registry.js";
 
@@ -70,15 +47,6 @@ export type {
   RunnerOptions,
   RunInvocation,
   RunResult,
-  GateRunnerOptions,
-  GateRunInvocation,
-  GateRunResult,
-} from "./runtime/runner.js";
-
-export { createGateRunner } from "./runtime/runner.js";
-export {
-  skillDefinitionToPreRunInput,
-  runOutputToPostRunInput,
 } from "./runtime/runner.js";
 
 export { createPolicyEvaluator } from "./adapters/policy-evaluator.js";
@@ -123,18 +91,6 @@ export type {
   SpawnLike,
   SpawnedLike,
 } from "./adapters/agent-invocation-adapter.js";
-
-/* LAT-166: adapter runner gate with policy enforcement */
-export {
-  createGatePolicyEvaluator,
-  createPreRunGate as createPreRunGateFromPolicies,
-  type GatePolicyOptions,
-} from "./adapters/gate-policies.js";
-export {
-  createPreRunGate,
-  createPostRunGate,
-  createAdapterRunnerGate,
-} from "./adapters/gates.js";
 
 export {
   dispatchTicketSkill,
@@ -200,22 +156,67 @@ export type {
   EligibilityOutcome,
 } from "./dispatcher/types.js";
 
-/* LAT-186 pre-run invocation gate. Validates AgentInvocationRequest
- * parameters against isolation rules before a run proceeds. Blocks if
- * any forbidden action is detected, and logs the gate decision with
- * evidence. LAT-187 adds the corresponding post-run gate. */
+/* LAT-163: Per-agent-type input/output contracts.
+ * Defines the exact inputs and outputs for coding, QA, PR-review,
+ * and SRE/deploy agents so adapters know what to expect and produce. */
 export {
-  runPreRunGate,
-  buildDefaultRules,
-  buildPermissiveRules,
-} from "./runtime/gates.js";
+  AGENT_CONTRACT_SCHEMA_VERSION,
+  CODING_AGENT_SCHEMA_VERSION,
+  QA_AGENT_SCHEMA_VERSION,
+  PR_REVIEW_AGENT_SCHEMA_VERSION,
+  SRE_AGENT_SCHEMA_VERSION,
+  getEvidenceContract,
+  validateCodingAgentInput,
+  validateQAAgentInput,
+  validatePRReviewAgentInput,
+  validateSREAgentInput,
+  checkEvidence,
+  buildDefaultOutput,
+  type AgentEvidence,
+  type AgentEvidenceContract,
+  type AgentInput,
+  type AgentOutput,
+  type AcceptanceCriterionResult,
+  type ReviewFinding,
+  type ApprovalStatus,
+  type ChangeSummary,
+  type HealthCheck,
+  type RollbackConfig,
+  type DeployStatus,
+  type HealthCheckResult,
+  type RollbackResult,
+  type DeploymentCost,
+  type ValidationError,
+  type ValidationResult,
+} from "./contract/agent-contracts.js";
 export type {
-  GateOutcome,
-  GateEvidence,
-  InvocationGateInput,
-  IsolationRules,
-  ForbiddenAction,
-} from "./runtime/gates.js";
+  CodingAgentInput,
+  CodingAgentOutput,
+  BuildStatus,
+  TestOutcome,
+  TestResults,
+  TestCaseResult,
+  LintStatus,
+  LintResults,
+  LintViolation,
+  CoverageMetrics,
+  CoverageFileSummary,
+} from "./contract/agent-contracts.js";
+export type {
+  QAAgentInput,
+  QAAgentOutput,
+  QAAcceptanceCriterionResult,
+  RegressionResult,
+  SeverityClassification,
+} from "./contract/agent-contracts.js";
+export type {
+  PRReviewAgentInput,
+  PRReviewAgentOutput,
+} from "./contract/agent-contracts.js";
+export type {
+  SREAgentInput,
+  SREAgentOutput,
+} from "./contract/agent-contracts.js";
 
 /* LAT-140 structured run artefact (sanitised observability record).
  * Pure module: produces the JSON / compact comment-ready summary; the
@@ -242,16 +243,6 @@ export type {
   RiskClass,
   TrainingEligibility,
 } from "./observability/run-artifact.js";
-
-/* LAT-184 run-record module — builds Linear sub-issue title and description
- * from a structured run artefact. Produces queryable run records inside
- * Linear (sub-issues under the source ticket). */
-export {
-  buildRunRecord,
-  buildRunRecordTitle,
-  buildRunRecordDescription,
-} from "./observability/run-record.js";
-
 export {
   fromControlLoopSummary,
   fromOpencodeDryRunSummary,
@@ -289,83 +280,3 @@ export type {
   RecentCompletionRow,
   ViewName,
 } from "./cockpit/types.js";
-
-/* LAT-174 coding agent input/output contract.
- * TypeScript types defining the canonical coding agent contract surface. */
-export {
-  CODING_AGENT_CONTRACT_SCHEMA_VERSION,
-  type CodingAgentInput,
-  type CodingAgentOutput,
-  type BuildStatus,
-  type BuildStatusValue,
-  type TestOutcome,
-  type TestResults,
-  type TestCaseResult,
-  type TestCaseStatus,
-  type LintStatusValue,
-  type LintResults,
-  type LintViolation,
-  type CoverageMetrics,
-  type CoverageFileSummary,
-  type AcceptanceCriterionResult,
-  type AcceptanceCriterionStatus,
-  type Recommendation,
-  type AutonomyLevel,
-} from "./contract/coding-agent-contract.js";
-
-/* LAT-162 provider-neutral adapter interface (ADR-0022).
- * Unified adapter interface contract for all agent providers. */
-export {
-  createRunError,
-  formatStatus,
-  formatResultSummary,
-  isRunError,
-  isOperationState,
-  isTerminalState,
-  isRunStatus,
-  isProviderType,
-  isRetryableKind,
-  DEFAULT_EVIDENCE_REQUIREMENTS,
-} from "./adapters/provider-adapter-interface.js";
-export type {
-  ProviderType,
-  RunRequest,
-  EvidenceRequirements,
-  RunResult,
-  RunStatus,
-  RunMode,
-  RunTiming,
-  RunEvidence,
-  RunError,
-  RunErrorCode,
-  OperationHandle,
-  OperationState,
-  OperationStatus,
-  ProviderAdapter,
-  /* Evidence sub-types */
-  AcceptanceCriterionResult,
-  BuildResult,
-  TestOutcome,
-  TestResults,
-  TestCaseResult,
-  LintStatus,
-  LintResults,
-  LintViolation,
-  CoverageMetrics,
-  CoverageFileSummary,
-  Recommendation,
-  /* Autonomy & cost */
-  AutonomyLevel,
-  CostBand,
-} from "./adapters/provider-adapter-interface.js";
-
-/* Legacy error types (LAT-173, re-exported for backwards compat).
- * New code should prefer the LAT-162 types from provider-adapter-interface. */
-export {
-  AdapterErrorType,
-  RetryPolicy,
-  CancelRequest,
-  toRunErrorCode,
-  type RunErrorCode,
-  type RunError,
-} from "./errors/index.js";

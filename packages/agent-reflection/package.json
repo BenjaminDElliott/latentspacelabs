@@ -1,8 +1,8 @@
 {
-  "name": "@latentspacelabs/agent-reflection",
+  "name": "@latentspacelabs/icp",
   "version": "0.0.0",
   "private": true,
-  "description": "LAT-273 Phase 1: Agent Self-Improvement Foundation — post-action reflection engine, experience log, and RAG-based experience retrieval.",
+  "description": "Integration Control Plane (ICP): skills framework and thin CLI harness. See docs/decisions/0011 and 0012.",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
+  },
+  "bin": {
+    "icp-cockpit": "./dist/cockpit/cli.js",
+    "icp-dispatch-next": "./dist/dispatcher/cli.js"
   },
   "files": [
     "dist",
@@ -24,9 +28,8 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/*.test.ts"
+    "test": "tsx --test src/index.test.ts src/runtime/*.test.ts src/adapters/*.test.ts src/skills/*.test.ts src/evaluation/*.test.ts src/cockpit/*.test.ts src/dispatcher/*.test.ts src/observability/*.test.ts src/contract/*.test.ts"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.12.0",
     "tsx": "^4.19.0",
