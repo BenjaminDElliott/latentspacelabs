@@ -1,0 +1,14 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  serializedVersion: 26
+  productGUID: 00000000000000000000000000000000
+  defaultScreenOrientation: 3
+  targetPlatform: 3
+  useSRPBatcher: 0
+  graphicsSettings:
+    apiCompatibilityLevel: 6
+  companyName: Latent Space Labs
+  productName: MMO Discovery
+  version: 0.1.0
