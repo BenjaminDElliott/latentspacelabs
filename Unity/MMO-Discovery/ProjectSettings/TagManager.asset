@@ -1,0 +1,13 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  tags:
+  - Player
+  - Avatar
+  - Networked
+  - SpawnPoint
+  Builtin Scopp Tag 0: Player
+  Builtin Scopp Tag 1: Avatar
+  Builtin Scopp Tag 2: Networked
+  Builtin Scopp Tag 3: SpawnPoint
