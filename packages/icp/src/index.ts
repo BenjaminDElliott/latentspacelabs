@@ -198,6 +198,16 @@ export type {
   RiskClass,
   TrainingEligibility,
 } from "./observability/run-artifact.js";
+
+/* LAT-184 run-record module — builds Linear sub-issue title and description
+ * from a structured run artefact. Produces queryable run records inside
+ * Linear (sub-issues under the source ticket). */
+export {
+  buildRunRecord,
+  buildRunRecordTitle,
+  buildRunRecordDescription,
+} from "./observability/run-record.js";
+
 export {
   fromControlLoopSummary,
   fromOpencodeDryRunSummary,

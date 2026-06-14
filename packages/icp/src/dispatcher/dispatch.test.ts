@@ -46,12 +46,13 @@ interface FakeLinearLog {
   reads: string[];
   comments: Array<{ uuid: string; body: string }>;
   states: Array<{ uuid: string; stateId: string }>;
+  runRecords: Array<{ title: string; description: string; parentId: string }>;
 }
 
 function fakeLinear(
   issuesById: Record<string, DispatchIssue | "missing">,
   log: FakeLinearLog,
-  opts: { commentThrows?: boolean; setStateThrows?: boolean } = {},
+  opts: { commentThrows?: boolean; setStateThrows?: boolean; createRunRecordThrows?: boolean } = {},
 ): DispatcherLinearClient {
   return {
     async readIssue(id) {
@@ -68,6 +69,11 @@ function fakeLinear(
     async setIssueState(uuid, stateId) {
       if (opts.setStateThrows) throw new Error("transition-failed");
       log.states.push({ uuid, stateId });
+    },
+    async createRunRecord(issue) {
+      if (opts.createRunRecordThrows) throw new Error("linear-down");
+      log.runRecords.push(issue);
+      return { id: `run-record-${issue.parentId}`, url: `https://linear.app/issue/${issue.parentId}/run-record` };
     },
   };
 }
@@ -175,7 +181,7 @@ const REFUSED_JSON = JSON.stringify({
 });
 
 test("runDispatcher: no eligible issue when dispatchIssueId is null", async () => {
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({}, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -206,7 +212,7 @@ test("runDispatcher: no eligible issue when dispatchIssueId is null", async () =
 
 test("runDispatcher: ineligible issue is not dispatched and not promoted", async () => {
   const issue = fakeIssue({ title: "Investigate auth pipeline" });
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -236,7 +242,7 @@ test("runDispatcher: ineligible issue is not dispatched and not promoted", async
 
 test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack inside worktree", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -284,7 +290,7 @@ test("runDispatcher: READY_FOR_REVIEW promotes to In Review and writes pack insi
 
 test("LAT-140: runDispatcher emits sanitised run artefact and references it in the Linear comment", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[] };
   // The control-loop child echoes a token-shaped substring; the dispatcher
@@ -343,7 +349,7 @@ test("LAT-140: runDispatcher emits sanitised run artefact and references it in t
 
 test("LAT-140: refused run still produces an artefact with a refusal code", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[] };
   const refusedJson = JSON.stringify({
@@ -382,7 +388,7 @@ test("LAT-140: refused run still produces an artefact with a refusal code", asyn
 
 test("runDispatcher: failed run posts comment but does NOT promote", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -412,7 +418,7 @@ test("runDispatcher: failed run posts comment but does NOT promote", async () =>
 
 test("runDispatcher: refused run posts comment, no promotion", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -442,7 +448,7 @@ test("runDispatcher: refused run posts comment, no promotion", async () => {
 
 test("runDispatcher: comment body is sanitised before write-back", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -519,7 +525,7 @@ test("resolveDispatcherConfig: forwards safe env, never LINEAR_API_KEY", () => {
 });
 
 test("runDispatcher: read-issue failure returns failed outcome with no spawn", async () => {
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear: DispatcherLinearClient = {
     async readIssue() {
       throw new Error("issue not found");
@@ -560,7 +566,7 @@ test("runDispatcher: read-issue failure returns failed outcome with no spawn", a
 
 test("runDispatcher: comment-failure on READY does not silently promote", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log, { commentThrows: true });
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -590,7 +596,7 @@ test("runDispatcher: comment-failure on READY does not silently promote", async 
 
 test("runDispatcher: command construction passes pack path and mode", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -627,7 +633,7 @@ test("runDispatcher: command construction passes pack path and mode", async () =
 // must NOT promote the issue.
 test("runDispatcher: LAT-143 ready_for_review with NO branch evidence is downgraded to no_review_artifact and not promoted", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -663,7 +669,7 @@ test("runDispatcher: LAT-143 ready_for_review with NO branch evidence is downgra
 
 test("runDispatcher: LAT-143 ready_for_review with explicit `branch: null` is not promoted", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -692,7 +698,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit `branch: null` is no
 
 test("runDispatcher: LAT-143 ready_for_review with empty/whitespace branch + prUrl is not promoted", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -721,7 +727,7 @@ test("runDispatcher: LAT-143 ready_for_review with empty/whitespace branch + prU
 
 test("runDispatcher: LAT-143 ready_for_review with PR URL only (no branch ref) promotes and reports the PR", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
@@ -758,7 +764,7 @@ test("runDispatcher: LAT-143 ready_for_review with PR URL only (no branch ref) p
 
 test("runDispatcher: LAT-143 ready_for_review with patch artifact (no branch / no PR) promotes and names the patch path", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
@@ -795,7 +801,7 @@ test("runDispatcher: LAT-143 ready_for_review with patch artifact (no branch / n
 
 test("runDispatcher: LAT-143 ready_for_review with explicit local diff path promotes and names it", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const summary = JSON.stringify({
@@ -835,7 +841,7 @@ test("runDispatcher: LAT-143 ready_for_review with explicit local diff path prom
 // there is still no review artifact, so we must refuse to promote.
 test("runDispatcher: LAT-143 exit-0 with unparseable summary is treated as no_review_artifact, not silently promoted", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -873,7 +879,7 @@ test("runDispatcher: two simulated dispatches use distinct branches and worktree
   // them through pack paths, child cwd, and Linear comments.
   const issueA = fakeIssue({ identifier: "LAT-100", uuid: "uuid-100" });
   const issueB = fakeIssue({ identifier: "LAT-200", uuid: "uuid-200" });
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-100": issueA, "LAT-200": issueB }, log);
   const capA = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   const capB = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
@@ -956,7 +962,7 @@ test("runDispatcher: refuses duplicate dispatch of same ticket while in flight",
   // yet released its reservation. We simulate "in flight" by manually
   // pre-reserving the slot before calling runDispatcher.
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   await withTempDir(async (dir) => {
@@ -991,7 +997,7 @@ test("runDispatcher: refuses duplicate dispatch of same ticket while in flight",
 
 test("runDispatcher: forwards CONTROL_LOOP_WORKDIR to the control loop env", async () => {
   const issue = fakeIssue();
-  const log: FakeLinearLog = { reads: [], comments: [], states: [] };
+  const log: FakeLinearLog = { reads: [], comments: [], states: [], runRecords: []};
   const linear = fakeLinear({ "LAT-126": issue }, log);
   const captured = { args: [] as ReadonlyArray<string>[], cwd: [] as (string | undefined)[] };
   // Capture env separately by augmenting the spawn factory.

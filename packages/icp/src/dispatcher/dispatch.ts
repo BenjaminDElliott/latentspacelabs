@@ -43,6 +43,9 @@ import {
   type RunArtefact,
   type RunArtefactOutcome,
 } from "../observability/run-artifact.js";
+import {
+  buildRunRecord,
+} from "../observability/run-record.js";
 import { WorktreeAllocator, type WorktreeAllocation } from "./worktree.js";
 import type {
   ControlLoopJsonSummary,
@@ -233,6 +236,17 @@ async function runDispatcherInner(
         invocationId,
         artefact,
       );
+      // LAT-184: also write a run-record sub-issue for failed invocations.
+      try {
+        const { title, description } = buildRunRecord(artefact);
+        await linear.createRunRecord({
+          title,
+          description,
+          parentId: issue.identifier,
+        });
+      } catch {
+        // Best-effort; artefact file remains traceable.
+      }
       return makeReport({
         outcome: "failed",
         issueIdentifier: issue.identifier,
@@ -286,6 +300,23 @@ async function runDispatcherInner(
       invocationId,
       artefact,
     );
+
+    // LAT-184: write evidence to Linear as a queryable run-record sub-issue.
+    let runRecordUrl: string | null = null;
+    let runRecordCreated = false;
+    try {
+      const { title, description } = buildRunRecord(artefact);
+      const created = await linear.createRunRecord({
+        title,
+        description,
+        parentId: issue.identifier,
+      });
+      runRecordUrl = created.url;
+      runRecordCreated = true;
+    } catch (err) {
+      // Best-effort: a failed run-record creation does not break dispatch.
+      // The artefact file and comment remain available for traceability.
+    }
 
     const commentBody = buildCommentBody({
       issueIdentifier: issue.identifier,

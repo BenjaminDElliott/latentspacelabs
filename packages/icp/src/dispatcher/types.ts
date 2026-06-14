@@ -193,6 +193,12 @@ export interface DispatcherLinearClient {
    * dispatcher never hard-codes Linear UUIDs in its source.
    */
   setIssueState(uuid: string, stateId: string): Promise<void>;
+  /**
+   * Create a run-record sub-issue under the parent issue. The title and
+   * description carry the full structured run evidence. The sub-issue is
+   * queryable in Linear (filter by parent, by label, by state).
+   */
+  createRunRecord(issue: import("./linear-client.js").RunRecordIssue): Promise<{ id: string; url: string }>;
 }
 
 /** Spawn surface the dispatcher uses to run the control-loop CLI. */
