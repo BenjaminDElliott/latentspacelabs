@@ -218,3 +218,26 @@ export type {
   RecentCompletionRow,
   ViewName,
 } from "./cockpit/types.js";
+
+/* LAT-174 coding agent input/output contract.
+ * TypeScript types defining the canonical coding agent contract surface. */
+export {
+  CODING_AGENT_CONTRACT_SCHEMA_VERSION,
+  type CodingAgentInput,
+  type CodingAgentOutput,
+  type BuildStatus,
+  type BuildStatusValue,
+  type TestOutcome,
+  type TestResults,
+  type TestCaseResult,
+  type TestCaseStatus,
+  type LintStatusValue,
+  type LintResults,
+  type LintViolation,
+  type CoverageMetrics,
+  type CoverageFileSummary,
+  type AcceptanceCriterionResult,
+  type AcceptanceCriterionStatus,
+  type Recommendation,
+  type AutonomyLevel,
+} from "./contract/coding-agent-contract.js";
