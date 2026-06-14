@@ -68,7 +68,8 @@ The retro is a consumer of evidence produced by the rest of the flywheel. It doe
 | Linear write-backs | Bounded outcome, risks, open questions per `LAT-*` issue. | ADR-0003, `operating-model.md` |
 | Intake triage results | Triage-output shape: confidence, classification, open questions, rejected items. | `docs/process/intake-triage.md` |
 | Docs-vs-skills drift | Adapters that disagreed with canonical docs during the cycle, per ADR-0004's `Affected adapters:` flag on doc PRs. | ADR-0004, `docs/process/README.md` |
-| Approval / control-plane decisions | Which actions were routed P-Direct, P-Propose, ICP-Routed, or Stop; any rule-matrix edge cases encountered. (ADR-0008 originally called this category `ACL-Routed`; renamed by ADR-0012.) | ADR-0008, ADR-0012, `docs/process/approval-gates-and-autonomy-rules.md` |
+- **Approval / control-plane decisions** | Which actions were routed P-Direct, P-Propose, ICP-Routed, or Stop; any rule-matrix edge cases encountered. (ADR-0008 originally called this category `ACL-Routed`; renamed by ADR-0012.) | ADR-0008, ADR-0012, `docs/process/approval-gates-and-autonomy-rules.md` |
+| Risk & open-questions register | All `Open` and `Watch` entries with a decision deadline in the past or approaching; any new risks flagged since the last retro. | `docs/process/risk-register.md` |
 | Dispatch decisions | Hard-blocker / soft-predecessor calls; any `## Sequencing` block failures or overrides. | ADR-0005 |
 
 If a retro cannot find the evidence it needs for one of the six questions, the gap itself is a finding — route it to the appropriate promotion path (typically backlog or ADR candidate).
@@ -120,6 +121,7 @@ The retro loop is not allowed to silently change its own governance.
 ## Interactions with other pilot mechanisms
 
 - **Run visibility (LAT-5 / ADR-0006).** Retro is the primary downstream consumer of the run-report envelope. If a question cannot be answered from the envelope today, the gap is an ADR-0006-extension finding (open sub-object or follow-up ADR per that ADR's extensibility rule).
+- **Risk & open-questions register (`risk-register.md`).** Every retro updates the register: resolves resolved items, closes stale entries, promotes new risks, and flags entries whose decision deadlines have passed.
 - **QA and review evidence (LAT-8 / ADR-0007).** Retro reads severity-tagged findings verbatim; it does not re-grade them. Recurring `medium`+ categories are the primary signal for template/prompt promotions.
 - **Intake triage (LAT-10).** Retro creates backlog via the same triage pipeline; retro-originated issues are not exempt from pre-flight. A retro that creates `agent-ready` issues directly is a policy violation.
 - **Docs vs skills (LAT-14 / ADR-0004).** Prompt/template promotions must respect the `derived_from:` header and the `Affected adapters:` PR convention. When adapters exist, a prompt change that does not update its derived adapter is a retro finding.
